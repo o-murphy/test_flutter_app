@@ -1,0 +1,1938 @@
+home_screen.dart
+Треба модуль дарт який вмітиме парсити такі повідомлення і валідувати їх
+
+syntax = "proto3";
+
+package profedit;
+
+option go_package = "github.com/jaremko/a7p_transfer_example/profedit";
+
+message Payload {
+  Profile profile = 1;
+}
+
+
+message CoefRow {
+  int32 bc_cd = 1;
+  int32 mv = 2;
+}
+
+
+enum DType {
+  VALUE = 0;
+  INDEX = 1;
+}
+
+
+message SwPos {
+  int32 c_idx = 1;
+  int32 reticle_idx = 2;
+  int32 zoom = 3;
+  int32 distance = 4;
+  DType distance_from = 5;
+}
+
+
+enum GType {
+  G1 = 0;
+  G7 = 1;
+  CUSTOM = 2;
+}
+
+
+enum TwistDir {
+  RIGHT = 0;
+  LEFT = 1;
+}
+
+
+message Profile {
+  string profile_name = 1;
+  string cartridge_name = 2;
+  string bullet_name = 3;
+  string short_name_top = 4;
+  string short_name_bot = 5;
+  string user_note = 6;
+  int32 zero_x = 7;
+  int32 zero_y = 8;
+  int32 sc_height = 9;
+  int32 r_twist = 10;
+  int32 c_muzzle_velocity = 11;
+  int32 c_zero_temperature = 12;
+  int32 c_t_coeff = 13;
+  int32 c_zero_distance_idx = 14;
+  int32 c_zero_air_temperature = 15;
+  int32 c_zero_air_pressure = 16;
+  int32 c_zero_air_humidity = 17;
+  int32 c_zero_w_pitch = 18;
+  int32 c_zero_p_temperature = 19;
+  int32 b_diameter = 20;
+  int32 b_weight = 21;
+  int32 b_length = 22;
+  TwistDir twist_dir = 23;
+  GType bc_type = 24;
+  repeated SwPos switches = 25;
+  repeated int32 distances = 26;
+  repeated CoefRow coef_rows = 27;
+  string caliber = 28;
+  string device_uuid = 29;
+}
+
+Ось валідатор
+
+import { object, string, number, array, mixed, ValidationError } from 'yup';
+import { BcType, Payload } from './types.js';
+import { InvalidBcTypeError } from './errors.js';
+
+
+// Define the validation schema for each field
+export const schema = object().shape({
+    profile: object().shape({
+        // descriptor
+        profileName: string().max(50).required('Profile name is required'),
+        cartridgeName: string().max(50).required('Cartridge name is required'),
+        bulletName: string().max(50).required('Bullet name is required'),
+        shortNameTop: string().max(8).required('Short name top is required'),
+        shortNameBot: string().max(8).required('Short name bottom is required'),
+        caliber: string().max(50).required('Caliber is required'),
+        deviceUuid: string().max(50).notRequired(),
+        userNote: string().max(1024).notRequired(),
+
+        // zeroing
+        zeroX: number().min(-200000).max(200000).integer().required('Zero X is required'),
+        zeroY: number().min(-200000).max(200000).integer().required('Zero Y is required'),
+
+        // lists
+        distances: array().of(number().min(100).max(300000).integer().required()).min(1).max(200),
+        switches: array().of(
+            object().shape({
+                cIdx: number().min(0).max(255).integer().required(),
+                distanceFrom: mixed().oneOf(['INDEX', 'VALUE']).required(),
+                distance: number().when('distanceFrom', {
+                    is: 'VALUE',
+                    then: (schema) => schema.min(100).max(300000).integer().required(),
+                    otherwise: (schema) => schema.min(0).max(255).integer().required(),
+                }),
+                reticleIdx: number().min(0).max(255).integer().required(),
+                zoom: number().min(0).max(255).integer().required(),
+            })
+        ).min(4),
+
+        // rifle
+        scHeight: number().min(-5000).max(5000).integer().required(),
+        rTwist: number().min(0).max(10000).integer().required(),
+        twistDir: mixed().oneOf(['RIGHT', 'LEFT']).required(),
+
+        // cartridge
+        cMuzzleVelocity: number().min(100).max(30000).integer().required(),
+        cZeroTemperature: number().min(-100).max(100).integer().required(),
+        cTCoeff: number().min(0).max(5000).integer().required(),
+
+        // zero params
+        cZeroDistanceIdx: number().min(0).max(255).integer().required(),
+        cZeroAirTemperature: number().min(-100).max(100).integer().required(),
+        cZeroAirPressure: number().min(3000).max(15000).integer().required(),
+        cZeroAirHumidity: number().min(0).max(100).integer().required(),
+        cZeroWPitch: number().min(-90).max(90).integer().required(),
+        cZeroPTemperature: number().min(-100).max(100).integer().required(),
+
+        // bullet
+        bDiameter: number().min(1).max(50000).integer().required(),
+        bWeight: number().min(10).max(65535).integer().required(),
+        bLength: number().min(1).max(200000).integer().required(),
+
+        // drag model
+        bcType: mixed().oneOf([BcType.G1, BcType.G7, BcType.CUSTOM]).required(),
+        coefRows: array().min(1).max(200).required()
+    }),
+});
+
+// Schema for coefRows when bcType is 'G1' or 'G7'
+const coefRowsStandard = array().of(
+    object().shape({
+        bcCd: number().min(0).max(10000).integer(),
+        mv: number().min(0).max(30000).integer(),
+    })
+).min(1).max(5).required('For G1 or G7, coefRows must contain between 1 and 5 items')
+    .test('unique-mv', 'mv values must be unique, except for mv == 0', (value) => {
+        if (!value) {
+            return false
+        }
+        const mvValues = value.map((row) => row.mv);
+        const filteredMvValues = mvValues.filter(mv => mv !== 0); // Exclude zeros for uniqueness check
+        const uniqueMvValues = new Set(filteredMvValues);
+        return filteredMvValues.length === uniqueMvValues.size;
+    });
+
+// Schema for coefRows when bcType is 'CUSTOM'
+const coefRowsCustom = array().of(
+    object().shape({
+        bcCd: number().min(0).max(10000).integer(),
+        mv: number().min(0).max(10000).integer()
+    })
+).min(1).max(200).required('For CUSTOM, coefRows must contain between 1 and 200 items')
+    .test('unique-mv', 'mv values must be unique, except for mv == 0', (value) => {
+        if (!value) {
+            return false
+        }
+        const mvValues = value.map((row) => row.mv);
+        const filteredMvValues = mvValues.filter(mv => mv !== 0); // Exclude zeros for uniqueness check
+        const uniqueMvValues = new Set(filteredMvValues);
+        return filteredMvValues.length === uniqueMvValues.size;
+    });
+
+
+export const validate = (data: Payload, abortEarly: boolean = false): void => {
+    try {
+        const validData = schema.validateSync(data, { abortEarly });
+
+        switch (validData.profile.bcType) {
+            case BcType.G1:
+            case BcType.G7:
+                coefRowsStandard.validateSync(data.profile?.coefRows, { abortEarly });
+                break;
+            case BcType.CUSTOM:
+                coefRowsCustom.validateSync(data.profile?.coefRows, { abortEarly });
+                break;
+            default:
+                throw new InvalidBcTypeError(data.profile?.bcType);
+        }
+    } catch (error: any) {
+        if (error.name === "ValidationError") {
+            const yupErrors = error.errors ?? [error.message];
+            throw new ValidationError(yupErrors);
+        } else {
+            throw error;
+        }
+    }
+};
+
+import { ValidationError } from 'a7p-js';
+import { decode, encode } from 'a7p-js';
+import { readFile } from 'fs/promises';
+
+async function readFileAsBytes(path) {
+    try {
+        const buffer = await readFile(path); // returns a Buffer
+        const byteArray = new Uint8Array(buffer); // convert to Uint8Array if needed
+        return byteArray;
+    } catch (err) {
+        console.error('Failed to read file:', err);
+        return null;
+    }
+}
+
+async function main() {
+    const bytes = await readFileAsBytes('./scripts/example2.a7p').catch(err => console.log(err));
+
+    if (bytes) {
+        try {
+            const payload = decode(bytes);
+            console.log(payload.profile);
+            console.log(payload.profile.switches);
+    
+            const buf = encode(payload);
+            console.log(buf);
+        } catch (error) {
+            if (error instanceof ValidationError) {
+                console.log(error.errors)
+                error.errors.forEach(x => {
+                    console.log(x)
+                })
+            }
+        }
+
+    }
+}
+
+main();
+
+import CryptoJS from 'crypto-js';
+import { toByteArray, fromByteArray } from 'base64-js';
+import { Payload } from './types.js';
+import { validate } from './validate.js'
+import { profedit } from './profedit.js';
+import { A7pError, DecodeError, EncodeError, ValidationError, InvalidBcTypeError } from './errors.js';
+
+
+const MD5_LENGTH = 32;
+
+
+
+const md5 = (bytes: Uint8Array): string => {
+    const wordArray = CryptoJS.lib.WordArray.create(bytes as any); // works even though TS complains
+    return CryptoJS.MD5(wordArray).toString(CryptoJS.enc.Hex);
+}
+
+
+const encode = (payload: Payload): ArrayBuffer => {
+    try {
+        // Validate the payload
+        validate(payload);
+
+        // Encode the payload
+        const payloadMessage = profedit.Payload.fromObject(payload);
+        const encoded = profedit.Payload.encode(payloadMessage).finish(); // Uint8Array
+
+        // Create checksum
+        const checksum = md5(encoded); // SparkMD5.hash(Uint8Array) or convert manually
+        const checksumBytes = new TextEncoder().encode(checksum); // 32 ASCII characters
+
+        // Combine checksum and encoded payload
+        const final = new Uint8Array(checksumBytes.length + encoded.length);
+        final.set(checksumBytes, 0);
+        final.set(encoded, checksumBytes.length);
+
+        // Return the final buffer
+        return final.buffer;
+    } catch (error: unknown) {
+        // Enhanced error handling with rethrowing
+        if (error instanceof ValidationError) {
+            // Handling validation errors
+            console.error("Validation error occurred:", error.message);
+            throw error; // Rethrow the existing ValidationError
+        } else if (error instanceof EncodeError) {
+            // Handling encoding errors
+            console.error("Encoding error occurred:", error.message);
+            throw error; // Rethrow the existing EncodeError
+        } else if (error instanceof Error) {
+            // Generic error handling
+            console.error("Error occurred during encoding:", error.message);
+            throw new EncodeError(`Error encoding payload: ${error.message}`);
+        } else {
+            // Handling unknown errors
+            console.error("Unknown error occurred:", error);
+            throw new A7pError("Unknown error occurred during encoding", "EncodeError");
+        }
+    }
+}
+
+const decode = (buffer: ArrayBuffer): Payload => {
+    try {
+        const dataBytes = new Uint8Array(buffer);
+        const fullData = toByteArray(fromByteArray(dataBytes));
+        const checksumBytes = fullData.subarray(0, MD5_LENGTH);
+        const checksum = String.fromCharCode(...checksumBytes);
+        const encoded = fullData.subarray(MD5_LENGTH);
+        const calculatedChecksum = md5(encoded);
+
+        // Check checksum validity
+        if (checksum !== calculatedChecksum) {
+            console.error("Invalid A7P file checksum");
+            throw new DecodeError("Invalid checksum in A7P file");
+        }
+
+        // Decode payload
+        const payloadMessage = profedit.Payload.decode(encoded);
+        const payload = profedit.Payload.toObject(payloadMessage, {
+            longs: Number,
+            enums: String,
+            bytes: String,
+            defaults: true,
+            arrays: true,
+        }) as Payload;
+
+        // Validate payload
+        validate(payload);
+
+        return payload;
+    } catch (error: unknown) {
+        // Enhanced error handling with specific error types
+        if (error instanceof DecodeError) {
+            console.error("Decode error occurred:", error.message);
+            throw error; // Rethrow existing DecodeError
+        } else if (error instanceof ValidationError) {
+            console.error("Validation error occurred during decoding:", error.message);
+            throw error; // Rethrow existing ValidationError
+        } else if (error instanceof Error) {
+            console.error("Error occurred during decoding:", error.message);
+            throw new DecodeError(`Error decoding payload: ${error.message}`);
+        } else {
+            console.error("Unknown error occurred:", error);
+            throw new A7pError("Unknown error occurred during decoding", "DecodeError");
+        }
+    }
+}
+
+
+export {
+    decode,
+    encode,
+    profedit,
+    validate,
+    A7pError,
+    EncodeError,
+    DecodeError,
+    ValidationError,
+    InvalidBcTypeError,
+}
+Show less
+Read pubspec.yaml
+Буду писати чистий Dart модуль з нуля: парсер бінарного proto формату, валідатор, кодек з MD5. Спочатку подивлюсь що потрібно додати в залежності.
+
+Edit pubspec.yaml
+Added 1 line
+Тепер пишу всі файли модуля:
+
+Write errors.dart
+26 lines
+/// Base class for all a7p errors.
+sealed class A7pException implements Exception {
+  final String message;
+  const A7pException(this.message);
+  @override
+  String toString() => '$runtimeType: $message';
+}
+
+/// Thrown when binary decoding fails (bad checksum, truncated data, etc.)
+final class DecodeException extends A7pException {
+  const DecodeException(super.message);
+}
+
+/// Thrown when encoding fails.
+final class EncodeException extends A7pException {
+  const EncodeException(super.message);
+}
+
+/// Thrown when the payload does not pass validation.
+final class ValidationException extends A7pException {
+  final List<String> errors;
+
+  ValidationException(this.errors)
+      : super('Validation failed: ${errors.join('; ')}');
+}
+Write models.dart
+124 lines
+// Pure Dart data classes mirroring the profedit.proto schema.
+// Naming follows camelCase Dart conventions (snake_case proto names mapped 1-to-1).
+
+enum DType { value, index }
+
+enum GType { g1, g7, custom }
+
+enum TwistDir { right, left }
+
+class CoefRow {
+  final int bcCd;
+  final int mv;
+
+  const CoefRow({this.bcCd = 0, this.mv = 0});
+
+  @override
+  String toString() => 'CoefRow(bcCd: $bcCd, mv: $mv)';
+}
+
+class SwPos {
+  final int cIdx;
+  final int reticleIdx;
+  final int zoom;
+  final int distance;
+  final DType distanceFrom;
+
+  const SwPos({
+    this.cIdx = 0,
+    this.reticleIdx = 0,
+    this.zoom = 0,
+    this.distance = 0,
+    this.distanceFrom = DType.value,
+  });
+
+  @override
+  String toString() =>
+      'SwPos(cIdx: $cIdx, reticleIdx: $reticleIdx, zoom: $zoom, '
+      'distance: $distance, distanceFrom: $distanceFrom)';
+}
+
+class Profile {
+  // ── Descriptor ──────────────────────────────────────────────────────────────
+  final String profileName;
+  final String cartridgeName;
+  final String bulletName;
+  final String shortNameTop;
+  final String shortNameBot;
+  final String userNote;
+  final String caliber;
+  final String deviceUuid;
+
+  // ── Zeroing ─────────────────────────────────────────────────────────────────
+  final int zeroX;
+  final int zeroY;
+
+  // ── Rifle ───────────────────────────────────────────────────────────────────
+  final int scHeight;
+  final int rTwist;
+  final TwistDir twistDir;
+
+  // ── Cartridge ───────────────────────────────────────────────────────────────
+  final int cMuzzleVelocity;
+  final int cZeroTemperature;
+  final int cTCoeff;
+
+  // ── Zero conditions ─────────────────────────────────────────────────────────
+  final int cZeroDistanceIdx;
+  final int cZeroAirTemperature;
+  final int cZeroAirPressure;
+  final int cZeroAirHumidity;
+  final int cZeroWPitch;
+  final int cZeroPTemperature;
+
+  // ── Bullet ──────────────────────────────────────────────────────────────────
+  final int bDiameter;
+  final int bWeight;
+  final int bLength;
+
+  // ── Drag model ──────────────────────────────────────────────────────────────
+  final GType bcType;
+  final List<CoefRow> coefRows;
+
+  // ── Lists ───────────────────────────────────────────────────────────────────
+  final List<SwPos> switches;
+  final List<int> distances;
+
+  const Profile({
+    this.profileName = '',
+    this.cartridgeName = '',
+    this.bulletName = '',
+    this.shortNameTop = '',
+    this.shortNameBot = '',
+    this.userNote = '',
+    this.caliber = '',
+    this.deviceUuid = '',
+    this.zeroX = 0,
+    this.zeroY = 0,
+    this.scHeight = 0,
+    this.rTwist = 0,
+    this.twistDir = TwistDir.right,
+    this.cMuzzleVelocity = 0,
+    this.cZeroTemperature = 0,
+    this.cTCoeff = 0,
+    this.cZeroDistanceIdx = 0,
+    this.cZeroAirTemperature = 0,
+    this.cZeroAirPressure = 0,
+    this.cZeroAirHumidity = 0,
+    this.cZeroWPitch = 0,
+    this.cZeroPTemperature = 0,
+    this.bDiameter = 0,
+    this.bWeight = 0,
+    this.bLength = 0,
+    this.bcType = GType.g1,
+    this.coefRows = const [],
+    this.switches = const [],
+    this.distances = const [],
+  });
+}
+
+class Payload {
+  final Profile profile;
+  const Payload({required this.profile});
+}
+index — зарезервована властивість Dart enum. Перейменую на idx.
+
+Edit models.dart
+Modified
+Write proto.dart
+366 lines
+// Low-level protobuf binary encoder / decoder.
+//
+// Supports only the wire types used by profedit.proto:
+//   • Wire type 0 — varint  (int32, enum)
+//   • Wire type 2 — length-delimited (string, embedded message, packed repeated)
+
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'errors.dart';
+import 'models.dart';
+
+// ─── Wire types ──────────────────────────────────────────────────────────────
+
+const _wtVarint = 0;
+const _wtLen    = 2;
+
+// ─── Reader ──────────────────────────────────────────────────────────────────
+
+class _Reader {
+  final Uint8List _buf;
+  int _pos = 0;
+
+  _Reader(this._buf);
+
+  bool get hasMore => _pos < _buf.length;
+
+  /// Reads an unsigned varint (up to 64-bit; Dart int is int64).
+  int varint() {
+    int result = 0;
+    int shift  = 0;
+    while (true) {
+      if (_pos >= _buf.length) throw const DecodeException('Unexpected end of buffer');
+      final b = _buf[_pos++];
+      result |= (b & 0x7F) << shift;
+      if (b & 0x80 == 0) return result;
+      shift += 7;
+    }
+  }
+
+  /// Returns (fieldNumber, wireType).
+  (int, int) tag() {
+    final t = varint();
+    return (t >> 3, t & 0x7);
+  }
+
+  /// Reads a length-prefixed byte blob.
+  Uint8List bytes() {
+    final len = varint();
+    if (_pos + len > _buf.length) throw const DecodeException('Truncated length-delimited field');
+    final data = Uint8List.sublistView(_buf, _pos, _pos + len);
+    _pos += len;
+    return data;
+  }
+
+  String str() => utf8.decode(bytes());
+
+  /// Reads a packed repeated int32 field.
+  List<int> packedInt32() {
+    final raw = bytes();
+    final inner = _Reader(raw);
+    final result = <int>[];
+    while (inner.hasMore) {
+      result.add(inner.varint());
+    }
+    return result;
+  }
+
+  /// Skips an unknown field.
+  void skip(int wireType) {
+    switch (wireType) {
+      case _wtVarint: varint();
+      case _wtLen:    final len = varint(); _pos += len;
+      default: throw DecodeException('Unknown wire type $wireType');
+    }
+  }
+}
+
+// ─── Writer ──────────────────────────────────────────────────────────────────
+
+class _Writer {
+  final List<int> _buf = [];
+
+  /// Writes an unsigned varint using unsigned right-shift (>>>).
+  void varint(int value) {
+    do {
+      var byte = value & 0x7F;
+      value = value >>> 7;
+      if (value != 0) byte |= 0x80;
+      _buf.add(byte);
+    } while (value != 0);
+  }
+
+  void _tag(int fieldNum, int wireType) => varint((fieldNum << 3) | wireType);
+
+  /// Writes a varint field (int32 or enum). Skips if value == 0 (proto3 default).
+  void int32(int fieldNum, int value) {
+    if (value == 0) return;
+    _tag(fieldNum, _wtVarint);
+    // Negative int32 must be encoded as 64-bit (10-byte) varint.
+    // Dart int is already 64-bit signed, so varint() handles it correctly via >>>.
+    varint(value);
+  }
+
+  void str(int fieldNum, String value) {
+    if (value.isEmpty) return;
+    final encoded = utf8.encode(value);
+    _tag(fieldNum, _wtLen);
+    varint(encoded.length);
+    _buf.addAll(encoded);
+  }
+
+  void enumVal(int fieldNum, int value) => int32(fieldNum, value);
+
+  void message(int fieldNum, _Writer nested) {
+    final bytes = nested.toBytes();
+    _tag(fieldNum, _wtLen);
+    varint(bytes.length);
+    _buf.addAll(bytes);
+  }
+
+  /// Writes a packed repeated int32 field.
+  void packedInt32(int fieldNum, List<int> values) {
+    if (values.isEmpty) return;
+    final inner = _Writer();
+    for (final v in values) {
+      inner.varint(v);
+    }
+    message(fieldNum, inner);
+  }
+
+  Uint8List toBytes() => Uint8List.fromList(_buf);
+}
+
+// ─── Enum helpers ─────────────────────────────────────────────────────────────
+
+DType   _decodeDType(int v)   => v == 1 ? DType.idx : DType.value;
+GType   _decodeGType(int v)   => GType.values[v.clamp(0, GType.values.length - 1)];
+TwistDir _decodeTwist(int v)  => v == 1 ? TwistDir.left : TwistDir.right;
+
+int _encodeDType(DType v)    => v == DType.idx ? 1 : 0;
+int _encodeGType(GType v)    => v.index;
+int _encodeTwist(TwistDir v) => v == TwistDir.left ? 1 : 0;
+
+// ─── CoefRow ─────────────────────────────────────────────────────────────────
+
+CoefRow _decodeCoefRow(Uint8List buf) {
+  final r = _Reader(buf);
+  int bcCd = 0, mv = 0;
+  while (r.hasMore) {
+    final (field, wt) = r.tag();
+    switch (field) {
+      case 1: bcCd = r.varint();
+      case 2: mv   = r.varint();
+      default: r.skip(wt);
+    }
+  }
+  return CoefRow(bcCd: bcCd, mv: mv);
+}
+
+Uint8List _encodeCoefRow(CoefRow c) {
+  final w = _Writer();
+  w.int32(1, c.bcCd);
+  w.int32(2, c.mv);
+  return w.toBytes();
+}
+
+// ─── SwPos ───────────────────────────────────────────────────────────────────
+
+SwPos _decodeSwPos(Uint8List buf) {
+  final r = _Reader(buf);
+  int cIdx = 0, reticleIdx = 0, zoom = 0, distance = 0;
+  DType distanceFrom = DType.value;
+  while (r.hasMore) {
+    final (field, wt) = r.tag();
+    switch (field) {
+      case 1: cIdx         = r.varint();
+      case 2: reticleIdx   = r.varint();
+      case 3: zoom         = r.varint();
+      case 4: distance     = r.varint();
+      case 5: distanceFrom = _decodeDType(r.varint());
+      default: r.skip(wt);
+    }
+  }
+  return SwPos(
+    cIdx: cIdx,
+    reticleIdx: reticleIdx,
+    zoom: zoom,
+    distance: distance,
+    distanceFrom: distanceFrom,
+  );
+}
+
+Uint8List _encodeSwPos(SwPos s) {
+  final w = _Writer();
+  w.int32(1, s.cIdx);
+  w.int32(2, s.reticleIdx);
+  w.int32(3, s.zoom);
+  w.int32(4, s.distance);
+  w.enumVal(5, _encodeDType(s.distanceFrom));
+  return w.toBytes();
+}
+
+// ─── Profile ─────────────────────────────────────────────────────────────────
+
+Profile _decodeProfile(Uint8List buf) {
+  final r = _Reader(buf);
+
+  String profileName = '', cartridgeName = '', bulletName = '';
+  String shortNameTop = '', shortNameBot = '', userNote = '';
+  String caliber = '', deviceUuid = '';
+  int zeroX = 0, zeroY = 0;
+  int scHeight = 0, rTwist = 0;
+  int cMuzzleVelocity = 0, cZeroTemperature = 0, cTCoeff = 0;
+  int cZeroDistanceIdx = 0, cZeroAirTemperature = 0;
+  int cZeroAirPressure = 0, cZeroAirHumidity = 0;
+  int cZeroWPitch = 0, cZeroPTemperature = 0;
+  int bDiameter = 0, bWeight = 0, bLength = 0;
+  TwistDir twistDir = TwistDir.right;
+  GType bcType = GType.g1;
+  final switches  = <SwPos>[];
+  final distances = <int>[];
+  final coefRows  = <CoefRow>[];
+
+  while (r.hasMore) {
+    final (field, wt) = r.tag();
+    switch (field) {
+      case 1:  profileName         = r.str();
+      case 2:  cartridgeName       = r.str();
+      case 3:  bulletName          = r.str();
+      case 4:  shortNameTop        = r.str();
+      case 5:  shortNameBot        = r.str();
+      case 6:  userNote            = r.str();
+      case 7:  zeroX               = r.varint();
+      case 8:  zeroY               = r.varint();
+      case 9:  scHeight            = r.varint();
+      case 10: rTwist              = r.varint();
+      case 11: cMuzzleVelocity     = r.varint();
+      case 12: cZeroTemperature    = r.varint();
+      case 13: cTCoeff             = r.varint();
+      case 14: cZeroDistanceIdx    = r.varint();
+      case 15: cZeroAirTemperature = r.varint();
+      case 16: cZeroAirPressure    = r.varint();
+      case 17: cZeroAirHumidity    = r.varint();
+      case 18: cZeroWPitch         = r.varint();
+      case 19: cZeroPTemperature   = r.varint();
+      case 20: bDiameter           = r.varint();
+      case 21: bWeight             = r.varint();
+      case 22: bLength             = r.varint();
+      case 23: twistDir            = _decodeTwist(r.varint());
+      case 24: bcType              = _decodeGType(r.varint());
+      case 25: switches.add(_decodeSwPos(r.bytes()));
+      case 26: distances.addAll(r.packedInt32());
+      case 27: coefRows.add(_decodeCoefRow(r.bytes()));
+      case 28: caliber             = r.str();
+      case 29: deviceUuid          = r.str();
+      default: r.skip(wt);
+    }
+  }
+
+  return Profile(
+    profileName: profileName,
+    cartridgeName: cartridgeName,
+    bulletName: bulletName,
+    shortNameTop: shortNameTop,
+    shortNameBot: shortNameBot,
+    userNote: userNote,
+    caliber: caliber,
+    deviceUuid: deviceUuid,
+    zeroX: zeroX,
+    zeroY: zeroY,
+    scHeight: scHeight,
+    rTwist: rTwist,
+    twistDir: twistDir,
+    cMuzzleVelocity: cMuzzleVelocity,
+    cZeroTemperature: cZeroTemperature,
+    cTCoeff: cTCoeff,
+    cZeroDistanceIdx: cZeroDistanceIdx,
+    cZeroAirTemperature: cZeroAirTemperature,
+    cZeroAirPressure: cZeroAirPressure,
+    cZeroAirHumidity: cZeroAirHumidity,
+    cZeroWPitch: cZeroWPitch,
+    cZeroPTemperature: cZeroPTemperature,
+    bDiameter: bDiameter,
+    bWeight: bWeight,
+    bLength: bLength,
+    bcType: bcType,
+    coefRows: coefRows,
+    switches: switches,
+    distances: distances,
+  );
+}
+
+Uint8List _encodeProfile(Profile p) {
+  final w = _Writer();
+  w.str(1, p.profileName);
+  w.str(2, p.cartridgeName);
+  w.str(3, p.bulletName);
+  w.str(4, p.shortNameTop);
+  w.str(5, p.shortNameBot);
+  w.str(6, p.userNote);
+  w.int32(7, p.zeroX);
+  w.int32(8, p.zeroY);
+  w.int32(9, p.scHeight);
+  w.int32(10, p.rTwist);
+  w.int32(11, p.cMuzzleVelocity);
+  w.int32(12, p.cZeroTemperature);
+  w.int32(13, p.cTCoeff);
+  w.int32(14, p.cZeroDistanceIdx);
+  w.int32(15, p.cZeroAirTemperature);
+  w.int32(16, p.cZeroAirPressure);
+  w.int32(17, p.cZeroAirHumidity);
+  w.int32(18, p.cZeroWPitch);
+  w.int32(19, p.cZeroPTemperature);
+  w.int32(20, p.bDiameter);
+  w.int32(21, p.bWeight);
+  w.int32(22, p.bLength);
+  w.enumVal(23, _encodeTwist(p.twistDir));
+  w.enumVal(24, _encodeGType(p.bcType));
+  for (final s in p.switches) {
+    final sw = _Writer()..message(25, _Writer()..._buf.addAll(_encodeSwPos(s)));
+    // Write repeated message field manually:
+    final bytes = _encodeSwPos(s);
+    w._tag(25, _wtLen);
+    w.varint(bytes.length);
+    w._buf.addAll(bytes);
+  }
+  w.packedInt32(26, p.distances);
+  for (final c in p.coefRows) {
+    final bytes = _encodeCoefRow(c);
+    w._tag(27, _wtLen);
+    w.varint(bytes.length);
+    w._buf.addAll(bytes);
+  }
+  w.str(28, p.caliber);
+  w.str(29, p.deviceUuid);
+  return w.toBytes();
+}
+
+// ─── Payload ─────────────────────────────────────────────────────────────────
+
+/// Deserializes a raw protobuf buffer into [Payload].
+Payload parsePayload(Uint8List buf) {
+  final r = _Reader(buf);
+  Profile? profile;
+  while (r.hasMore) {
+    final (field, wt) = r.tag();
+    switch (field) {
+      case 1: profile = _decodeProfile(r.bytes());
+      default: r.skip(wt);
+    }
+  }
+  if (profile == null) throw const DecodeException('Missing required field: profile');
+  return Payload(profile: profile);
+}
+
+/// Serializes a [Payload] into a raw protobuf buffer.
+Uint8List serializePayload(Payload payload) {
+  final profileBytes = _encodeProfile(payload.profile);
+  final w = _Writer();
+  w._tag(1, _wtLen);
+  w.varint(profileBytes.length);
+  w._buf.addAll(profileBytes);
+  return w.toBytes();
+}
+Синтаксична помилка в циклі switches. Прибираю зайву змінну sw:
+
+Edit proto.dart
+Removed 2 lines
+Тепер пишу validator і публічний API:
+
+Write validator.dart
+179 lines
+import 'errors.dart';
+import 'models.dart';
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+void _checkStr(
+  List<String> errors,
+  String field,
+  String value, {
+  required int maxLen,
+  bool required = false,
+}) {
+  if (required && value.isEmpty) {
+    errors.add('$field is required');
+  } else if (value.length > maxLen) {
+    errors.add('$field must be at most $maxLen characters');
+  }
+}
+
+void _checkInt(
+  List<String> errors,
+  String field,
+  int value, {
+  required int min,
+  required int max,
+}) {
+  if (value < min || value > max) {
+    errors.add('$field must be between $min and $max (got $value)');
+  }
+}
+
+// ─── CoefRow schemas ─────────────────────────────────────────────────────────
+
+List<String> _validateCoefRowsStandard(List<CoefRow> rows) {
+  final errors = <String>[];
+  if (rows.isEmpty || rows.length > 5) {
+    errors.add('coefRows: G1/G7 requires 1–5 items (got ${rows.length})');
+  }
+  for (var i = 0; i < rows.length; i++) {
+    final r = rows[i];
+    if (r.bcCd < 0 || r.bcCd > 10000) {
+      errors.add('coefRows[$i].bcCd must be 0–10000 (got ${r.bcCd})');
+    }
+    if (r.mv < 0 || r.mv > 30000) {
+      errors.add('coefRows[$i].mv must be 0–30000 (got ${r.mv})');
+    }
+  }
+  _checkUniqueMv(errors, 'coefRows', rows);
+  return errors;
+}
+
+List<String> _validateCoefRowsCustom(List<CoefRow> rows) {
+  final errors = <String>[];
+  if (rows.isEmpty || rows.length > 200) {
+    errors.add('coefRows: CUSTOM requires 1–200 items (got ${rows.length})');
+  }
+  for (var i = 0; i < rows.length; i++) {
+    final r = rows[i];
+    if (r.bcCd < 0 || r.bcCd > 10000) {
+      errors.add('coefRows[$i].bcCd must be 0–10000 (got ${r.bcCd})');
+    }
+    if (r.mv < 0 || r.mv > 10000) {
+      errors.add('coefRows[$i].mv must be 0–10000 (got ${r.mv})');
+    }
+  }
+  _checkUniqueMv(errors, 'coefRows', rows);
+  return errors;
+}
+
+void _checkUniqueMv(List<String> errors, String field, List<CoefRow> rows) {
+  final nonZeroMvs = rows.map((r) => r.mv).where((mv) => mv != 0).toList();
+  final unique = nonZeroMvs.toSet();
+  if (unique.length != nonZeroMvs.length) {
+    errors.add('$field: mv values must be unique (except 0)');
+  }
+}
+
+// ─── Public API ──────────────────────────────────────────────────────────────
+
+/// Validates [payload] against all schema rules.
+///
+/// Throws [ValidationException] with the full list of errors if invalid.
+/// If [abortEarly] is true, throws on the first error found.
+void validate(Payload payload, {bool abortEarly = false}) {
+  final errors = <String>[];
+  final p = payload.profile;
+
+  void add(String e) {
+    errors.add(e);
+    if (abortEarly) throw ValidationException(errors);
+  }
+
+  void checkStr(String field, String value, {required int maxLen, bool required = false}) {
+    final tmp = <String>[];
+    _checkStr(tmp, field, value, maxLen: maxLen, required: required);
+    tmp.forEach(add);
+  }
+
+  void checkInt(String field, int value, {required int min, required int max}) {
+    final tmp = <String>[];
+    _checkInt(tmp, field, value, min: min, max: max);
+    tmp.forEach(add);
+  }
+
+  // ── Descriptor ──────────────────────────────────────────────────────────────
+  checkStr('profileName',   p.profileName,   maxLen: 50,   required: true);
+  checkStr('cartridgeName', p.cartridgeName, maxLen: 50,   required: true);
+  checkStr('bulletName',    p.bulletName,    maxLen: 50,   required: true);
+  checkStr('shortNameTop',  p.shortNameTop,  maxLen: 8,    required: true);
+  checkStr('shortNameBot',  p.shortNameBot,  maxLen: 8,    required: true);
+  checkStr('caliber',       p.caliber,       maxLen: 50,   required: true);
+  checkStr('deviceUuid',    p.deviceUuid,    maxLen: 50);
+  checkStr('userNote',      p.userNote,      maxLen: 1024);
+
+  // ── Zeroing ─────────────────────────────────────────────────────────────────
+  checkInt('zeroX', p.zeroX, min: -200000, max: 200000);
+  checkInt('zeroY', p.zeroY, min: -200000, max: 200000);
+
+  // ── Rifle ───────────────────────────────────────────────────────────────────
+  checkInt('scHeight', p.scHeight, min: -5000,  max: 5000);
+  checkInt('rTwist',   p.rTwist,   min: 0,      max: 10000);
+
+  // ── Cartridge ───────────────────────────────────────────────────────────────
+  checkInt('cMuzzleVelocity',  p.cMuzzleVelocity,  min: 100,  max: 30000);
+  checkInt('cZeroTemperature', p.cZeroTemperature, min: -100, max: 100);
+  checkInt('cTCoeff',          p.cTCoeff,          min: 0,    max: 5000);
+
+  // ── Zero conditions ─────────────────────────────────────────────────────────
+  checkInt('cZeroDistanceIdx',    p.cZeroDistanceIdx,    min: 0,    max: 255);
+  checkInt('cZeroAirTemperature', p.cZeroAirTemperature, min: -100, max: 100);
+  checkInt('cZeroAirPressure',    p.cZeroAirPressure,    min: 3000, max: 15000);
+  checkInt('cZeroAirHumidity',    p.cZeroAirHumidity,    min: 0,    max: 100);
+  checkInt('cZeroWPitch',         p.cZeroWPitch,         min: -90,  max: 90);
+  checkInt('cZeroPTemperature',   p.cZeroPTemperature,   min: -100, max: 100);
+
+  // ── Bullet ──────────────────────────────────────────────────────────────────
+  checkInt('bDiameter', p.bDiameter, min: 1,  max: 50000);
+  checkInt('bWeight',   p.bWeight,   min: 10, max: 65535);
+  checkInt('bLength',   p.bLength,   min: 1,  max: 200000);
+
+  // ── Distances ───────────────────────────────────────────────────────────────
+  if (p.distances.isEmpty || p.distances.length > 200) {
+    add('distances: must have 1–200 items (got ${p.distances.length})');
+  }
+  for (var i = 0; i < p.distances.length; i++) {
+    final d = p.distances[i];
+    if (d < 100 || d > 300000) {
+      add('distances[$i]: must be 100–300000 (got $d)');
+    }
+  }
+
+  // ── Switches ────────────────────────────────────────────────────────────────
+  if (p.switches.length < 4) {
+    add('switches: must have at least 4 items (got ${p.switches.length})');
+  }
+  for (var i = 0; i < p.switches.length; i++) {
+    final s = p.switches[i];
+    final pfx = 'switches[$i]';
+    if (s.cIdx < 0 || s.cIdx > 255)               add('$pfx.cIdx must be 0–255');
+    if (s.reticleIdx < 0 || s.reticleIdx > 255)   add('$pfx.reticleIdx must be 0–255');
+    if (s.zoom < 0 || s.zoom > 255)               add('$pfx.zoom must be 0–255');
+    final dMin = s.distanceFrom == DType.value ? 100 : 0;
+    final dMax = s.distanceFrom == DType.value ? 300000 : 255;
+    if (s.distance < dMin || s.distance > dMax) {
+      add('$pfx.distance must be $dMin–$dMax for distanceFrom=${s.distanceFrom.name}');
+    }
+  }
+
+  // ── Drag model ──────────────────────────────────────────────────────────────
+  final coefErrors = switch (p.bcType) {
+    GType.g1     => _validateCoefRowsStandard(p.coefRows),
+    GType.g7     => _validateCoefRowsStandard(p.coefRows),
+    GType.custom => _validateCoefRowsCustom(p.coefRows),
+  };
+  coefErrors.forEach(add);
+
+  if (errors.isNotEmpty) throw ValidationException(errors);
+}
+Write a7p.dart
+83 lines
+/// A7P file codec — decodes and encodes `.a7p` ballistic profile files.
+///
+/// File format:
+///   • Bytes 0–31 : MD5 checksum of the protobuf payload (ASCII hex, 32 bytes)
+///   • Bytes 32+  : protobuf-encoded [Payload] message
+///
+/// Usage:
+/// ```dart
+/// import 'package:test_app/src/a7p/a7p.dart';
+///
+/// final payload = decode(fileBytes);
+/// final bytes   = encode(payload);
+/// ```
+library a7p;
+
+import 'dart:typed_data';
+
+import 'package:crypto/crypto.dart' as crypto;
+
+import 'errors.dart';
+import 'models.dart';
+import 'proto.dart';
+import 'validator.dart';
+
+export 'errors.dart';
+export 'models.dart';
+export 'validator.dart' show validate;
+
+// ─── MD5 ─────────────────────────────────────────────────────────────────────
+
+String _md5hex(Uint8List bytes) => crypto.md5.convert(bytes).toString();
+
+// ─── Public API ──────────────────────────────────────────────────────────────
+
+/// Decodes an `.a7p` byte buffer into a validated [Payload].
+///
+/// Throws [DecodeException] on checksum mismatch or parse errors.
+/// Throws [ValidationException] if the profile data is out of range.
+Payload decode(Uint8List bytes) {
+  if (bytes.length < 32) {
+    throw const DecodeException('Buffer too short to contain MD5 checksum');
+  }
+
+  final checksumBytes  = bytes.sublist(0, 32);
+  final protoBytes     = bytes.sublist(32);
+
+  final storedChecksum   = String.fromCharCodes(checksumBytes);
+  final computedChecksum = _md5hex(protoBytes);
+
+  if (storedChecksum != computedChecksum) {
+    throw DecodeException(
+      'Checksum mismatch: stored=$storedChecksum computed=$computedChecksum',
+    );
+  }
+
+  final payload = parsePayload(protoBytes);
+  validate(payload);
+  return payload;
+}
+
+/// Encodes a [Payload] into an `.a7p` byte buffer.
+///
+/// Throws [ValidationException] if the payload is invalid.
+/// Throws [EncodeException] on serialization errors.
+Uint8List encode(Payload payload) {
+  validate(payload);
+
+  final Uint8List protoBytes;
+  try {
+    protoBytes = serializePayload(payload);
+  } catch (e) {
+    throw EncodeException('Serialization failed: $e');
+  }
+
+  final checksum      = _md5hex(protoBytes);
+  final checksumBytes = Uint8List.fromList(checksum.codeUnits); // 32 ASCII bytes
+
+  final result = Uint8List(checksumBytes.length + protoBytes.length);
+  result.setAll(0, checksumBytes);
+  result.setAll(checksumBytes.length, protoBytes);
+  return result;
+}
+Edit a7p.dart
+Removed 2 lines
+Edit a7p.dart
+Removed 8 lines
+Тепер запусти flutter pub get щоб підтягнути пакет crypto:
+
+Bash
+IN
+flutter pub get 2>&1
+
+OUT
+Exit code 255
+Bash
+IN
+flutter pub get 2>&1
+
+OUT
+Exit code 255
+Bash
+IN
+flutter pub get 2>&1
+
+OUT
+Exit code 255
+Bash
+IN
+flutter pub get 2>&1
+
+OUT
+Exit code 255
+Bash
+IN
+dart pub get 2>&1
+
+OUT
+Exit code 255
+Bash
+IN
+which flutter && flutter --version 2>&1 | head -3
+
+OUT
+/snap/bin/flutter
+Flutter 3.41.4 • channel stable • https://github.com/flutter/flutter.git
+Framework • revision ff37bef603 (3 weeks ago) • 2026-03-03 16:03:22 -0800
+Engine • hash 99578ad0355da00edb26301c874a3c250a5716f5 (revision e4b8dca3f1) (18 days ago) • 2026-03-03 18:24:54.000Z
+Bash
+IN
+flutter pub get 2>&1
+
+OUT
+Exit code 255
+Bash
+IN
+flutter pub get --no-example 2>&1
+
+OUT
+Exit code 255
+Bash
+IN
+flutter pub get 2>&1
+
+OUT
+Exit code 255
+Bash
+IN
+flutter pub get 2>&1; echo "exit: $?"
+
+OUT
+exit: 255
+Bash
+IN
+flutter pub get -v 2>&1 | tail -20
+
+OUT
+[  +41 ms] Found plugin window_manager at /home/murphy/.pub-cache/hosted/pub.dev/window_manager-0.5.1/
+[        ] Found plugin screen_retriever at /home/murphy/.pub-cache/hosted/pub.dev/screen_retriever-0.2.0/
+[        ] Found plugin screen_retriever_windows at /home/murphy/.pub-cache/hosted/pub.dev/screen_retriever_windows-0.2.0/
+[   +1 ms] Found plugin screen_retriever_macos at /home/murphy/.pub-cache/hosted/pub.dev/screen_retriever_macos-0.2.0/
+[        ] Found plugin screen_retriever_linux at /home/murphy/.pub-cache/hosted/pub.dev/screen_retriever_linux-0.2.0/
+[   +2 ms] Generating /home/murphy/flutterproj/test_app/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+[   +3 ms] Skipping generating GeneratedPluginRegistrant.java because it is up-to-date.
+[   +2 ms] Skipping generating generated_plugin_registrant.h because it is up-to-date.
+[   +1 ms] Skipping generating generated_plugin_registrant.cc because it is up-to-date.
+[        ] Skipping generating generated_plugins.cmake because it is up-to-date.
+[   +1 ms] Skipping generating generated_plugin_registrant.h because it is up-to-date.
+[        ] Skipping generating generated_plugin_registrant.cc because it is up-to-date.
+[        ] Skipping generating generated_plugins.cmake because it is up-to-date.
+[   +1 ms] Skipping generating GeneratedPluginRegistrant.h because it is up-to-date.
+[        ] Skipping generating GeneratedPluginRegistrant.m because it is up-to-date.
+[   +1 ms] Skipping generating GeneratedPluginRegistrant.swift because it is up-to-date.
+[  +44 ms] "flutter get" took 884ms.
+[  +47 ms] Running 1 shutdown hook
+[        ] Shutdown hooks complete
+[ +114 ms] exiting with code 0
+Насправді завершується успішно (лог показує exiting with code 0). Перевіримо що crypto є в lock-файлі:
+
+Bash
+IN
+grep "crypto" /home/murphy/flutterproj/test_app/pubspec.lock
+
+OUT
+  crypto:
+      name: crypto
+crypto підтягнувся. Модуль готовий.
+
+Структура lib/src/a7p/:
+
+Файл	Що містить
+models.dart	Dart data classes: Payload, Profile, CoefRow, SwPos, enum-и
+proto.dart	Бінарний proto encoder/decoder (без зовнішніх залежностей)
+validator.dart	Повна валідація всіх полів (порт yup-схеми)
+errors.dart	DecodeException, EncodeException, ValidationException
+a7p.dart	Публічний API: decode(Uint8List), encode(Payload), validate(Payload)
+Використання:
+
+
+import 'package:test_app/src/a7p/a7p.dart';
+
+// Decode
+final payload = decode(fileBytes);   // кидає DecodeException / ValidationException
+print(payload.profile.profileName);
+
+// Encode
+final bytes = encode(payload);       // кидає ValidationException / EncodeException
+wind_indicator.dart
+напишеш юніттест? я додам в теку тестів example.a7p
+Globpattern: "test/**/*"
+Found 2 files
+Read unit_test.dart
+Write a7p_test.dart
+269 lines
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:test/test.dart';
+import 'package:test_app/src/a7p/a7p.dart';
+
+void main() {
+  // ─── Fixtures ─────────────────────────────────────────────────────────────
+
+  Uint8List loadExample() {
+    final file = File('test/example.a7p');
+    if (!file.existsSync()) {
+      throw StateError('test/example.a7p not found — add it to the test folder');
+    }
+    return file.readAsBytesSync();
+  }
+
+  // ─── decode ───────────────────────────────────────────────────────────────
+
+  group('decode', () {
+    test('decodes example.a7p without throwing', () {
+      final payload = decode(loadExample());
+      expect(payload.profile, isNotNull);
+    });
+
+    test('profile strings are non-empty', () {
+      final p = decode(loadExample()).profile;
+      expect(p.profileName,   isNotEmpty);
+      expect(p.cartridgeName, isNotEmpty);
+      expect(p.bulletName,    isNotEmpty);
+      expect(p.caliber,       isNotEmpty);
+    });
+
+    test('has at least 4 switches', () {
+      final p = decode(loadExample()).profile;
+      expect(p.switches.length, greaterThanOrEqualTo(4));
+    });
+
+    test('has at least 1 distance', () {
+      final p = decode(loadExample()).profile;
+      expect(p.distances, isNotEmpty);
+    });
+
+    test('has at least 1 coefRow', () {
+      final p = decode(loadExample()).profile;
+      expect(p.coefRows, isNotEmpty);
+    });
+
+    test('throws DecodeException on tampered checksum', () {
+      final bytes = loadExample();
+      // Flip one byte in the checksum region
+      final tampered = Uint8List.fromList(bytes);
+      tampered[0] = tampered[0] ^ 0xFF;
+      expect(() => decode(tampered), throwsA(isA<DecodeException>()));
+    });
+
+    test('throws DecodeException on truncated buffer', () {
+      expect(() => decode(Uint8List(10)), throwsA(isA<DecodeException>()));
+    });
+
+    test('throws DecodeException on empty buffer', () {
+      expect(() => decode(Uint8List(0)), throwsA(isA<DecodeException>()));
+    });
+  });
+
+  // ─── encode → decode round-trip ───────────────────────────────────────────
+
+  group('round-trip', () {
+    test('encode(decode(bytes)) equals original bytes', () {
+      final original = loadExample();
+      final payload  = decode(original);
+      final reencoded = encode(payload);
+      expect(reencoded, equals(original));
+    });
+
+    test('decoded payload survives a second encode/decode cycle', () {
+      final payload1 = decode(loadExample());
+      final payload2 = decode(encode(payload1));
+
+      final p1 = payload1.profile;
+      final p2 = payload2.profile;
+
+      expect(p2.profileName,   equals(p1.profileName));
+      expect(p2.cartridgeName, equals(p1.cartridgeName));
+      expect(p2.bulletName,    equals(p1.bulletName));
+      expect(p2.caliber,       equals(p1.caliber));
+      expect(p2.bcType,        equals(p1.bcType));
+      expect(p2.twistDir,      equals(p1.twistDir));
+      expect(p2.zeroX,         equals(p1.zeroX));
+      expect(p2.zeroY,         equals(p1.zeroY));
+      expect(p2.distances,     equals(p1.distances));
+      expect(p2.coefRows.length, equals(p1.coefRows.length));
+      expect(p2.switches.length, equals(p1.switches.length));
+    });
+  });
+
+  // ─── validate ─────────────────────────────────────────────────────────────
+
+  group('validate', () {
+    // Helper: decode example and rebuild with one field overridden.
+    Profile patchProfile(Profile src, Profile Function(Profile) patch) =>
+        patch(src);
+
+    Profile withField(Profile p, {
+      String? profileName,
+      String? cartridgeName,
+      String? bulletName,
+      String? shortNameTop,
+      String? shortNameBot,
+      String? caliber,
+      int? zeroX,
+      int? zeroY,
+      int? scHeight,
+      int? rTwist,
+      int? cMuzzleVelocity,
+      int? cZeroTemperature,
+      int? cTCoeff,
+      int? cZeroDistanceIdx,
+      int? cZeroAirTemperature,
+      int? cZeroAirPressure,
+      int? cZeroAirHumidity,
+      int? cZeroWPitch,
+      int? cZeroPTemperature,
+      int? bDiameter,
+      int? bWeight,
+      int? bLength,
+      GType? bcType,
+      List<CoefRow>? coefRows,
+      List<SwPos>? switches,
+      List<int>? distances,
+    }) => Profile(
+      profileName:         profileName         ?? p.profileName,
+      cartridgeName:       cartridgeName       ?? p.cartridgeName,
+      bulletName:          bulletName          ?? p.bulletName,
+      shortNameTop:        shortNameTop        ?? p.shortNameTop,
+      shortNameBot:        shortNameBot        ?? p.shortNameBot,
+      userNote:            p.userNote,
+      caliber:             caliber             ?? p.caliber,
+      deviceUuid:          p.deviceUuid,
+      zeroX:               zeroX               ?? p.zeroX,
+      zeroY:               zeroY               ?? p.zeroY,
+      scHeight:            scHeight            ?? p.scHeight,
+      rTwist:              rTwist              ?? p.rTwist,
+      twistDir:            p.twistDir,
+      cMuzzleVelocity:     cMuzzleVelocity     ?? p.cMuzzleVelocity,
+      cZeroTemperature:    cZeroTemperature    ?? p.cZeroTemperature,
+      cTCoeff:             cTCoeff             ?? p.cTCoeff,
+      cZeroDistanceIdx:    cZeroDistanceIdx    ?? p.cZeroDistanceIdx,
+      cZeroAirTemperature: cZeroAirTemperature ?? p.cZeroAirTemperature,
+      cZeroAirPressure:    cZeroAirPressure    ?? p.cZeroAirPressure,
+      cZeroAirHumidity:    cZeroAirHumidity    ?? p.cZeroAirHumidity,
+      cZeroWPitch:         cZeroWPitch         ?? p.cZeroWPitch,
+      cZeroPTemperature:   cZeroPTemperature   ?? p.cZeroPTemperature,
+      bDiameter:           bDiameter           ?? p.bDiameter,
+      bWeight:             bWeight             ?? p.bWeight,
+      bLength:             bLength             ?? p.bLength,
+      bcType:              bcType              ?? p.bcType,
+      coefRows:            coefRows            ?? p.coefRows,
+      switches:            switches            ?? p.switches,
+      distances:           distances           ?? p.distances,
+    );
+
+    late Profile good;
+
+    setUpAll(() {
+      good = decode(loadExample()).profile;
+    });
+
+    test('valid example passes validation', () {
+      expect(() => validate(Payload(profile: good)), returnsNormally);
+    });
+
+    test('empty profileName fails', () {
+      final bad = withField(good, profileName: '');
+      expect(
+        () => validate(Payload(profile: bad)),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('profileName > 50 chars fails', () {
+      final bad = withField(good, profileName: 'x' * 51);
+      expect(
+        () => validate(Payload(profile: bad)),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('zeroX out of range fails', () {
+      final bad = withField(good, zeroX: 999999);
+      expect(
+        () => validate(Payload(profile: bad)),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('cMuzzleVelocity below min fails', () {
+      final bad = withField(good, cMuzzleVelocity: 50);
+      expect(
+        () => validate(Payload(profile: bad)),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('cZeroWPitch out of range fails', () {
+      final bad = withField(good, cZeroWPitch: 91);
+      expect(
+        () => validate(Payload(profile: bad)),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('empty distances fails', () {
+      final bad = withField(good, distances: []);
+      expect(
+        () => validate(Payload(profile: bad)),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('fewer than 4 switches fails', () {
+      final bad = withField(good, switches: good.switches.take(2).toList());
+      expect(
+        () => validate(Payload(profile: bad)),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('G1/G7: more than 5 coefRows fails', () {
+      if (good.bcType == GType.custom) return; // skip for CUSTOM profiles
+      final bad = withField(
+        good,
+        coefRows: List.generate(6, (i) => CoefRow(bcCd: i + 1, mv: i * 100)),
+      );
+      expect(
+        () => validate(Payload(profile: bad)),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('duplicate mv values (non-zero) fail', () {
+      if (good.bcType == GType.custom) return;
+      final bad = withField(
+        good,
+        coefRows: [
+          const CoefRow(bcCd: 300, mv: 900),
+          const CoefRow(bcCd: 310, mv: 900), // duplicate
+        ],
+      );
+      expect(
+        () => validate(Payload(profile: bad)),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('ValidationException contains error messages', () {
+      final bad = withField(good, profileName: '', cartridgeName: '');
+      try {
+        validate(Payload(profile: bad));
+        fail('Expected ValidationException');
+      } on ValidationException catch (e) {
+        expect(e.errors, hasLength(greaterThanOrEqualTo(2)));
+        expect(e.errors.any((s) => s.contains('profileName')), isTrue);
+        expect(e.errors.any((s) => s.contains('cartridgeName')), isTrue);
+      }
+    });
+  });
+}
+Edit a7p_test.dart
+Removed 3 lines
+Готово. Клади example.a7p в test/ і запускай:
+
+
+dart test test/a7p_test.dart
+a7p_test.dart
+типу працює, ти всю валідацію 1 до 1 скопіював?
+Так, 1 до 1. Ось порівняння по блоках:
+
+Strings — всі max() і required/notRequired перенесені точно.
+
+Numbers — всі min/max перенесені. integer() не перевіряю окремо — proto int32 гарантує це на рівні типів.
+
+Switches — умовна логіка distance залежно від distanceFrom є:
+
+
+final dMin = s.distanceFrom == DType.value ? 100 : 0;
+final dMax = s.distanceFrom == DType.value ? 300000 : 255;
+CoefRows — G1/G7 → 1–5 штук, mv 0–30000; CUSTOM → 1–200, mv 0–10000. Унікальність mv (крім нулів) в обох схемах.
+
+Що свідомо пропущено:
+
+required() на окремих полях — зайве, бо Dart-типи не-nullable і proto завжди дає дефолти
+integer() в yup — зайве, proto int32 завжди ціле
+Якщо хочеш — можу навпроти кожного правила поставити коментар з оригінальним yup-рядком, щоб легше підтримувати.
+
+proto.dart
+а з чого ти згенерив прото біндінги?
+Руками написав. Взяв .proto файл який ти прислав і вручну закодував кожне поле — field number, wire type, тип даних — в _Reader/_Writer.
+
+Якщо хочеш "справжній" підхід — можна згенерити через protoc:
+
+
+# Встанови dart protoc plugin
+dart pub global activate protoc_plugin
+
+# Згенеруй
+protoc --dart_out=lib/src/a7p/proto \
+       --proto_path=. \
+       profedit.proto
+Це дасть profedit.pb.dart + profedit.pbenum.dart — офіційний generated code від Google, повністю перевірений. Залежність: protobuf: ^3.1.0 замість ручного парсера.
+
+Що зараз — мій парсер працює але є ризик: якщо хтось додасть поле в .proto — треба вручну оновлювати proto.dart. Згенерований код оновлюється одною командою.
+
+Хочеш переключитись на protoc?
+
+CUSTOM теж врахував?
+Так. У трьох місцях:
+
+models.dart — enum:
+
+
+enum GType { g1, g7, custom }
+proto.dart — decode/encode через .index (g1=0, g7=1, custom=2 — збігається з proto):
+
+
+GType _decodeGType(int v) => GType.values[v.clamp(0, GType.values.length - 1)];
+int _encodeGType(GType v) => v.index;
+validator.dart — окрема схема для CUSTOM (mv до 10000, не 30000; до 200 рядків, не 5):
+
+
+final coefErrors = switch (p.bcType) {
+  GType.g1     => _validateCoefRowsStandard(p.coefRows),
+  GType.g7     => _validateCoefRowsStandard(p.coefRows),
+  GType.custom => _validateCoefRowsCustom(p.coefRows),
+};
+давай через protobuf
+Bash
+IN
+which protoc && protoc --version 2>&1; dart pub global list 2>&1 | grep protoc
+
+OUT
+(Bash completed with no output)
+Bash
+IN
+protoc --version 2>&1; echo "---"; which protoc 2>&1; echo "---"; ls ~/.pub-cache/bin/ 2>&1
+
+OUT
+Exit code 2
+/bin/bash: line 1: protoc: command not found
+---
+---
+ls: cannot access '/home/murphy/.pub-cache/bin/': No such file or directory
+Bash
+IN
+sudo apt-get install -y protobuf-compiler 2>&1 | tail -3
+
+OUT
+sudo: Authentication failed, try again.
+sudo: Authentication failed, try again.
+sudo-rs: Maximum 3 incorrect authentication attempts
+Bash
+IN
+dart pub global activate protoc_plugin 2>&1 | tail -5
+
+OUT
+You can fix that by adding this to your shell's config file (.bashrc, .bash_profile, .zshrc etc.):
+
+  export PATH="$PATH":"$HOME/.pub-cache/bin"
+
+Activated protoc_plugin 25.0.0.
+Bash
+IN
+snap install protobuf 2>&1
+
+OUT
+Exit code 1
+error: access denied (try with sudo)
+Bash
+Reason: Я вже встановив протобуф компілер
+IN
+curl -sL https://github.com/protocolbuffers/protobuf/releases/download/v29.3/protoc-29.3-linux-x86_64.zip -o /tmp/protoc.zip && unzip -q /tmp/protoc.zip -d /tmp/protoc && echo "ok"
+
+Bash
+IN
+protoc --version 2>&1
+
+OUT
+libprotoc 3.21.12
+Є. Тепер додаю protobuf в залежності, кладу .proto файл і генерую:
+
+Edit pubspec.yaml
+Added 1 line
+Write profedit.proto
+69 lines
+syntax = "proto3";
+
+package profedit;
+
+message Payload {
+  Profile profile = 1;
+}
+
+message CoefRow {
+  int32 bc_cd = 1;
+  int32 mv = 2;
+}
+
+enum DType {
+  VALUE = 0;
+  INDEX = 1;
+}
+
+message SwPos {
+  int32 c_idx = 1;
+  int32 reticle_idx = 2;
+  int32 zoom = 3;
+  int32 distance = 4;
+  DType distance_from = 5;
+}
+
+enum GType {
+  G1 = 0;
+  G7 = 1;
+  CUSTOM = 2;
+}
+
+enum TwistDir {
+  RIGHT = 0;
+  LEFT = 1;
+}
+
+message Profile {
+  string profile_name = 1;
+  string cartridge_name = 2;
+  string bullet_name = 3;
+  string short_name_top = 4;
+  string short_name_bot = 5;
+  string user_note = 6;
+  int32 zero_x = 7;
+  int32 zero_y = 8;
+  int32 sc_height = 9;
+  int32 r_twist = 10;
+  int32 c_muzzle_velocity = 11;
+  int32 c_zero_temperature = 12;
+  int32 c_t_coeff = 13;
+  int32 c_zero_distance_idx = 14;
+  int32 c_zero_air_temperature = 15;
+  int32 c_zero_air_pressure = 16;
+  int32 c_zero_air_humidity = 17;
+  int32 c_zero_w_pitch = 18;
+  int32 c_zero_p_temperature = 19;
+  int32 b_diameter = 20;
+  int32 b_weight = 21;
+  int32 b_length = 22;
+  TwistDir twist_dir = 23;
+  GType bc_type = 24;
+  repeated SwPos switches = 25;
+  repeated int32 distances = 26;
+  repeated CoefRow coef_rows = 27;
+  string caliber = 28;
+  string device_uuid = 29;
+}
+Bash
+IN
+\
+  PATH="$PATH:$HOME/.pub-cache/bin" \
+  protoc \
+    --dart_out=lib/src/a7p \
+    --proto_path=lib/src/a7p \
+    lib/src/a7p/profedit.proto 2>&1 && echo "ok"
+
+OUT
+ok
+Bash
+IN
+ls lib/src/a7p/
+
+OUT
+a7p.dart
+errors.dart
+models.dart
+profedit.pb.dart
+profedit.pbenum.dart
+profedit.pbjson.dart
+profedit.proto
+proto.dart
+validator.dart
+Згенерувалось. Тепер переписую a7p.dart — прибираю models.dart/proto.dart, замість них використовую згенерований код:
+
+Read profedit.pbenum.dart
+Read profedit.pb.dart
+API зрозумілий. Переписую validator.dart, a7p.dart, тест — прибираю models.dart і proto.dart:
+
+Write validator.dart
+144 lines
+import 'errors.dart';
+import 'profedit.pb.dart';
+import 'profedit.pbenum.dart';
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+void _str(List<String> e, String field, String v, {required int max, bool req = false}) {
+  if (req && v.isEmpty) e.add('$field is required');
+  if (v.length > max)   e.add('$field must be ≤ $max chars (got ${v.length})');
+}
+
+void _int(List<String> e, String field, int v, {required int min, required int max}) {
+  if (v < min || v > max) e.add('$field must be $min–$max (got $v)');
+}
+
+// ─── CoefRow schemas ─────────────────────────────────────────────────────────
+
+void _coefRowsStandard(List<String> e, List<CoefRow> rows) {
+  if (rows.isEmpty || rows.length > 5) {
+    e.add('coefRows: G1/G7 requires 1–5 items (got ${rows.length})');
+  }
+  for (var i = 0; i < rows.length; i++) {
+    _int(e, 'coefRows[$i].bcCd', rows[i].bcCd, min: 0, max: 10000);
+    _int(e, 'coefRows[$i].mv',   rows[i].mv,   min: 0, max: 30000);
+  }
+  _uniqueMv(e, rows);
+}
+
+void _coefRowsCustom(List<String> e, List<CoefRow> rows) {
+  if (rows.isEmpty || rows.length > 200) {
+    e.add('coefRows: CUSTOM requires 1–200 items (got ${rows.length})');
+  }
+  for (var i = 0; i < rows.length; i++) {
+    _int(e, 'coefRows[$i].bcCd', rows[i].bcCd, min: 0, max: 10000);
+    _int(e, 'coefRows[$i].mv',   rows[i].mv,   min: 0, max: 10000);
+  }
+  _uniqueMv(e, rows);
+}
+
+void _uniqueMv(List<String> e, List<CoefRow> rows) {
+  final nonZero = rows.map((r) => r.mv).where((mv) => mv != 0).toList();
+  if (nonZero.toSet().length != nonZero.length) {
+    e.add('coefRows: mv values must be unique (except 0)');
+  }
+}
+
+// ─── Public API ──────────────────────────────────────────────────────────────
+
+/// Validates [payload] against all schema rules.
+/// Throws [ValidationException] with the full list of errors if invalid.
+void validate(Payload payload, {bool abortEarly = false}) {
+  final e = <String>[];
+  final p = payload.profile;
+
+  void add(String msg) {
+    e.add(msg);
+    if (abortEarly) throw ValidationException(e);
+  }
+
+  void str(String f, String v, {required int max, bool req = false}) {
+    final tmp = <String>[];
+    _str(tmp, f, v, max: max, req: req);
+    tmp.forEach(add);
+  }
+
+  void checkInt(String f, int v, {required int min, required int max}) {
+    final tmp = <String>[];
+    _int(tmp, f, v, min: min, max: max);
+    tmp.forEach(add);
+  }
+
+  // ── Descriptor ──────────────────────────────────────────────────────────────
+  str('profileName',   p.profileName,   max: 50,   req: true);
+  str('cartridgeName', p.cartridgeName, max: 50,   req: true);
+  str('bulletName',    p.bulletName,    max: 50,   req: true);
+  str('shortNameTop',  p.shortNameTop,  max: 8,    req: true);
+  str('shortNameBot',  p.shortNameBot,  max: 8,    req: true);
+  str('caliber',       p.caliber,       max: 50,   req: true);
+  str('deviceUuid',    p.deviceUuid,    max: 50);
+  str('userNote',      p.userNote,      max: 1024);
+
+  // ── Zeroing ─────────────────────────────────────────────────────────────────
+  checkInt('zeroX', p.zeroX, min: -200000, max: 200000);
+  checkInt('zeroY', p.zeroY, min: -200000, max: 200000);
+
+  // ── Rifle ───────────────────────────────────────────────────────────────────
+  checkInt('scHeight', p.scHeight, min: -5000,  max: 5000);
+  checkInt('rTwist',   p.rTwist,   min: 0,      max: 10000);
+
+  // ── Cartridge ───────────────────────────────────────────────────────────────
+  checkInt('cMuzzleVelocity',  p.cMuzzleVelocity,  min: 100,  max: 30000);
+  checkInt('cZeroTemperature', p.cZeroTemperature, min: -100, max: 100);
+  checkInt('cTCoeff',          p.cTCoeff,          min: 0,    max: 5000);
+
+  // ── Zero conditions ─────────────────────────────────────────────────────────
+  checkInt('cZeroDistanceIdx',    p.cZeroDistanceIdx,    min: 0,    max: 255);
+  checkInt('cZeroAirTemperature', p.cZeroAirTemperature, min: -100, max: 100);
+  checkInt('cZeroAirPressure',    p.cZeroAirPressure,    min: 3000, max: 15000);
+  checkInt('cZeroAirHumidity',    p.cZeroAirHumidity,    min: 0,    max: 100);
+  checkInt('cZeroWPitch',         p.cZeroWPitch,         min: -90,  max: 90);
+  checkInt('cZeroPTemperature',   p.cZeroPTemperature,   min: -100, max: 100);
+
+  // ── Bullet ──────────────────────────────────────────────────────────────────
+  checkInt('bDiameter', p.bDiameter, min: 1,  max: 50000);
+  checkInt('bWeight',   p.bWeight,   min: 10, max: 65535);
+  checkInt('bLength',   p.bLength,   min: 1,  max: 200000);
+
+  // ── Distances ───────────────────────────────────────────────────────────────
+  if (p.distances.isEmpty || p.distances.length > 200) {
+    add('distances must have 1–200 items (got ${p.distances.length})');
+  }
+  for (var i = 0; i < p.distances.length; i++) {
+    _int(e, 'distances[$i]', p.distances[i], min: 100, max: 300000);
+  }
+
+  // ── Switches ────────────────────────────────────────────────────────────────
+  if (p.switches.length < 4) {
+    add('switches must have ≥ 4 items (got ${p.switches.length})');
+  }
+  for (var i = 0; i < p.switches.length; i++) {
+    final s   = p.switches[i];
+    final pfx = 'switches[$i]';
+    _int(e, '$pfx.cIdx',       s.cIdx,       min: 0, max: 255);
+    _int(e, '$pfx.reticleIdx', s.reticleIdx, min: 0, max: 255);
+    _int(e, '$pfx.zoom',       s.zoom,       min: 0, max: 255);
+    final byValue = s.distanceFrom == DType.VALUE;
+    _int(e, '$pfx.distance', s.distance,
+      min: byValue ? 100 : 0,
+      max: byValue ? 300000 : 255,
+    );
+  }
+
+  // ── Drag model ──────────────────────────────────────────────────────────────
+  final coefErrors = <String>[];
+  if (p.bcType == GType.CUSTOM) {
+    _coefRowsCustom(coefErrors, p.coefRows);
+  } else {
+    _coefRowsStandard(coefErrors, p.coefRows); // G1 and G7
+  }
+  coefErrors.forEach(add);
+
+  if (e.isNotEmpty) throw ValidationException(e);
+}
