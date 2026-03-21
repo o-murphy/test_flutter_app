@@ -3,6 +3,20 @@ import '../widgets/wind_indicator.dart';
 import '../widgets/side_control_block.dart';
 import '../widgets/quick_actions_panel.dart';
 
+Widget _buildCard(String text, Color color) {
+  return Card(
+    margin: const EdgeInsets.all(8),
+    color: color,
+    child: Center(
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white, fontSize: 32),
+      ),
+    ),
+  );
+}
+
+// TODO: make thunderstorm_outlined buttons a little bigger
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -10,17 +24,18 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final height = constraints.maxHeight * 0.55;
+        final topBlockHeight = constraints.maxHeight * 0.55;
+        final botBlockHeight = constraints.maxHeight - topBlockHeight;
 
         return Column(
           children: [
             // ── Top card ──────────────────────────────────────────────────────
             Container(
               width: double.infinity,
-              height: height,
+              height: topBlockHeight,
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                color: Theme.of(context).colorScheme.surfaceContainer,
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(32),
                   bottomRight: Radius.circular(32),
@@ -37,9 +52,18 @@ class HomeScreen extends StatelessWidget {
                           Expanded(
                             child: FilledButton.tonal(
                               onPressed: () {},
-                              child: const Text(
-                                '.338 Lapua Mag 300gr SMK',
-                                overflow: TextOverflow.ellipsis,
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      'Savage AXIS || Precision',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const Icon(Icons.more_horiz_rounded),
+                                ],
                               ),
                             ),
                           ),
@@ -104,12 +128,14 @@ class HomeScreen extends StatelessWidget {
             ),
 
             // ── Ballistic parameters (scrollable) ─────────────────────────────
-            const Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  children: [Text('There will be calculation result')],
-                ),
+            SizedBox(
+              height: botBlockHeight,
+              child: PageView(
+                children: [
+                  _buildCard('Current projectile, reticle and adjustments', Colors.blueGrey),
+                  _buildCard('Adjustments table', Colors.indigo),
+                  _buildCard('Simplified Trajectory Chart', Colors.deepPurple),
+                ],
               ),
             ),
           ],
