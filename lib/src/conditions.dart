@@ -258,8 +258,6 @@ class Coriolis {
     required this.flatFireOnly,
   });
 
-  /// Створює помічник Coriolis.
-  /// Якщо [latitude] null, повертає null (ефект не враховується).
   static Coriolis? create({
     double? latitude,
     double? azimuth,

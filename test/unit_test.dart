@@ -1,6 +1,4 @@
 import 'package:test/test.dart';
-import 'dart:math';
-// Замініть на ваш реальний шлях імпорту
 import 'package:test_app/src/unit.dart';
 
 void main() {
@@ -19,14 +17,14 @@ void main() {
       final result = d1 + d2;
 
       expect(result, isA<Distance>());
-      // 36 + 12 = 48 дюймів (rawValue)
+
       expect(result.rawValue, closeTo(48.0, 1e-9));
       expect(result.in_(Unit.yard), closeTo(1.333333, 1e-5));
     });
 
     test('Add scalar (Distance)', () {
       final d = Distance(1, Unit.yard);
-      final result = d + 2; // + 2 ярди
+      final result = d + 2;
       expect(result.in_(Unit.yard), 3.0);
     });
 
@@ -55,14 +53,14 @@ void main() {
 
     test('Temperature scalar addition (Delta)', () {
       final t = Temperature(20, Unit.celsius);
-      // Додавання 10 градусів за Цельсієм
+
       final warmer = t + 10;
       expect(warmer.in_(Unit.celsius), 30.0);
     });
 
     test('Temperature scalar subtraction', () {
       final t = Temperature(32, Unit.fahrenheit);
-      // Віднімання 2 градусів за Фаренгейтом
+
       final colder = t - 2;
       expect(colder.in_(Unit.fahrenheit), 30.0);
     });

@@ -1,7 +1,6 @@
 /// Global physical and atmospheric constants for ballistic calculations.
 /// All constants follow international standards (ISA, ICAO).
 abstract final class BallisticConstants {
-  // Приватний конструктор запобігає створенню екземплярів класу
   BallisticConstants._();
 
   static const double cGravityImperial = 32.17405; // ft/s²

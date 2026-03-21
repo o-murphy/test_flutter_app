@@ -7,7 +7,7 @@ class WindIndicator extends StatefulWidget {
 
   const WindIndicator({
     super.key,
-    this.initialAngle = -pi / 2, // Починаємо з 12:00 (вгору)
+    this.initialAngle = -pi / 2,
     required this.onAngleChanged,
   });
 
@@ -27,29 +27,22 @@ class _WindIndicatorState extends State<WindIndicator> {
   void _handleGesture(Offset localPosition, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
 
-    // Отримуємо "сирий" кут від дотику
     double rawAngle = atan2(
       localPosition.dy - center.dy,
       localPosition.dx - center.dx,
     );
 
-    // 1. Переводимо в градуси для зручного округлення
-    // Додаємо 90, щоб 0 був на 12 годині
     double degrees = (rawAngle * 180 / pi + 90) % 360;
     if (degrees < 0) degrees += 360;
 
-    // 2. ОКРУГЛЕННЯ: приводимо до найближчого цілого градуса
     double snappedDegrees = degrees.roundToDouble();
 
-    // 3. Конвертуємо назад у радіани для коректного відображення стрілки
-    // Віднімаємо 90, щоб повернути математичну орієнтацію Flutter
     double snappedAngle = (snappedDegrees - 90) * pi / 180;
 
     setState(() {
       angle = snappedAngle;
     });
 
-    // Розрахунок год:хв (360° = 720 хв)
     final totalMin = (snappedDegrees * 2).round();
     int hour = (totalMin ~/ 60) % 12;
     if (hour == 0) hour = 12;
@@ -100,11 +93,9 @@ class WindPainter extends CustomPainter {
     final innerRadius = radius * 0.8;
 
     final ringPaint = Paint()
-      ..color = color
-          .withValues(alpha: 0.1) // Було withOpacity
+      ..color = color.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
 
-    // 1. Малюємо зовнішнє кільце
     canvas.drawCircle(center, radius, ringPaint);
     canvas.drawCircle(
       center,
@@ -112,12 +103,10 @@ class WindPainter extends CustomPainter {
       Paint()..color = color.withOpacity(0.05),
     );
 
-    // 2. Малюємо мітки годин та цифри
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
     for (int i = 1; i <= 12; i++) {
       double hourAngle = (i * 30 - 90) * pi / 180;
 
-      // Рисочки
       final tickStart = Offset(
         center.dx + innerRadius * cos(hourAngle),
         center.dy + innerRadius * sin(hourAngle),
@@ -134,7 +123,6 @@ class WindPainter extends CustomPainter {
           ..strokeWidth = 2,
       );
 
-      // Цифри тільки на 12, 3, 6, 9
       if (i % 3 != 0) continue;
       textPainter.text = TextSpan(
         text: '$i',
@@ -154,27 +142,23 @@ class WindPainter extends CustomPainter {
       textPainter.paint(canvas, textPos);
     }
 
-    // 3. Маркер + стрілка
     const markerR = 16.0;
-    const markerOver = 6.0; // виступ за radius
+    const markerOver = 6.0;
     final markerCenter = Offset(
       center.dx + (radius - markerR + markerOver) * cos(angle),
       center.dy + (radius - markerR + markerOver) * sin(angle),
     );
 
-    // Вектори напрямку
-    final fx = -cos(angle); // до центру
+    final fx = -cos(angle);
     final fy = -sin(angle);
-    final rx = -sin(angle); // перпендикуляр
+    final rx = -sin(angle);
     final ry = cos(angle);
 
-    // --- Стрілка (малюємо ПЕРШОЮ, кружечок перекриє основу) ---
     const stemW = 4.0;
     const headW = 11.0;
     const totalL = 45.0;
     const headL = 14.0;
 
-    // Основа стрілки = центр кружечка
     final bx = markerCenter.dx;
     final by = markerCenter.dy;
     final mx = bx + fx * (totalL - headL);
@@ -199,8 +183,6 @@ class WindPainter extends CustomPainter {
         ..style = PaintingStyle.fill,
     );
 
-    // --- Кружечок (поверх основи стрілки) ---
-    // Тінь
     canvas.drawCircle(
       markerCenter,
       markerR + 1,
@@ -208,10 +190,9 @@ class WindPainter extends CustomPainter {
         ..color = Colors.black.withValues(alpha: 0.25)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
-    // Заливка
+
     canvas.drawCircle(markerCenter, markerR, Paint()..color = primaryColor);
 
-    // Fingerprint іконка
     final iconTp = TextPainter(
       text: TextSpan(
         text: String.fromCharCode(Icons.fingerprint.codePoint),
@@ -231,7 +212,6 @@ class WindPainter extends CustomPainter {
       ),
     );
 
-    // 4. Текст у центрі
     double degrees = (angle * 180 / pi + 90) % 360;
     if (degrees < 0) degrees += 360;
 
@@ -242,7 +222,6 @@ class WindPainter extends CustomPainter {
     final clockStr =
         '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
 
-    // Мітка "Wind direction"
     textPainter.text = TextSpan(
       text: 'Wind direction',
       style: TextStyle(color: color.withValues(alpha: 0.55), fontSize: 11),
@@ -256,7 +235,6 @@ class WindPainter extends CustomPainter {
       ),
     );
 
-    // Градуси (великий текст)
     textPainter.text = TextSpan(
       text: '${degrees.toStringAsFixed(0)}°',
       style: TextStyle(color: color, fontSize: 24, fontWeight: FontWeight.bold),
@@ -270,7 +248,6 @@ class WindPainter extends CustomPainter {
       ),
     );
 
-    // Годинний формат
     textPainter.text = TextSpan(
       text: clockStr,
       style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 13),

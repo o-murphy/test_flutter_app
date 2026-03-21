@@ -4,7 +4,6 @@ import 'package:test_app/src/constants.dart';
 import 'package:test_app/src/drag_tables.dart';
 import 'package:test_app/src/unit.dart';
 
-/// Точка балістичного коефіцієнта (BC) для конкретного числа Маха або швидкості
 class BCPoint {
   final double bc;
   final double mach;
@@ -43,7 +42,6 @@ class BCPoint {
   }
 }
 
-/// Основна модель опору
 class DragModel {
   final double bc;
   final List<DragDataPoint> dragTable;
@@ -91,7 +89,6 @@ class DragModel {
   }
 }
 
-/// Конвертація вхідних даних у List точок (Records)
 List<DragDataPoint> makeDataPoints(List<dynamic> table) {
   return table.map((point) {
     return switch (point) {
@@ -108,12 +105,10 @@ List<DragDataPoint> makeDataPoints(List<dynamic> table) {
   }).toList();
 }
 
-/// Розрахунок SD (lb/in²)
 double calculateSectionalDensity(double weight, double diameter) {
   return weight / pow(diameter, 2) / 7000;
 }
 
-/// Лінійна інтерполяція
 List<double> linearInterpolation(
   List<double> x,
   List<double> xp,
@@ -143,10 +138,9 @@ List<double> linearInterpolation(
   }).toList();
 }
 
-/// Фабрика для створення DragModel на основі кількох BC точок
 DragModel createDragModelMultiBC({
   required List<BCPoint> bcPoints,
-  required dynamic dragTable, // Може бути DragTable або List<DragDataPoint>
+  required dynamic dragTable,
   Object? weight,
   Object? diameter,
   Object? length,
@@ -158,7 +152,6 @@ DragModel createDragModelMultiBC({
       ? calculateSectionalDensity(wObj.in_(Unit.grain), dObj.in_(Unit.inch))
       : 1.0;
 
-  // Витягуємо точки з інтерфейсу DragTable або використовуємо список напряму
   final List<DragDataPoint> sourcePoints = (dragTable is DragTable)
       ? dragTable.points
       : makeDataPoints(dragTable as List);

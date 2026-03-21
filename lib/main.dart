@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
-import 'screens/home_screen.dart'; // <--- 1. Імпортуємо файл
-import 'screens/conditions_screen.dart'; // <--- 1. Імпортуємо файл
-import 'screens/tables_screen.dart'; // <--- 1. Імпортуємо файл
-import 'screens/convertor_screen.dart'; // <--- 1. Імпортуємо файл
-import 'screens/settings_screen.dart'; // <--- 1. Імпортуємо файл
+import 'screens/home_screen.dart';
+import 'screens/conditions_screen.dart';
+import 'screens/tables_screen.dart';
+import 'screens/convertor_screen.dart';
+import 'screens/settings_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
@@ -42,7 +42,6 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      // 2. Темна тема
       darkTheme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -51,7 +50,6 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      // 3. Режим роботи: система сама каже, яку тему брати
       themeMode: ThemeMode.system,
 
       home: const MyHomePage(title: 'eBallistica'),
@@ -78,20 +76,16 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // 1. Індекс поточного вибраного екрана
   int _selectedIndex = 0;
 
-  // 2. Список віджетів (екранів), між якими ми перемикаємось
-  // Ви можете винести їх в окремі файли пізніше
   static const List<Widget> _pages = <Widget>[
-    HomeScreen(), // <--- Ось ваш окремий віджет
+    HomeScreen(),
     ConditionsScreen(),
     TablesScreen(),
     ConvertorScreen(),
     SettingsScreen(),
   ];
 
-  // 3. Функція, що змінює індекс при натисканні
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -101,10 +95,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 4. Тіло екрана змінюється динамічно залежно від індексу
       body: SafeArea(child: _pages[_selectedIndex]),
 
-      // 5. Сам BottomNavigationBar
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,

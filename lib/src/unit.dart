@@ -186,7 +186,7 @@ abstract class Dimension<T extends Dimension<T>> implements Measurable<T> {
   double toDouble() => fromRaw(_rawValue, _definedUnits);
 
   double get _unitsToRawDelta {
-    if (conversionFactors.isEmpty) return 0.0; // Для Temperature
+    if (conversionFactors.isEmpty) return 0.0;
     return _getFactor(_definedUnits);
   }
 

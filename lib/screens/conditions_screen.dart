@@ -6,7 +6,6 @@ class ConditionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Тут ви описуєте інтерфейс саме цього екрана
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -21,7 +20,7 @@ class ConditionsScreen extends StatelessWidget {
           const Text('There will be shooting conditions'),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () => print("Розрахунок..."),
+            onPressed: () => print("Calculating..."),
             child: const Text("Start Calculation"),
           ),
         ],

@@ -22,7 +22,7 @@ class HomeScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: const BorderRadius.only(
-                  bottomLeft:  Radius.circular(32),
+                  bottomLeft: Radius.circular(32),
                   bottomRight: Radius.circular(32),
                 ),
               ),
@@ -59,14 +59,14 @@ class HomeScreen extends StatelessWidget {
                           Expanded(
                             flex: 1,
                             child: SideControlBlock(
-                              topIcon:    Icons.info_outline,
+                              topIcon: Icons.info_outline,
                               bottomIcon: Icons.note_add_outlined,
                               infoRows: const [
-                                (Icons.thunderstorm_outlined,      ''),
+                                (Icons.thunderstorm_outlined, ''),
                                 (Icons.device_thermostat_outlined, '23°C'),
-                                (Icons.terrain_outlined,           '150 m'),
+                                (Icons.terrain_outlined, '150 m'),
                               ],
-                              onTopPressed:    () => print("Info pressed"),
+                              onTopPressed: () => print("Info pressed"),
                               onBottomPressed: () => print("Notes pressed"),
                             ),
                           ),
@@ -74,21 +74,21 @@ class HomeScreen extends StatelessWidget {
                             flex: 2,
                             child: WindIndicator(
                               onAngleChanged: (degrees, clockFormat) {
-                                print("Напрямок: $degrees°");
+                                print("Wind direction: $degrees°");
                               },
                             ),
                           ),
                           Expanded(
                             flex: 1,
                             child: SideControlBlock(
-                              topIcon:    Icons.question_mark_outlined,
+                              topIcon: Icons.question_mark_outlined,
                               bottomIcon: Icons.more_horiz_outlined,
                               infoRows: const [
                                 (Icons.thunderstorm_outlined, ''),
-                                (Icons.water_drop_outlined,   '29%'),
-                                (Icons.speed_outlined,        '992 hPa'),
+                                (Icons.water_drop_outlined, '29%'),
+                                (Icons.speed_outlined, '992 hPa'),
                               ],
-                              onTopPressed:    () => print("Help pressed"),
+                              onTopPressed: () => print("Help pressed"),
                               onBottomPressed: () => print("Tools pressed"),
                             ),
                           ),
@@ -108,7 +108,7 @@ class HomeScreen extends StatelessWidget {
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(16.0),
                 child: Column(
-                  children: [Text('Параметри балістики будуть тут')],
+                  children: [Text('There will be calculation result')],
                 ),
               ),
             ),
