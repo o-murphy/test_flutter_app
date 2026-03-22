@@ -2,6 +2,7 @@ import 'package:uuid/uuid.dart';
 
 import '../solver/conditions.dart';
 import '../solver/shot.dart';
+import '../solver/unit.dart';
 import '_dim.dart';
 import 'cartridge.dart';
 import 'rifle.dart';
@@ -18,6 +19,12 @@ class ShotProfile {
   final dynamic lookAngle;  // Angular
   final double? latitudeDeg;
   final double? azimuthDeg;
+  /// Range used for zeroing (default 100 m).
+  final Distance zeroDistance;
+  /// Optional separate conditions for zeroing. Null → use [conditions].
+  final Atmo? zeroConditions;
+  /// Current target range for the quick-actions panel.
+  final Distance targetDistance;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -32,9 +39,14 @@ class ShotProfile {
     required this.lookAngle,
     this.latitudeDeg,
     this.azimuthDeg,
+    Distance? zeroDistance,
+    this.zeroConditions,
+    Distance? targetDistance,
     DateTime? createdAt,
     DateTime? updatedAt,
   })  : id = id ?? const Uuid().v4(),
+        zeroDistance = zeroDistance ?? Distance(100.0, Unit.meter),
+        targetDistance = targetDistance ?? Distance(300.0, Unit.meter),
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
@@ -58,6 +70,10 @@ class ShotProfile {
     dynamic lookAngle,
     double? latitudeDeg,
     double? azimuthDeg,
+    Distance? zeroDistance,
+    Atmo? zeroConditions,
+    bool clearZeroConditions = false,
+    Distance? targetDistance,
   }) =>
       ShotProfile(
         id: id,
@@ -70,6 +86,9 @@ class ShotProfile {
         lookAngle: lookAngle ?? this.lookAngle,
         latitudeDeg: latitudeDeg ?? this.latitudeDeg,
         azimuthDeg: azimuthDeg ?? this.azimuthDeg,
+        zeroDistance: zeroDistance ?? this.zeroDistance,
+        zeroConditions: clearZeroConditions ? null : (zeroConditions ?? this.zeroConditions),
+        targetDistance: targetDistance ?? this.targetDistance,
         createdAt: createdAt,
         updatedAt: DateTime.now(),
       );
@@ -95,12 +114,22 @@ class ShotProfile {
         'lookAngle': dimToJson(lookAngle),
         if (latitudeDeg != null) 'latitudeDeg': latitudeDeg,
         if (azimuthDeg != null) 'azimuthDeg': azimuthDeg,
+        'zeroDistance': dimToJson(zeroDistance),
+        if (zeroConditions != null) 'zeroConditions': {
+          'altitude': dimToJson(zeroConditions!.altitude),
+          'pressure': dimToJson(zeroConditions!.pressure),
+          'temperature': dimToJson(zeroConditions!.temperature),
+          'humidity': zeroConditions!.humidity,
+          'powderTemp': dimToJson(zeroConditions!.powderTemp),
+        },
+        'targetDistance': dimToJson(targetDistance),
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
       };
 
   factory ShotProfile.fromJson(Map<String, dynamic> json) {
     final c = json['conditions'] as Map;
+    final zc = json['zeroConditions'] as Map?;
     return ShotProfile(
       id: json['id'] as String,
       name: json['name'] as String,
@@ -122,6 +151,21 @@ class ShotProfile {
       lookAngle: angularFromJson(json['lookAngle'] as Map),
       latitudeDeg: (json['latitudeDeg'] as num?)?.toDouble(),
       azimuthDeg: (json['azimuthDeg'] as num?)?.toDouble(),
+      zeroDistance: json['zeroDistance'] != null
+          ? distanceFromJson(json['zeroDistance'] as Map)
+          : null,
+      zeroConditions: zc != null
+          ? Atmo(
+              altitude: distanceFromJson(zc['altitude'] as Map),
+              pressure: pressureFromJson(zc['pressure'] as Map),
+              temperature: temperatureFromJson(zc['temperature'] as Map),
+              humidity: (zc['humidity'] as num).toDouble(),
+              powderTemperature: temperatureFromJson(zc['powderTemp'] as Map),
+            )
+          : null,
+      targetDistance: json['targetDistance'] != null
+          ? distanceFromJson(json['targetDistance'] as Map)
+          : null,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );

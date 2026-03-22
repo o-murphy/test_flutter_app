@@ -30,7 +30,7 @@ HitResult? _runCalculation(_CalcArgs args) {
         atmo:       profile.conditions,
         winds:      const [],
       );
-      calc.setWeaponZero(zeroShot, Distance(100.0, Unit.meter));
+      calc.setWeaponZero(zeroShot, profile.zeroDistance);
     } catch (_) {
       zeroShot = Shot(
         weapon:    profile.rifle.weapon,
@@ -39,7 +39,7 @@ HitResult? _runCalculation(_CalcArgs args) {
         atmo:      profile.conditions,
         winds:     const [],
       );
-      calc.setWeaponZero(zeroShot, Distance(100.0, Unit.meter));
+      calc.setWeaponZero(zeroShot, profile.zeroDistance);
     }
 
     // Shot ammo — MV adjusted for current powder / atmo temperature.

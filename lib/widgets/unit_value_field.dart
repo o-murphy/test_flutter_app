@@ -4,6 +4,128 @@ import 'package:flutter/material.dart';
 import '../src/models/field_constraints.dart';
 import '../src/solver/unit.dart';
 
+// ── Standalone dialog helper ──────────────────────────────────────────────────
+
+double _toDisp(Unit rawUnit, Unit dispUnit, double raw) {
+  if (rawUnit == dispUnit) return raw;
+  return (rawUnit(raw) as dynamic).in_(dispUnit) as double;
+}
+
+double _toRawVal(Unit rawUnit, Unit dispUnit, double disp) {
+  if (rawUnit == dispUnit) return disp;
+  return (dispUnit(disp) as dynamic).in_(rawUnit) as double;
+}
+
+int _calcAccuracy(FieldConstraints c, Unit displayUnit) {
+  if (c.rawUnit == displayUnit) return c.accuracy;
+  final step = (_toDisp(c.rawUnit, displayUnit, c.minRaw + c.stepRaw) -
+      _toDisp(c.rawUnit, displayUnit, c.minRaw)).abs();
+  if (step <= 0) return c.accuracy;
+  final d = (-log(step) / ln10).ceil();
+  return d < 0 ? 0 : d;
+}
+
+/// Shows the `[−] textField [+]` edit dialog for any unit-based value.
+/// [rawValue] and [onChanged] work in [constraints.rawUnit].
+void showUnitEditDialog(
+  BuildContext context, {
+  required String label,
+  required double rawValue,
+  required FieldConstraints constraints,
+  required Unit displayUnit,
+  String? symbol,
+  required ValueChanged<double> onChanged,
+}) {
+  final sym = symbol ?? displayUnit.symbol;
+  final inputAcc = _calcAccuracy(constraints, displayUnit);
+  final dispMin = _toDisp(constraints.rawUnit, displayUnit, constraints.minRaw);
+  final dispMax = _toDisp(constraints.rawUnit, displayUnit, constraints.maxRaw);
+  double editRaw = rawValue;
+
+  final controller = TextEditingController(
+    text: _toDisp(constraints.rawUnit, displayUnit, rawValue).toStringAsFixed(inputAcc),
+  );
+
+  showDialog<void>(
+    context: context,
+    builder: (ctx) {
+      String? errorText;
+      return StatefulBuilder(
+        builder: (ctx, setState) {
+          void step(int dir) {
+            editRaw = (editRaw + dir * constraints.stepRaw)
+                .clamp(constraints.minRaw, constraints.maxRaw);
+            controller.text =
+                _toDisp(constraints.rawUnit, displayUnit, editRaw).toStringAsFixed(inputAcc);
+            errorText = null;
+          }
+
+          return AlertDialog(
+            title: Text('$label  ($sym)'),
+            content: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.remove),
+                  onPressed: () => setState(() => step(-1)),
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    autofocus: true,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                      signed: true,
+                    ),
+                    textAlign: TextAlign.center,
+                    decoration: InputDecoration(
+                      suffixText: sym,
+                      errorText: errorText,
+                    ),
+                    onChanged: (text) {
+                      final parsed = double.tryParse(text.replaceAll(',', '.'));
+                      setState(() {
+                        if (parsed == null) {
+                          errorText = 'Invalid number';
+                        } else if (parsed < dispMin || parsed > dispMax) {
+                          errorText =
+                              '${dispMin.toStringAsFixed(inputAcc)} – '
+                              '${dispMax.toStringAsFixed(inputAcc)}';
+                        } else {
+                          errorText = null;
+                          editRaw = _toRawVal(constraints.rawUnit, displayUnit, parsed);
+                        }
+                      });
+                    },
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () => setState(() => step(1)),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: errorText != null
+                    ? null
+                    : () {
+                        onChanged(editRaw.clamp(constraints.minRaw, constraints.maxRaw));
+                        Navigator.pop(ctx);
+                      },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
 /// Tappable row: `icon  label  value ✎`
 ///
 /// Tapping opens a dialog with `[−] textField [+]` + Cancel/OK.
@@ -35,7 +157,6 @@ class UnitValueField extends StatelessWidget {
 
   Unit   get _rawUnit => constraints.rawUnit;
   double get _minRaw  => constraints.minRaw;
-  double get _maxRaw  => constraints.maxRaw;
   double get _stepRaw => constraints.stepRaw;
 
   // ── Conversion ──────────────────────────────────────────────────────────────
@@ -43,11 +164,6 @@ class UnitValueField extends StatelessWidget {
   double _toDisplay(double raw) {
     if (_rawUnit == displayUnit) return raw;
     return (_rawUnit(raw) as dynamic).in_(displayUnit) as double;
-  }
-
-  double _toRaw(double display) {
-    if (_rawUnit == displayUnit) return display;
-    return (displayUnit(display) as dynamic).in_(_rawUnit) as double;
   }
 
   double get _displayValue => _toDisplay(rawValue);
@@ -65,94 +181,15 @@ class UnitValueField extends StatelessWidget {
 
   // ── Dialog ──────────────────────────────────────────────────────────────────
 
-  void _showDialog(BuildContext context) {
-    double editRaw = rawValue;
-    final inputAcc = _accuracy; // constraints.accuracy — precision per role
-    final controller = TextEditingController(
-      text: _displayValue.toStringAsFixed(inputAcc),
-    );
-    final displayMin = _toDisplay(_minRaw);
-    final displayMax = _toDisplay(_maxRaw);
-
-    showDialog<void>(
-      context: context,
-      builder: (ctx) {
-        String? errorText;
-        return StatefulBuilder(
-          builder: (ctx, setState) {
-            void step(int dir) {
-              editRaw = (editRaw + dir * _stepRaw).clamp(_minRaw, _maxRaw);
-              controller.text = _toDisplay(editRaw).toStringAsFixed(inputAcc);
-              errorText = null;
-            }
-
-            return AlertDialog(
-              title: Text('$label  ($_sym)'),
-              content: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.remove),
-                    onPressed: () => setState(() => step(-1)),
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: controller,
-                      autofocus: true,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
-                      textAlign: TextAlign.center,
-                      decoration: InputDecoration(
-                        suffixText: _sym,
-                        errorText: errorText,
-                      ),
-                      onChanged: (text) {
-                        final parsed =
-                            double.tryParse(text.replaceAll(',', '.'));
-                        setState(() {
-                          if (parsed == null) {
-                            errorText = 'Invalid number';
-                          } else if (parsed < displayMin ||
-                              parsed > displayMax) {
-                            errorText =
-                                '${displayMin.toStringAsFixed(inputAcc)} – '
-                                '${displayMax.toStringAsFixed(inputAcc)}';
-                          } else {
-                            errorText = null;
-                            editRaw = _toRaw(parsed);
-                          }
-                        });
-                      },
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () => setState(() => step(1)),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: errorText != null
-                      ? null
-                      : () {
-                          onChanged(editRaw.clamp(_minRaw, _maxRaw));
-                          Navigator.pop(ctx);
-                        },
-                  child: const Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
+  void _showDialog(BuildContext context) => showUnitEditDialog(
+        context,
+        label: label,
+        rawValue: rawValue,
+        constraints: constraints,
+        displayUnit: displayUnit,
+        symbol: symbol,
+        onChanged: onChanged,
+      );
 
   // ── Build ───────────────────────────────────────────────────────────────────
 

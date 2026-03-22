@@ -9,6 +9,7 @@ import '../src/solver/conditions.dart';
 import '../src/solver/unit.dart';
 import 'storage_provider.dart';
 
+
 class ShotProfileNotifier extends AsyncNotifier<ShotProfile> {
   @override
   Future<ShotProfile> build() async {
@@ -42,10 +43,27 @@ class ShotProfileNotifier extends AsyncNotifier<ShotProfile> {
       _update((p) => p.copyWith(lookAngle: Angular(degrees, Unit.degree)));
 
   Future<void> updateTargetDistance(double meters) =>
-      _update((p) => p.copyWith(
-        // targetDistance is not on ShotProfile directly — stored externally
-        // This is a placeholder for when we add that field
-      ));
+      _update((p) => p.copyWith(targetDistance: Distance(meters, Unit.meter)));
+
+  Future<void> updateZeroDistance(double meters) =>
+      _update((p) => p.copyWith(zeroDistance: Distance(meters, Unit.meter)));
+
+  Future<void> updateZeroConditions(Atmo? atmo) => _update((p) => atmo != null
+      ? p.copyWith(zeroConditions: atmo)
+      : p.copyWith(clearZeroConditions: true));
+
+  Future<void> updateWindSpeed(double mps) => _update((p) {
+        final existing = p.winds;
+        final dir = existing.isNotEmpty
+            ? existing.first.directionFrom
+            : Angular(0.0, Unit.degree);
+        final until = existing.isNotEmpty
+            ? existing.first.untilDistance
+            : Distance(9999.0, Unit.meter);
+        return p.copyWith(
+          winds: [Wind(velocity: Velocity(mps, Unit.mps), directionFrom: dir, untilDistance: until)],
+        );
+      });
 
   Future<void> _update(ShotProfile Function(ShotProfile) fn) async {
     final current = state.value ?? seedShotProfile;

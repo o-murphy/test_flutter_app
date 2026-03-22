@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/calculation_provider.dart';
+import '../providers/settings_provider.dart';
 import '../providers/shot_profile_provider.dart';
 import '../router.dart';
 import '../src/solver/conditions.dart' as solver;
 import '../src/solver/unit.dart' as solver;
+import '../src/solver/unit.dart';
 import '../widgets/trajectory_chart.dart';
 import '../widgets/wind_indicator.dart';
 import '../widgets/side_control_block.dart';
@@ -19,22 +21,25 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(shotProfileProvider).value;
+    final units   = ref.watch(unitSettingsProvider);
 
-    final rifleName = profile?.rifle.name ?? '—';
+    final rifleName    = profile?.rifle.name ?? '—';
     final cartridgeName = profile?.cartridge.name ?? '—';
 
+    // Helper: convert a Dimension from its raw unit to the display unit.
+    String dimStr(dynamic dim, Unit rawUnit, Unit dispUnit, {int dec = 0}) {
+      if (dim == null) return '—';
+      final raw  = (dim as dynamic).in_(rawUnit) as double;
+      final disp = (rawUnit(raw) as dynamic).in_(dispUnit) as double;
+      return '${disp.toStringAsFixed(dec)} ${dispUnit.symbol}';
+    }
+
     final conditions = profile?.conditions;
-    final tempStr = conditions != null
-        ? '${conditions.temperature.in_(conditions.temperature.units).toStringAsFixed(0)}°C'
-        : '—';
-    final altStr = conditions != null
-        ? '${conditions.altitude.in_(conditions.altitude.units).toStringAsFixed(0)} m'
-        : '—';
+    final tempStr  = dimStr(conditions?.temperature, Unit.celsius, units.temperature);
+    final altStr   = dimStr(conditions?.altitude,    Unit.meter,   units.distance);
+    final pressStr = dimStr(conditions?.pressure,    Unit.hPa,     units.pressure);
     final humidStr = conditions != null
         ? '${(conditions.humidity * 100).toStringAsFixed(0)}%'
-        : '—';
-    final pressStr = conditions != null
-        ? '${conditions.pressure.in_(conditions.pressure.units).toStringAsFixed(0)} hPa'
         : '—';
 
     return LayoutBuilder(
