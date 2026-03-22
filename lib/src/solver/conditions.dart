@@ -4,11 +4,11 @@ import 'package:test_app/src/solver/unit.dart';
 import 'package:test_app/src/solver/vector.dart';
 
 class Atmo {
-  late Distance    _altitude;
-  late Pressure    _pressure;
+  late Distance _altitude;
+  late Pressure _pressure;
   late Temperature _temperature;
   late Temperature _powderTemp;
-  late double      _humidity;
+  late double _humidity;
 
   late double _densityRatio;
   late double _mach;
@@ -16,29 +16,30 @@ class Atmo {
   late double _p0;
   late double _a0;
 
-  static final double cLowestTempC =
-      Temperature(BallisticConstants.cLowestTempF, Unit.fahrenheit)
-          .in_(Unit.celsius);
+  static final double cLowestTempC = Temperature(
+    BallisticConstants.cLowestTempF,
+    Unit.fahrenheit,
+  ).in_(Unit.celsius);
 
   bool _initializing = true;
 
   Atmo({
-    Distance?    altitude,
-    Pressure?    pressure,
+    Distance? altitude,
+    Pressure? pressure,
     Temperature? temperature,
-    double       humidity = 0.0,
+    double humidity = 0.0,
     Temperature? powderTemperature,
   }) {
     _initializing = true;
 
-    _altitude    = altitude    ?? Distance(0, Unit.meter);
+    _altitude = altitude ?? Distance(0, Unit.meter);
     _temperature = temperature ?? Atmo.standardTemperature(_altitude);
-    _pressure    = pressure    ?? Atmo.standardPressure(_altitude);
-    _powderTemp  = powderTemperature ?? _temperature;
+    _pressure = pressure ?? Atmo.standardPressure(_altitude);
+    _powderTemp = temperature ?? Atmo.standardTemperature(_altitude);
 
-    _t0   = _temperature.in_(Unit.celsius);
-    _p0   = _pressure.in_(Unit.hPa);
-    _a0   = _altitude.in_(Unit.foot);
+    _t0 = _temperature.in_(Unit.celsius);
+    _p0 = _pressure.in_(Unit.hPa);
+    _a0 = _altitude.in_(Unit.foot);
     _mach = Atmo.machF(_temperature.in_(Unit.fahrenheit));
 
     this.humidity = humidity;
@@ -48,13 +49,13 @@ class Atmo {
   }
 
   // --- Getters ---
-  Distance    get altitude    => _altitude;
-  Pressure    get pressure    => _pressure;
+  Distance get altitude => _altitude;
+  Pressure get pressure => _pressure;
   Temperature get temperature => _temperature;
-  Temperature get powderTemp  => _powderTemp;
-  double      get densityRatio => _densityRatio;
-  Velocity    get mach        => Velocity(_mach, Unit.fps);
-  double      get humidity    => _humidity;
+  Temperature get powderTemp => _powderTemp;
+  double get densityRatio => _densityRatio;
+  Velocity get mach => Velocity(_mach, Unit.fps);
+  double get humidity => _humidity;
 
   // --- Setters ---
   set humidity(double value) {
@@ -71,41 +72,42 @@ class Atmo {
         BallisticConstants.cStandardDensityMetric;
   }
 
-  double get densityMetric   => _densityRatio * BallisticConstants.cStandardDensityMetric;
-  double get densityImperial => _densityRatio * BallisticConstants.cStandardDensity;
+  double get densityMetric =>
+      _densityRatio * BallisticConstants.cStandardDensityMetric;
+  double get densityImperial =>
+      _densityRatio * BallisticConstants.cStandardDensity;
 
   // --- Static Methods ---
 
   static Temperature standardTemperature(Distance altitude) => Temperature(
-        BallisticConstants.cStandardTemperatureF +
-            altitude.in_(Unit.foot) * BallisticConstants.cLapseRateImperial,
-        Unit.fahrenheit,
-      );
+    BallisticConstants.cStandardTemperatureF +
+        altitude.in_(Unit.foot) * BallisticConstants.cLapseRateImperial,
+    Unit.fahrenheit,
+  );
 
   static Pressure standardPressure(Distance altitude) => Pressure(
-        BallisticConstants.cStandardPressureMetric *
-            math.pow(
-              1 +
-                  (BallisticConstants.cLapseRateMetric *
-                          altitude.in_(Unit.meter)) /
-                      (BallisticConstants.cStandardTemperatureC +
-                          BallisticConstants.cDegreesCtoK),
-              BallisticConstants.cPressureExponent,
-            ),
-        Unit.hPa,
-      );
+    BallisticConstants.cStandardPressureMetric *
+        math.pow(
+          1 +
+              (BallisticConstants.cLapseRateMetric * altitude.in_(Unit.meter)) /
+                  (BallisticConstants.cStandardTemperatureC +
+                      BallisticConstants.cDegreesCtoK),
+          BallisticConstants.cPressureExponent,
+        ),
+    Unit.hPa,
+  );
 
   factory Atmo.icao({
-    Distance?    altitude,
+    Distance? altitude,
     Temperature? temperature,
-    double       humidity = 0.0,
+    double humidity = 0.0,
   }) {
     final alt = altitude ?? Distance(0, Unit.meter);
     return Atmo(
-      altitude:    alt,
-      pressure:    Atmo.standardPressure(alt),
+      altitude: alt,
+      pressure: Atmo.standardPressure(alt),
       temperature: temperature ?? Atmo.standardTemperature(alt),
-      humidity:    humidity,
+      humidity: humidity,
     );
   }
 
@@ -113,7 +115,9 @@ class Atmo {
     double temp = fahrenheit;
     if (fahrenheit < -BallisticConstants.cDegreesFtoR) {
       // ignore: avoid_print
-      print('Invalid temperature: $fahrenheit°F. Adjusted to ${BallisticConstants.cLowestTempF}°F.');
+      print(
+        'Invalid temperature: $fahrenheit°F. Adjusted to ${BallisticConstants.cLowestTempF}°F.',
+      );
       temp = BallisticConstants.cLowestTempF;
     }
     return math.sqrt(temp + BallisticConstants.cDegreesFtoR) *
@@ -125,7 +129,7 @@ class Atmo {
     double p_hpa,
     double humidityFraction,
   ) {
-    const double R  = 8.314472;
+    const double R = 8.314472;
     const double Ma = 28.96546e-3;
     const double Mv = 18.01528e-3;
 
@@ -140,8 +144,8 @@ class Atmo {
     double compressibilityFactor(double p, double tk, double xv) {
       final tl = tk - BallisticConstants.cDegreesCtoK;
       const a = [1.58123e-6, -2.9331e-8, 1.1043e-10];
-      const b = [5.707e-6,   -2.051e-8];
-      const c = [1.9898e-4,  -2.376e-6];
+      const b = [5.707e-6, -2.051e-8];
+      const c = [1.9898e-4, -2.376e-6];
       const d = 1.83e-11;
       const e = -0.765e-8;
       return 1 -
@@ -154,13 +158,13 @@ class Atmo {
           math.pow(p / tk, 2) * (d + e * math.pow(xv, 2));
     }
 
-    final tk  = tCelsius + BallisticConstants.cDegreesCtoK;
+    final tk = tCelsius + BallisticConstants.cDegreesCtoK;
     final pPa = p_hpa * 100.0;
     final psv = saturationVaporPressure(tk);
-    final f   = enhancementFactor(pPa, tCelsius);
-    final pv  = humidityFraction * f * psv;
-    final xv  = pv / pPa;
-    final z   = compressibilityFactor(pPa, tk, xv);
+    final f = enhancementFactor(pPa, tCelsius);
+    final pv = humidityFraction * f * psv;
+    final xv = pv / pPa;
+    final z = compressibilityFactor(pPa, tk, xv);
 
     return ((pPa * Ma) / (z * R * tk)) * (1 - xv * (1 - Mv / Ma));
   }
@@ -169,13 +173,8 @@ class Atmo {
 class Vacuum extends Atmo {
   static final double cLowestTempC = -BallisticConstants.cDegreesCtoK;
 
-  Vacuum({
-    super.altitude,
-    super.temperature,
-  }) : super(
-          pressure: Pressure(0, Unit.hPa),
-          humidity: 0,
-        );
+  Vacuum({super.altitude, super.temperature})
+    : super(pressure: Pressure(0, Unit.hPa), humidity: 0);
 
   @override
   void updateDensityRatio() => _densityRatio = 0.0;
@@ -183,23 +182,21 @@ class Vacuum extends Atmo {
 
 class Wind {
   final Velocity velocity;
-  final Angular  directionFrom;
+  final Angular directionFrom;
   final Distance untilDistance;
 
   static double maxDistanceFeet = BallisticConstants.cMaxWindDistanceFeet;
 
   Wind({
     Velocity? velocity,
-    Angular?  directionFrom,
+    Angular? directionFrom,
     Distance? untilDistance,
-    double?   customMaxDistanceFeet,
-  })  : velocity      = velocity      ?? Velocity(0, Unit.mps),
-        directionFrom = directionFrom ?? Angular(0, Unit.radian),
-        untilDistance = untilDistance ??
-            Distance(
-              customMaxDistanceFeet ?? maxDistanceFeet,
-              Unit.foot,
-            ) {
+    double? customMaxDistanceFeet,
+  }) : velocity = velocity ?? Velocity(0, Unit.mps),
+       directionFrom = directionFrom ?? Angular(0, Unit.radian),
+       untilDistance =
+           untilDistance ??
+           Distance(customMaxDistanceFeet ?? maxDistanceFeet, Unit.foot) {
     if (customMaxDistanceFeet != null) {
       maxDistanceFeet = customMaxDistanceFeet;
     }
@@ -219,7 +216,7 @@ class Coriolis {
   final double? rangeNorth;
   final double? crossEast;
   final double? crossNorth;
-  final bool   flatFireOnly;
+  final bool flatFireOnly;
   final double muzzleVelocityFps;
 
   Coriolis._({
@@ -256,19 +253,19 @@ class Coriolis {
     }
 
     final azRad = azimuth * (math.pi / 180.0);
-    final sAz   = math.sin(azRad);
-    final cAz   = math.cos(azRad);
+    final sAz = math.sin(azRad);
+    final cAz = math.cos(azRad);
 
     return Coriolis._(
       sinLat: sinLat,
       cosLat: cosLat,
       muzzleVelocityFps: muzzleVelocityFps,
-      sinAz:       sAz,
-      cosAz:       cAz,
-      rangeEast:   sAz,
-      rangeNorth:  cAz,
-      crossEast:   cAz,
-      crossNorth:  -sAz,
+      sinAz: sAz,
+      cosAz: cAz,
+      rangeEast: sAz,
+      rangeNorth: cAz,
+      crossEast: cAz,
+      crossNorth: -sAz,
       flatFireOnly: false,
     );
   }
@@ -278,18 +275,18 @@ class Coriolis {
   Vector coriolisAccelerationLocal(Vector velocity) {
     if (!isFull3d) return Vector.zero;
 
-    final velEast  = velocity.x * rangeEast!  + velocity.z * crossEast!;
+    final velEast = velocity.x * rangeEast! + velocity.z * crossEast!;
     final velNorth = velocity.x * rangeNorth! + velocity.z * crossNorth!;
-    final velUp    = velocity.y;
+    final velUp = velocity.y;
 
     const factor = -2.0 * BallisticConstants.cEarthAngularVelocityRadS;
 
-    final accelEast  = factor * (cosLat * velUp    - sinLat * velNorth);
+    final accelEast = factor * (cosLat * velUp - sinLat * velNorth);
     final accelNorth = factor * (sinLat * velEast);
-    final accelUp    = factor * (-cosLat * velEast);
+    final accelUp = factor * (-cosLat * velEast);
 
-    final accelRange = accelEast * rangeEast!  + accelNorth * rangeNorth!;
-    final accelCross = accelEast * crossEast!  + accelNorth * crossNorth!;
+    final accelRange = accelEast * rangeEast! + accelNorth * rangeNorth!;
+    final accelCross = accelEast * crossEast! + accelNorth * crossNorth!;
 
     return Vector(accelRange, accelUp, accelCross);
   }
@@ -315,7 +312,8 @@ class Coriolis {
           muzzleVelocityFps *
           cosLat *
           sinAz!;
-      vertical = dropFt * (verticalFactor / BallisticConstants.cGravityImperial);
+      vertical =
+          dropFt * (verticalFactor / BallisticConstants.cGravityImperial);
     }
 
     return (vertical, horizontal);

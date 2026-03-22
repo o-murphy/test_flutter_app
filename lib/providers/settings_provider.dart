@@ -33,7 +33,8 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
     final s = state.value ?? const AppSettings();
     await _save(switch (key) {
       'coriolis'               => s.copyWith(enableCoriolis: value),
-      'powderSensitivity'      => s.copyWith(enablePowderSensitivity: value),
+      'powderSensitivity'           => s.copyWith(enablePowderSensitivity: value),
+      'diffPowderTemperature'       => s.copyWith(useDifferentPowderTemperature: value),
       'derivation'             => s.copyWith(enableDerivation: value),
       'aerodynamicJump'        => s.copyWith(enableAerodynamicJump: value),
       'pressureFromAltitude'   => s.copyWith(pressureDependsOnAltitude: value),

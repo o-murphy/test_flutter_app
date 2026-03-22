@@ -13,6 +13,7 @@ class AppSettings {
   final bool showSubsonicTransition;
   final bool enableCoriolis;
   final bool enablePowderSensitivity;
+  final bool useDifferentPowderTemperature;
   final bool enableDerivation;
   final bool enableAerodynamicJump;
   final bool pressureDependsOnAltitude;
@@ -31,8 +32,9 @@ class AppSettings {
     this.chartDistanceStep        = 100,
     this.showSubsonicTransition   = true,
     this.enableCoriolis           = false,
-    this.enablePowderSensitivity  = false,
-    this.enableDerivation         = false,
+    this.enablePowderSensitivity          = false,
+    this.useDifferentPowderTemperature    = false,
+    this.enableDerivation                 = false,
     this.enableAerodynamicJump    = false,
     this.pressureDependsOnAltitude = false,
     this.adjustmentFormat          = AdjustmentFormat.arrows,
@@ -52,6 +54,7 @@ class AppSettings {
     bool? showSubsonicTransition,
     bool? enableCoriolis,
     bool? enablePowderSensitivity,
+    bool? useDifferentPowderTemperature,
     bool? enableDerivation,
     bool? enableAerodynamicJump,
     bool? pressureDependsOnAltitude,
@@ -69,8 +72,9 @@ class AppSettings {
     chartDistanceStep:          chartDistanceStep         ?? this.chartDistanceStep,
     showSubsonicTransition:     showSubsonicTransition    ?? this.showSubsonicTransition,
     enableCoriolis:             enableCoriolis            ?? this.enableCoriolis,
-    enablePowderSensitivity:    enablePowderSensitivity   ?? this.enablePowderSensitivity,
-    enableDerivation:           enableDerivation          ?? this.enableDerivation,
+    enablePowderSensitivity:          enablePowderSensitivity         ?? this.enablePowderSensitivity,
+    useDifferentPowderTemperature:    useDifferentPowderTemperature   ?? this.useDifferentPowderTemperature,
+    enableDerivation:                 enableDerivation                ?? this.enableDerivation,
     enableAerodynamicJump:      enableAerodynamicJump     ?? this.enableAerodynamicJump,
     pressureDependsOnAltitude:  pressureDependsOnAltitude ?? this.pressureDependsOnAltitude,
     adjustmentFormat:           adjustmentFormat          ?? this.adjustmentFormat,
@@ -111,8 +115,9 @@ class AppSettings {
     'chartDistanceStep':          chartDistanceStep,
     'showSubsonicTransition':     showSubsonicTransition,
     'enableCoriolis':             enableCoriolis,
-    'enablePowderSensitivity':    enablePowderSensitivity,
-    'enableDerivation':           enableDerivation,
+    'enablePowderSensitivity':          enablePowderSensitivity,
+    'useDifferentPowderTemperature':    useDifferentPowderTemperature,
+    'enableDerivation':                 enableDerivation,
     'enableAerodynamicJump':      enableAerodynamicJump,
     'pressureDependsOnAltitude':  pressureDependsOnAltitude,
     'adjustmentFormat':           _adjustmentFormatNames[adjustmentFormat],
@@ -131,8 +136,9 @@ class AppSettings {
     chartDistanceStep:          (json['chartDistanceStep'] as num?)?.toDouble() ?? 100,
     showSubsonicTransition:     json['showSubsonicTransition'] as bool? ?? true,
     enableCoriolis:             json['enableCoriolis'] as bool? ?? false,
-    enablePowderSensitivity:    json['enablePowderSensitivity'] as bool? ?? false,
-    enableDerivation:           json['enableDerivation'] as bool? ?? false,
+    enablePowderSensitivity:          json['enablePowderSensitivity']       as bool? ?? false,
+    useDifferentPowderTemperature:    json['useDifferentPowderTemperature'] as bool? ?? false,
+    enableDerivation:                 json['enableDerivation']              as bool? ?? false,
     enableAerodynamicJump:      json['enableAerodynamicJump'] as bool? ?? false,
     pressureDependsOnAltitude:  json['pressureDependsOnAltitude'] as bool? ?? false,
     adjustmentFormat:           _adjustmentFormatByName[json['adjustmentFormat']] ?? AdjustmentFormat.arrows,

@@ -10,12 +10,15 @@ class FieldConstraints {
     required this.minRaw,
     required this.maxRaw,
     required this.stepRaw,
+    required this.accuracy,
   });
 
   final Unit   rawUnit;
   final double minRaw;
   final double maxRaw;
   final double stepRaw;
+  /// Decimal places shown in the display unit.
+  final int    accuracy;
 }
 
 // ─── Role definitions ─────────────────────────────────────────────────────────
@@ -24,118 +27,128 @@ abstract final class FC {
 
   // Environmental
   static const temperature = FieldConstraints(
-    rawUnit: Unit.celsius,
-    minRaw: -90.0,
-    maxRaw:  60.0,
-    stepRaw:  1.0,
+    rawUnit:  Unit.celsius,
+    minRaw:  -100.0,
+    maxRaw:   100.0,
+    stepRaw:    1.0,
+    accuracy:   0,
   );
 
   static const altitude = FieldConstraints(
-    rawUnit: Unit.meter,
-    minRaw:    -500.0,
-    maxRaw:   15000.0,
-    stepRaw:     10.0,
+    rawUnit:  Unit.meter,
+    minRaw:  -500.0,
+    maxRaw:  15000.0,
+    stepRaw:    10.0,
+    accuracy:    0,
   );
 
   static const pressure = FieldConstraints(
-    rawUnit: Unit.hPa,
-    minRaw:  300.0,
-    maxRaw: 1100.0,
-    stepRaw:   1.0,
+    rawUnit:  Unit.hPa,
+    minRaw:   300.0,
+    maxRaw:  1500.0,
+    stepRaw:    1.0,
+    accuracy:   0,
   );
 
   /// Humidity in percent (0–100). No unit conversion.
   static const humidity = FieldConstraints(
-    rawUnit: Unit.second,   // sentinel — no conversion used for humidity
-    minRaw:   0.0,
-    maxRaw: 100.0,
-    stepRaw:  1.0,
+    rawUnit:  Unit.second,  // sentinel — no conversion used for humidity
+    minRaw:    0.0,
+    maxRaw:  100.0,
+    stepRaw:   1.0,
+    accuracy:  0,
   );
 
   // Ballistic inputs
   static const windVelocity = FieldConstraints(
-    rawUnit: Unit.mps,
-    minRaw:  0.0,
-    maxRaw: 30.0,
-    stepRaw: 0.5,
+    rawUnit:  Unit.mps,
+    minRaw:   0.0,
+    maxRaw:  30.0,
+    stepRaw:  0.5,
+    accuracy: 1,
   );
 
   static const lookAngle = FieldConstraints(
-    rawUnit: Unit.degree,
-    minRaw: -90.0,
-    maxRaw:  90.0,
-    stepRaw:  1.0,
+    rawUnit:  Unit.degree,
+    minRaw:  -90.0,
+    maxRaw:   90.0,
+    stepRaw:   1.0,
+    accuracy:  1,
   );
 
   static const targetDistance = FieldConstraints(
-    rawUnit: Unit.meter,
+    rawUnit:  Unit.meter,
     minRaw:    10.0,
     maxRaw:  3000.0,
     stepRaw:   10.0,
+    accuracy:   0,
   );
 
   // Weapon / optics
   static const sightHeight = FieldConstraints(
-    rawUnit: Unit.millimeter,
-    minRaw:   0.0,
-    maxRaw: 200.0,
-    stepRaw:  1.0,
+    rawUnit:  Unit.millimeter,
+    minRaw:    0.0,
+    maxRaw:  200.0,
+    stepRaw:   1.0,
+    accuracy:  1,
   );
 
   static const twistRate = FieldConstraints(
-    rawUnit: Unit.inch,
-    minRaw:  1.0,
-    maxRaw: 30.0,
-    stepRaw: 0.5,
+    rawUnit:  Unit.inch,
+    minRaw:   1.0,
+    maxRaw:  30.0,
+    stepRaw:  0.5,
+    accuracy: 1,
   );
 
   static const zeroDistance = FieldConstraints(
-    rawUnit: Unit.meter,
-    minRaw:   10.0,
-    maxRaw: 1000.0,
-    stepRaw:  10.0,
+    rawUnit:  Unit.meter,
+    minRaw:    10.0,
+    maxRaw:  1000.0,
+    stepRaw:   10.0,
+    accuracy:   0,
   );
 
   // Projectile
   static const muzzleVelocity = FieldConstraints(
-    rawUnit: Unit.mps,
+    rawUnit:  Unit.mps,
     minRaw:   100.0,
     maxRaw:  1800.0,
     stepRaw:    1.0,
+    accuracy:   0,
   );
 
   static const bulletWeight = FieldConstraints(
-    rawUnit: Unit.grain,
-    minRaw:   1.0,
-    maxRaw: 800.0,
-    stepRaw:  0.1,
+    rawUnit:  Unit.grain,
+    minRaw:    1.0,
+    maxRaw:  800.0,
+    stepRaw:   0.1,
+    accuracy:  1,
   );
 
   static const bulletLength = FieldConstraints(
-    rawUnit: Unit.millimeter,
-    minRaw:   1.0,
-    maxRaw: 100.0,
-    stepRaw:  0.1,
+    rawUnit:  Unit.millimeter,
+    minRaw:    1.0,
+    maxRaw:  100.0,
+    stepRaw:   0.1,
+    accuracy:  1,
   );
 
   static const bulletDiameter = FieldConstraints(
-    rawUnit: Unit.millimeter,
-    minRaw:  1.0,
-    maxRaw: 30.0,
-    stepRaw: 0.01,
+    rawUnit:  Unit.millimeter,
+    minRaw:   1.0,
+    maxRaw:  30.0,
+    stepRaw:  0.01,
+    accuracy: 2,
   );
 
   static const ballisticCoefficient = FieldConstraints(
-    rawUnit: Unit.second,   // sentinel — dimensionless, no conversion
-    minRaw:  0.001,
-    maxRaw:  2.000,
-    stepRaw: 0.001,
-  );
-
-  static const powderTemperature = FieldConstraints(
-    rawUnit: Unit.celsius,
-    minRaw: -40.0,
-    maxRaw:  60.0,
-    stepRaw:  1.0,
+    rawUnit:  Unit.second,  // sentinel — dimensionless, no conversion
+    minRaw:   0.001,
+    maxRaw:   2.000,
+    stepRaw:  0.001,
+    accuracy: 3,
   );
 }
+
+
