@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:test_app/src/solver/ffi/bclibc_ffi.dart';
+import 'package:test_app/src/solver/trajectory_data.dart';
+import 'package:test_app/src/solver/unit.dart';
 
 const _ftToM   = 1.0 / 3.28084;
 const _ftToCm  = 30.48;
@@ -7,7 +8,7 @@ const _fpsToms = 1.0 / 3.28084;
 const _ftLbToJ = 1.35582;
 
 class TrajectoryTable extends StatelessWidget {
-  final List<BcTrajectoryData> traj;
+  final List<TrajectoryData> traj;
   final double availableWidth;
 
   const TrajectoryTable({
@@ -25,7 +26,7 @@ class TrajectoryTable extends StatelessWidget {
     int zeroIdx = 0;
     double minAbs = 1e9;
     for (var i = 0; i < traj.length; i++) {
-      final a = traj[i].slantHeightFt.abs();
+      final a = traj[i].slantHeight.in_(Unit.foot).abs();
       if (a < minAbs) { minAbs = a; zeroIdx = i; }
     }
 
@@ -49,19 +50,19 @@ class TrajectoryTable extends StatelessWidget {
       ('Energy',  'J'),
     ];
 
-    List<String> rowData(BcTrajectoryData r) => [
+    List<String> rowData(TrajectoryData r) => [
       r.time.toStringAsFixed(3),
-      (r.distanceFt  * _ftToM).toStringAsFixed(0),
-      (r.velocityFps * _fpsToms).toStringAsFixed(0),
-      (r.heightFt    * _ftToCm).toStringAsFixed(1),
-      (r.slantHeightFt * _ftToCm).toStringAsFixed(1),
-      (r.dropAngleRad    * 1000).toStringAsFixed(2),
-      (r.windageFt   * _ftToCm).toStringAsFixed(1),
-      (r.windageAngleRad * 1000).toStringAsFixed(2),
+      (r.distance.in_(Unit.foot)     * _ftToM  ).toStringAsFixed(0),
+      (r.velocity.in_(Unit.fps)      * _fpsToms).toStringAsFixed(0),
+      (r.height.in_(Unit.foot)       * _ftToCm ).toStringAsFixed(1),
+      (r.slantHeight.in_(Unit.foot)  * _ftToCm ).toStringAsFixed(1),
+      (r.dropAngle.in_(Unit.radian)  * 1000    ).toStringAsFixed(2),
+      (r.windage.in_(Unit.foot)      * _ftToCm ).toStringAsFixed(1),
+      (r.windageAngle.in_(Unit.radian) * 1000  ).toStringAsFixed(2),
       r.mach.toStringAsFixed(2),
       r.densityRatio.toStringAsFixed(3),
       r.drag.toStringAsFixed(4),
-      (r.energyFtLb  * _ftLbToJ).toStringAsFixed(0),
+      (r.energy.in_(Unit.footPound)  * _ftLbToJ).toStringAsFixed(0),
     ];
 
     List<TableRow> rows() => [

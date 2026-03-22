@@ -35,6 +35,11 @@ class _WindIndicatorState extends State<WindIndicator> {
     });
   }
 
+  void _reset() {
+    setState(() => angle = -pi / 2); // 12 o'clock = 0°
+    _commit();
+  }
+
   // Commits the current angle to the parent (called on gesture end / tap).
   void _commit() {
     double degrees = (angle * 180 / pi + 90) % 360;
@@ -54,6 +59,7 @@ class _WindIndicatorState extends State<WindIndicator> {
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, constraints.maxHeight);
         return GestureDetector(
+          onDoubleTap: _reset,
           onPanUpdate: (details) => _updateAngle(details.localPosition, size),
           onPanEnd:    (_)       => _commit(),
           onTapDown:   (details) { _updateAngle(details.localPosition, size); _commit(); },

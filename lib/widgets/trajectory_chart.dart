@@ -1,13 +1,14 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:test_app/src/solver/ffi/bclibc_ffi.dart';
+import 'package:test_app/src/solver/trajectory_data.dart';
+import 'package:test_app/src/solver/unit.dart';
 
 const _ftToM   = 1.0 / 3.28084;
 const _ftToCm  = 30.48;
 const _fpsToms = 1.0 / 3.28084;
 
 class TrajectoryChart extends StatelessWidget {
-  final List<BcTrajectoryData> traj;
+  final List<TrajectoryData> traj;
 
   const TrajectoryChart({super.key, required this.traj});
 
@@ -31,7 +32,7 @@ class TrajectoryChart extends StatelessWidget {
 }
 
 class _ChartPainter extends CustomPainter {
-  final List<BcTrajectoryData> traj;
+  final List<TrajectoryData> traj;
   final Color heightColor, velColor, gridColor, textColor;
 
   static const _ml = 52.0, _mr = 56.0, _mt = 20.0, _mb = 36.0;
@@ -49,9 +50,9 @@ class _ChartPainter extends CustomPainter {
     final pw = size.width  - _ml - _mr;
     final ph = size.height - _mt - _mb;
 
-    final heights = traj.map((r) => r.heightFt * _ftToCm).toList();
-    final vels    = traj.map((r) => r.velocityFps * _fpsToms).toList();
-    final dists   = traj.map((r) => r.distanceFt * _ftToM).toList();
+    final heights = traj.map((r) => r.height.in_(Unit.foot) * _ftToCm).toList();
+    final vels    = traj.map((r) => r.velocity.in_(Unit.fps) * _fpsToms).toList();
+    final dists   = traj.map((r) => r.distance.in_(Unit.foot) * _ftToM).toList();
 
     final xMin = dists.first, xMax = dists.last;
     final yHMin = (heights.reduce(math.min) * 1.1).floorToDouble();

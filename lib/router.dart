@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'providers/calculation_provider.dart';
 
 import 'screens/home_screen.dart';
 import 'screens/home_sub_screens.dart';
@@ -136,20 +138,42 @@ final appRouter = GoRouter(
 
 // ─── Shell with persistent bottom nav ────────────────────────────────────────
 
-class _ScaffoldWithNav extends StatelessWidget {
+class _ScaffoldWithNav extends ConsumerStatefulWidget {
   const _ScaffoldWithNav({required this.shell});
   final StatefulNavigationShell shell;
 
   @override
+  ConsumerState<_ScaffoldWithNav> createState() => _ScaffoldWithNavState();
+}
+
+class _ScaffoldWithNavState extends ConsumerState<_ScaffoldWithNav> {
+  // Tabs 0 (Home) and 2 (Tables) trigger recalculation.
+  static const _calcTabs = {0, 2};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _triggerCalcIfNeeded(widget.shell.currentIndex));
+  }
+
+  void _triggerCalcIfNeeded(int i) {
+    if (_calcTabs.contains(i)) {
+      ref.read(calculationProvider.notifier).recalculateIfNeeded();
+    }
+  }
+
+  void _onTabSelected(int i) {
+    widget.shell.goBranch(i, initialLocation: i == widget.shell.currentIndex);
+    _triggerCalcIfNeeded(i);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(child: shell),
+      body: SafeArea(child: widget.shell),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: shell.currentIndex,
-        onDestinationSelected: (i) => shell.goBranch(
-          i,
-          initialLocation: i == shell.currentIndex,
-        ),
+        selectedIndex: widget.shell.currentIndex,
+        onDestinationSelected: _onTabSelected,
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined),        label: 'Home'),
           NavigationDestination(icon: Icon(Icons.thunderstorm_outlined), label: 'Conditions'),

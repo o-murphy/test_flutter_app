@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../providers/calculation_provider.dart';
 import '../providers/shot_profile_provider.dart';
 import '../router.dart';
+import '../widgets/trajectory_chart.dart';
 import '../widgets/wind_indicator.dart';
 import '../widgets/side_control_block.dart';
 import '../widgets/quick_actions_panel.dart';
@@ -138,24 +140,26 @@ class HomeScreen extends ConsumerWidget {
             ),
 
             // ── Bottom block — 3 pages ────────────────────────────────────────
-            ScrollConfiguration(
-              behavior: ScrollConfiguration.of(context).copyWith(
-                dragDevices: {
-                  PointerDeviceKind.touch,
-                  PointerDeviceKind.mouse,
-                  PointerDeviceKind.trackpad,
-                },
-              ),
-              child: SizedBox(
-                height: botBlockHeight,
-                child: PageView(
-                  children: const [
-                    _PageReticle(),
-                    _PageTable(),
-                    _PageChart(),
-                  ],
-                ),
-              ),
+            SizedBox(
+              height: botBlockHeight,
+              child: ref.watch(calculationProvider).isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(
+                        dragDevices: {
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.mouse,
+                          PointerDeviceKind.trackpad,
+                        },
+                      ),
+                      child: PageView(
+                        children: const [
+                          _PageReticle(),
+                          _PageTable(),
+                          _PageChart(),
+                        ],
+                      ),
+                    ),
             ),
           ],
         );
@@ -178,8 +182,14 @@ class _PageTable extends StatelessWidget {
   Widget build(BuildContext context) => const Center(child: Text('Adjustments Table'));
 }
 
-class _PageChart extends StatelessWidget {
+class _PageChart extends ConsumerWidget {
   const _PageChart();
   @override
-  Widget build(BuildContext context) => const Center(child: Text('Trajectory Chart'));
+  Widget build(BuildContext context, WidgetRef ref) {
+    final calc = ref.watch(calculationProvider);
+    if (calc.isLoading) return const Center(child: CircularProgressIndicator());
+    final traj = calc.value?.trajectory ?? [];
+    if (traj.isEmpty) return const Center(child: Text('No data'));
+    return TrajectoryChart(traj: traj);
+  }
 }
