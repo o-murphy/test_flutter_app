@@ -28,8 +28,8 @@ class IconValueButton extends StatelessWidget {
             child: FloatingActionButton(
               heroTag: heroTag,
               onPressed: onTap,
-              backgroundColor: cs.surfaceContainerHighest,
-              foregroundColor: cs.onSurface,
+              backgroundColor: cs.primaryContainer,
+              foregroundColor: cs.onPrimaryContainer,
               elevation: 1,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -69,29 +69,24 @@ class IconValueButtonRow extends StatelessWidget {
     super.key,
     required this.items,
     this.height = 100,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     this.spacing = 8.0,
   });
 
   final List<IconValueButton> items;
   final double height;
-  final EdgeInsets padding;
   final double spacing;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: height,
-      child: Padding(
-        padding: padding,
-        child: Row(
-          children: [
-            for (var i = 0; i < items.length; i++) ...[
-              if (i > 0) SizedBox(width: spacing),
-              Expanded(child: items[i]),
-            ],
+      child: Row(
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0) SizedBox(width: spacing),
+            Expanded(child: items[i]),
           ],
-        ),
+        ],
       ),
     );
   }

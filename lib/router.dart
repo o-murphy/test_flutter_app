@@ -164,7 +164,9 @@ class _ScaffoldWithNavState extends ConsumerState<_ScaffoldWithNav> {
   }
 
   void _onTabSelected(int i) {
-    widget.shell.goBranch(i, initialLocation: i == widget.shell.currentIndex);
+    // Always go to the root of the branch — prevents sub-screens from persisting
+    // across tab switches. Tapping the current tab also resets to root.
+    widget.shell.goBranch(i, initialLocation: true);
     _triggerCalcIfNeeded(i);
   }
 

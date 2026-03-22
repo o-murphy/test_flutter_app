@@ -50,6 +50,22 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
     await _save((state.value ?? const AppSettings()).copyWith(chartDistanceStep: step));
   }
 
+  Future<void> setAdjustmentFormat(AdjustmentFormat format) async {
+    await _save((state.value ?? const AppSettings()).copyWith(adjustmentFormat: format));
+  }
+
+  Future<void> setAdjustmentToggle(String key, bool value) async {
+    final s = state.value ?? const AppSettings();
+    await _save(switch (key) {
+      'showMrad'       => s.copyWith(showMrad: value),
+      'showMoa'        => s.copyWith(showMoa: value),
+      'showMil'        => s.copyWith(showMil: value),
+      'showCmPer100m'  => s.copyWith(showCmPer100m: value),
+      'showInPer100yd' => s.copyWith(showInPer100yd: value),
+      _                => s,
+    });
+  }
+
   Future<void> _save(AppSettings s) async {
     state = AsyncData(s);
     await ref.read(appStorageProvider).saveSettings(s);

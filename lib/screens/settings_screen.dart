@@ -14,7 +14,6 @@ class SettingsScreen extends ConsumerWidget {
     final settings = ref.watch(settingsProvider).value ?? const AppSettings();
 
     final notifier = ref.read(settingsProvider.notifier);
-    final cs       = Theme.of(context).colorScheme;
     final tt       = Theme.of(context).textTheme;
 
     return Column(
@@ -28,9 +27,10 @@ class SettingsScreen extends ConsumerWidget {
               _SectionHeader('Language'),
               ListTile(
                 leading: const Icon(Icons.language_outlined),
-                title: const Text('English'),
-                trailing: Icon(Icons.check, color: cs.primary),
+                title: Text(_languageName(settings.languageCode)),
+                trailing: const Icon(Icons.chevron_right),
                 dense: true,
+                onTap: () => _showLanguageDialog(context, settings.languageCode, notifier.setLanguage),
               ),
               const Divider(height: 1),
 
@@ -159,6 +159,40 @@ class SettingsScreen extends ConsumerWidget {
       ],
     );
   }
+}
+
+// ─── Language helpers ─────────────────────────────────────────────────────────
+
+String _languageName(String code) => switch (code) {
+  'uk' => 'Українська',
+  _    => 'English',
+};
+
+void _showLanguageDialog(
+  BuildContext context,
+  String current,
+  Future<void> Function(String) onSelect,
+) {
+  const langs = [('en', 'English'), ('uk', 'Українська')];
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Language'),
+      content: RadioGroup<String>(
+        groupValue: current,
+        onChanged: (v) {
+          if (v != null) { onSelect(v); Navigator.pop(ctx); }
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: langs.map((l) => RadioListTile<String>(
+            value: l.$1,
+            title: Text(l.$2),
+          )).toList(),
+        ),
+      ),
+    ),
+  );
 }
 
 // ─── Header ──────────────────────────────────────────────────────────────────

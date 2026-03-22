@@ -654,6 +654,7 @@ eballistica_backup.zip
 | Tables — Export wired | Stub | 8.7 |
 | Home — Page 1 (reticle + adjustments) | Stub | 6 |
 | Home — Page 2 (adjustment tables) | Stub | 6 |
+| Home — Page 3 (details and interactivity)
 | Conditions screen | Stub | 7 |
 | Convertors screen | Grid stub | 9 |
 | Rifle/Cartridge/Sight selection | Stubs | 11 |

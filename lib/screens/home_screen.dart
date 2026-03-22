@@ -20,20 +20,20 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(shotProfileProvider).value;
 
-    final rifleName     = profile?.rifle.name      ?? '—';
-    final cartridgeName = profile?.cartridge.name  ?? '—';
+    final rifleName = profile?.rifle.name ?? '—';
+    final cartridgeName = profile?.cartridge.name ?? '—';
 
-    final conditions    = profile?.conditions;
-    final tempStr       = conditions != null
+    final conditions = profile?.conditions;
+    final tempStr = conditions != null
         ? '${conditions.temperature.in_(conditions.temperature.units).toStringAsFixed(0)}°C'
         : '—';
-    final altStr        = conditions != null
+    final altStr = conditions != null
         ? '${conditions.altitude.in_(conditions.altitude.units).toStringAsFixed(0)} m'
         : '—';
-    final humidStr      = conditions != null
+    final humidStr = conditions != null
         ? '${(conditions.humidity * 100).toStringAsFixed(0)}%'
         : '—';
-    final pressStr      = conditions != null
+    final pressStr = conditions != null
         ? '${conditions.pressure.in_(conditions.pressure.units).toStringAsFixed(0)} hPa'
         : '—';
 
@@ -52,23 +52,24 @@ class HomeScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainer,
                 borderRadius: const BorderRadius.only(
-                  bottomLeft:  Radius.circular(32),
+                  bottomLeft: Radius.circular(32),
                   bottomRight: Radius.circular(32),
                 ),
               ),
               child: SafeArea(
-                child: Column(
-                  children: [
-                    // Rifle / cartridge selector row
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Row(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+                  child: Column(
+                    children: [
+                      // Rifle / cartridge selector row
+                      Row(
                         children: [
                           Expanded(
                             child: FilledButton.tonal(
                               onPressed: () => context.push(Routes.rifleSelect),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
                                     child: Text(
@@ -83,66 +84,79 @@ class HomeScreen extends ConsumerWidget {
                           ),
                           const SizedBox(width: 8),
                           IconButton.filledTonal(
-                            onPressed: () => context.push(Routes.projectileSelect),
+                            onPressed: () =>
+                                context.push(Routes.projectileSelect),
                             icon: const Icon(Icons.rocket_launch_outlined),
                           ),
                         ],
                       ),
-                    ),
 
-                    // Wind indicator + side controls
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 1,
-                            child: SideControlBlock(
-                              topIcon:    Icons.info_outline,
-                              bottomIcon: Icons.note_add_outlined,
-                              infoRows: [
-                                (Icons.thunderstorm_outlined,      ''),
-                                (Icons.device_thermostat_outlined,  tempStr),
-                                (Icons.terrain_outlined,            altStr),
-                              ],
-                              onTopPressed:    () => context.push(Routes.shotDetails),
-                              onBottomPressed: () {},
-                            ),
+                      // Wind indicator + side controls
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(0, 12, 0, 12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 1,
+                                child: SideControlBlock(
+                                  topIcon: Icons.info_outline,
+                                  bottomIcon: Icons.note_add_outlined,
+                                  infoRows: [
+                                    (Icons.device_thermostat_outlined, tempStr),
+                                    (Icons.terrain_outlined, altStr),
+                                  ],
+                                  onTopPressed: () =>
+                                      context.push(Routes.shotDetails),
+                                  onBottomPressed: () {},
+                                ),
+                              ),
+                              Expanded(
+                                flex: 3,
+                                child: WindIndicator(
+                                  onAngleChanged: (degrees, _) {
+                                    final existing =
+                                        ref
+                                            .read(shotProfileProvider)
+                                            .value
+                                            ?.winds ??
+                                        [];
+                                    final wind = solver.Wind(
+                                      velocity: existing.isNotEmpty
+                                          ? existing.first.velocity
+                                          : solver.Velocity(0, solver.Unit.mps),
+                                      directionFrom: solver.Angular(
+                                        degrees,
+                                        solver.Unit.degree,
+                                      ),
+                                    );
+                                    ref
+                                        .read(shotProfileProvider.notifier)
+                                        .updateWinds([wind]);
+                                  },
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: SideControlBlock(
+                                  topIcon: Icons.question_mark_outlined,
+                                  bottomIcon: Icons.more_horiz_outlined,
+                                  infoRows: [
+                                    (Icons.water_drop_outlined, humidStr),
+                                    (Icons.speed_outlined, pressStr),
+                                  ],
+                                  onTopPressed: () {},
+                                  onBottomPressed: () {},
+                                ),
+                              ),
+                            ],
                           ),
-                          Expanded(
-                            flex: 2,
-                            child: WindIndicator(
-                              onAngleChanged: (degrees, _) {
-                                final existing = ref.read(shotProfileProvider).value?.winds ?? [];
-                                final wind = solver.Wind(
-                                  velocity: existing.isNotEmpty
-                                      ? existing.first.velocity
-                                      : solver.Velocity(0, solver.Unit.mps),
-                                  directionFrom: solver.Angular(degrees, solver.Unit.degree),
-                                );
-                                ref.read(shotProfileProvider.notifier).updateWinds([wind]);
-                              },
-                            ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: SideControlBlock(
-                              topIcon:    Icons.question_mark_outlined,
-                              bottomIcon: Icons.more_horiz_outlined,
-                              infoRows: [
-                                (Icons.thunderstorm_outlined, ''),
-                                (Icons.water_drop_outlined,   humidStr),
-                                (Icons.speed_outlined,        pressStr),
-                              ],
-                              onTopPressed:    () {},
-                              onBottomPressed: () {},
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
 
-                    const QuickActionsPanel(),
-                  ],
+                      SizedBox(height: 80, child: const QuickActionsPanel()),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -150,6 +164,7 @@ class HomeScreen extends ConsumerWidget {
             // ── Bottom block — 3 pages ────────────────────────────────────────
             SizedBox(
               height: botBlockHeight,
+
               child: ref.watch(calculationProvider).isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : ScrollConfiguration(
@@ -181,13 +196,15 @@ class HomeScreen extends ConsumerWidget {
 class _PageReticle extends StatelessWidget {
   const _PageReticle();
   @override
-  Widget build(BuildContext context) => const Center(child: Text('Reticle & Adjustments'));
+  Widget build(BuildContext context) =>
+      const Center(child: Text('Reticle & Adjustments'));
 }
 
 class _PageTable extends StatelessWidget {
   const _PageTable();
   @override
-  Widget build(BuildContext context) => const Center(child: Text('Adjustments Table'));
+  Widget build(BuildContext context) =>
+      const Center(child: Text('Adjustments Table'));
 }
 
 class _PageChart extends ConsumerWidget {

@@ -8,12 +8,30 @@ class QuickActionsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconValueButtonRow(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      
       height: 104,
       items: [
-        IconValueButton(icon: Icons.air_outlined,  value: '5.4 m/s', label: 'Wind speed',    onTap: () {}, heroTag: 'qa-wind'),
-        IconValueButton(icon: Icons.square_foot,    value: '0°',      label: 'Look angle',   onTap: () {}, heroTag: 'qa-angle'),
-        IconValueButton(icon: Icons.flag_outlined,  value: '420 m',   label: 'Target range', onTap: () {}, heroTag: 'qa-range'),
+        IconValueButton(
+          icon: Icons.air_outlined,
+          value: '5.4 m/s',
+          label: 'Wind speed',
+          onTap: () {},
+          heroTag: 'qa-wind',
+        ),
+        IconValueButton(
+          icon: Icons.square_foot,
+          value: '0°',
+          label: 'Look angle',
+          onTap: () {},
+          heroTag: 'qa-angle',
+        ),
+        IconValueButton(
+          icon: Icons.flag_outlined,
+          value: '420 m',
+          label: 'Target range',
+          onTap: () {},
+          heroTag: 'qa-range',
+        ),
       ],
     );
   }
