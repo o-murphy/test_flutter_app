@@ -121,8 +121,8 @@ List<BcTrajectoryData> _runCalc() {
   final result = bc.integrate(
     makeProps(atmo: _bcAtmo(curAtmo), barrelElevationRad: zeroAngle),
     BcTrajectoryRequest(
-      rangeLimitFt: 1000.0 * 3.28084,
-      rangeStepFt: 100.0 * 3.28084,
+      rangeLimitFt: 500.0 * 3.28084,
+      rangeStepFt: 10.0 * 3.28084,
       filterFlags: BCTrajFlag.BC_TRAJ_FLAG_RANGE,
     ),
   );

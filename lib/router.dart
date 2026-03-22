@@ -38,7 +38,8 @@ abstract final class Routes {
   static String convertorOf(String type) => '/convertors/$type';
 
   // Settings stack
-  static const settingsUnits     = '/settings/units';
+  static const settingsUnits       = '/settings/units';
+  static const settingsAdjustment  = '/settings/adjustment';
 }
 
 // ─── Router ──────────────────────────────────────────────────────────────────
@@ -122,7 +123,8 @@ final appRouter = GoRouter(
             path: Routes.settings,
             builder: (_, _) => const SettingsScreen(),
             routes: [
-              GoRoute(path: 'units', builder: (_, _) => const UnitsScreen()),
+              GoRoute(path: 'units',       builder: (_, _) => const UnitsScreen()),
+              GoRoute(path: 'adjustment',  builder: (_, _) => const AdjustmentDisplayScreen()),
             ],
           ),
         ]),

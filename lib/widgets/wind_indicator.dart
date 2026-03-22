@@ -24,33 +24,28 @@ class _WindIndicatorState extends State<WindIndicator> {
     angle = widget.initialAngle;
   }
 
-  void _handleGesture(Offset localPosition, Size size) {
+  // Updates local visual state only — does NOT notify parent.
+  void _updateAngle(Offset localPosition, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-
-    double rawAngle = atan2(
-      localPosition.dy - center.dy,
-      localPosition.dx - center.dx,
-    );
-
+    final rawAngle = atan2(localPosition.dy - center.dy, localPosition.dx - center.dx);
     double degrees = (rawAngle * 180 / pi + 90) % 360;
     if (degrees < 0) degrees += 360;
-
-    double snappedDegrees = degrees.roundToDouble();
-
-    double snappedAngle = (snappedDegrees - 90) * pi / 180;
-
     setState(() {
-      angle = snappedAngle;
+      angle = (degrees.roundToDouble() - 90) * pi / 180;
     });
+  }
 
-    final totalMin = (snappedDegrees * 2).round();
+  // Commits the current angle to the parent (called on gesture end / tap).
+  void _commit() {
+    double degrees = (angle * 180 / pi + 90) % 360;
+    if (degrees < 0) degrees += 360;
+    degrees = degrees.roundToDouble();
+    final totalMin = (degrees * 2).round();
     int hour = (totalMin ~/ 60) % 12;
     if (hour == 0) hour = 12;
     final minute = totalMin % 60;
-    String clockFormat =
-        "${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}";
-
-    widget.onAngleChanged(snappedDegrees, clockFormat);
+    final clockFormat = '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+    widget.onAngleChanged(degrees, clockFormat);
   }
 
   @override
@@ -59,8 +54,9 @@ class _WindIndicatorState extends State<WindIndicator> {
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, constraints.maxHeight);
         return GestureDetector(
-          onPanUpdate: (details) => _handleGesture(details.localPosition, size),
-          onTapDown: (details) => _handleGesture(details.localPosition, size),
+          onPanUpdate: (details) => _updateAngle(details.localPosition, size),
+          onPanEnd:    (_)       => _commit(),
+          onTapDown:   (details) { _updateAngle(details.localPosition, size); _commit(); },
           child: CustomPaint(
             painter: WindPainter(
               angle: angle,

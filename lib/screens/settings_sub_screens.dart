@@ -6,3 +6,9 @@ class UnitsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const StubScreen(title: 'Units of Measurement');
 }
+
+class AdjustmentDisplayScreen extends StatelessWidget {
+  const AdjustmentDisplayScreen({super.key});
+  @override
+  Widget build(BuildContext context) => const StubScreen(title: 'Adjustment Display');
+}

@@ -771,7 +771,8 @@ Isar may be added later as an alternative implementation behind the same interfa
 | `screens/_stub_screen.dart` | Reusable stub with back button header |
 | `screens/home_sub_screens.dart` | Stubs: RifleSelect, RifleEdit, SightSelect, Cartridge, CartridgeEdit, ProjectileSelect, ProjectileEdit, ShotDetails |
 | `screens/tables_sub_screens.dart` | Stub: TableConfig |
-| `screens/settings_sub_screens.dart` | Stub: Units |
+| `screens/settings_screen.dart` | Full Settings screen — language, units nav, theme selector, ballistics switches, distance steps, export/import, links, about |
+| `screens/settings_sub_screens.dart` | Stubs: UnitsScreen, AdjustmentDisplayScreen |
 | `widgets/wind_indicator.dart` | `WindIndicator` — interactive wind direction wheel |
 | `widgets/side_control_block.dart` | `SideControlBlock` |
 | `widgets/quick_actions_panel.dart` | `QuickActionsPanel` |
@@ -954,15 +955,22 @@ Connect to `ShotProfileNotifier.updateConditions()`. All fields — keyboard inp
 
 ---
 
-### Phase 10 — Settings Screen
+### Phase 10 — Settings Screen ✅
 
-- Language selector
-- Units → `/settings/units` (list of categories, segmented selectors, reads/writes `unitSettingsProvider`)
-- Theme → Light / Dark / System
-- All switches from `AppSettings`
-- Table distance step
-- Import / Export (ZIP archive, 5 files)
-- Version / License / Links
+Implemented as a full scrollable `ConsumerWidget`:
+- Language (English only, placeholder)
+- Units of Measurement → `/settings/units` (stub)
+- Theme selector — `SegmentedButton` (System / Light / Dark) → `themeModeProvider`
+- Adjustment Display → `/settings/adjustment` (stub)
+- Switch: Show subsonic transition → `AppSettings.showSubsonicTransition`
+- Table distance step — tap to enter via dialog → `AppSettings.tableDistanceStep`
+- Chart distance step — tap to enter via dialog → `AppSettings.chartDistanceStep`
+- Export / Import profile buttons (stubs)
+- GitHub / Privacy Policy / Terms of Use links (stubs)
+- Version (hardcoded 1.0.0) + Changelog link (stub)
+
+`AppSettings` extended with `chartDistanceStep` + `showSubsonicTransition`.
+`SettingsNotifier` extended with `setChartDistanceStep` + `subsonicTransition` switch key.
 
 ---
 

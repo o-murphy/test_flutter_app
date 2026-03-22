@@ -7,6 +7,8 @@ class AppSettings {
   final String languageCode;
   final ThemeMode themeMode;
   final double tableDistanceStep;
+  final double chartDistanceStep;
+  final bool showSubsonicTransition;
   final bool enableCoriolis;
   final bool enablePowderSensitivity;
   final bool enableDerivation;
@@ -18,6 +20,8 @@ class AppSettings {
     this.languageCode             = 'en',
     this.themeMode                = ThemeMode.system,
     this.tableDistanceStep        = 100,
+    this.chartDistanceStep        = 100,
+    this.showSubsonicTransition   = true,
     this.enableCoriolis           = false,
     this.enablePowderSensitivity  = false,
     this.enableDerivation         = false,
@@ -30,6 +34,8 @@ class AppSettings {
     String? languageCode,
     ThemeMode? themeMode,
     double? tableDistanceStep,
+    double? chartDistanceStep,
+    bool? showSubsonicTransition,
     bool? enableCoriolis,
     bool? enablePowderSensitivity,
     bool? enableDerivation,
@@ -40,6 +46,8 @@ class AppSettings {
     languageCode:               languageCode              ?? this.languageCode,
     themeMode:                  themeMode                 ?? this.themeMode,
     tableDistanceStep:          tableDistanceStep         ?? this.tableDistanceStep,
+    chartDistanceStep:          chartDistanceStep         ?? this.chartDistanceStep,
+    showSubsonicTransition:     showSubsonicTransition    ?? this.showSubsonicTransition,
     enableCoriolis:             enableCoriolis            ?? this.enableCoriolis,
     enablePowderSensitivity:    enablePowderSensitivity   ?? this.enablePowderSensitivity,
     enableDerivation:           enableDerivation          ?? this.enableDerivation,
@@ -63,6 +71,8 @@ class AppSettings {
     'languageCode':               languageCode,
     'themeMode':                  _themeModeNames[themeMode],
     'tableDistanceStep':          tableDistanceStep,
+    'chartDistanceStep':          chartDistanceStep,
+    'showSubsonicTransition':     showSubsonicTransition,
     'enableCoriolis':             enableCoriolis,
     'enablePowderSensitivity':    enablePowderSensitivity,
     'enableDerivation':           enableDerivation,
@@ -75,6 +85,8 @@ class AppSettings {
     languageCode:               json['languageCode'] as String? ?? 'en',
     themeMode:                  _themeModeByName[json['themeMode']] ?? ThemeMode.system,
     tableDistanceStep:          (json['tableDistanceStep'] as num?)?.toDouble() ?? 100,
+    chartDistanceStep:          (json['chartDistanceStep'] as num?)?.toDouble() ?? 100,
+    showSubsonicTransition:     json['showSubsonicTransition'] as bool? ?? true,
     enableCoriolis:             json['enableCoriolis'] as bool? ?? false,
     enablePowderSensitivity:    json['enablePowderSensitivity'] as bool? ?? false,
     enableDerivation:           json['enableDerivation'] as bool? ?? false,

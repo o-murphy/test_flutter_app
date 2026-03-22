@@ -37,12 +37,17 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
       'derivation'             => s.copyWith(enableDerivation: value),
       'aerodynamicJump'        => s.copyWith(enableAerodynamicJump: value),
       'pressureFromAltitude'   => s.copyWith(pressureDependsOnAltitude: value),
+      'subsonicTransition'     => s.copyWith(showSubsonicTransition: value),
       _                        => s,
     });
   }
 
   Future<void> setTableDistanceStep(double step) async {
     await _save((state.value ?? const AppSettings()).copyWith(tableDistanceStep: step));
+  }
+
+  Future<void> setChartDistanceStep(double step) async {
+    await _save((state.value ?? const AppSettings()).copyWith(chartDistanceStep: step));
   }
 
   Future<void> _save(AppSettings s) async {

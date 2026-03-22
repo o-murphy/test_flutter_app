@@ -28,26 +28,29 @@ void main() async {
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
+  static final _lightTheme = ThemeData(
+    useMaterial3: true,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: Colors.deepPurple,
+      brightness: Brightness.light,
+    ),
+  );
+  static final _darkTheme = ThemeData(
+    useMaterial3: true,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: Colors.deepPurple,
+      brightness: Brightness.dark,
+    ),
+  );
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       routerConfig: appRouter,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.light,
-        ),
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
-        ),
-      ),
+      theme: _lightTheme,
+      darkTheme: _darkTheme,
       themeMode: themeMode,
     );
   }
