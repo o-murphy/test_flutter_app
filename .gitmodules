@@ -1,6 +1,3 @@
-[submodule "py-ballisticcalc"]
-	path = py-ballisticcalc
-	url = https://github.com/o-murphy/py-ballisticcalc
-[submodule "a7p-lib"]
-	path = a7p-lib
-	url = https://github.com/o-murphy/a7p-lib
+[submodule "external/bclibc"]
+	path = external/bclibc
+	url = https://github.com/ballistics-lab/bclibc

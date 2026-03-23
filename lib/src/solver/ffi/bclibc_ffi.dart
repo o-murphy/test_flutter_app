@@ -24,7 +24,7 @@ ffi.DynamicLibrary _openLibrary() {
     // During development / dart test: check local cmake build dir first.
     final env = Platform.environment['BCLIBC_FFI_PATH'];
     if (env != null && env.isNotEmpty) return env;
-    final devPath = 'build/native/$name';
+    final devPath = 'build/bclibc/$name';
     if (File(devPath).existsSync()) return devPath;
     return name; // bundled app (RPATH / system lookup)
   }
@@ -268,9 +268,9 @@ String _charArrayToString(ffi.Array<ffi.Char> arr, int maxLen) {
   return String.fromCharCodes(codes);
 }
 
-Never _throwFromError(BCFFIError err) {
+Never _throwFromError(BCLIBCFFIError err) {
   final msg = _charArrayToString(err.message, 512);
-  if (err.code == BCFFIStatus.BCFFI_ERR_OUT_OF_RANGE) {
+  if (err.code == BCLIBCFFIStatus.BCLIBCFFI_ERR_OUT_OF_RANGE) {
     throw BcException(
       code: err.code, message: msg,
       requestedDistanceFt: err.f64_0,
@@ -278,7 +278,7 @@ Never _throwFromError(BCFFIError err) {
       lookAngleRad:        err.f64_2,
     );
   }
-  if (err.code == BCFFIStatus.BCFFI_ERR_ZERO_FINDING) {
+  if (err.code == BCLIBCFFIStatus.BCLIBCFFI_ERR_ZERO_FINDING) {
     throw BcException(
       code: err.code, message: msg,
       zeroFindingError:       err.f64_0,
@@ -365,19 +365,19 @@ extension _FillNative on BcShotProps {
 // ============================================================================
 
 class BcLibC {
-  final BcLibCBindings _b;
+  final BcLibCFFIBindings _b;
 
   BcLibC._(this._b);
 
   /// Open the native library. Call once per isolate.
-  factory BcLibC.open() => BcLibC._(BcLibCBindings(_openLibrary()));
+  factory BcLibC.open() => BcLibC._(BcLibCFFIBindings(_openLibrary()));
 
   BcTrajectoryData findApex(BcShotProps props) => using((arena) {
     final p   = arena<BCShotProps>();
     final out = arena<BCTrajectoryData>();
-    final err = arena<BCFFIError>();
+    final err = arena<BCLIBCFFIError>();
     props._fill(p.ref, arena);
-    final st = _b.bcffi_find_apex(p, out, err);
+    final st = _b.BCLIBCFFI_find_apex(p, out, err);
     if (st != 0) _throwFromError(err.ref);
     return BcTrajectoryData._fromNative(out.ref);
   });
@@ -389,9 +389,9 @@ class BcLibC {
   }) => using((arena) {
     final p   = arena<BCShotProps>();
     final out = arena<BCMaxRangeResult>();
-    final err = arena<BCFFIError>();
+    final err = arena<BCLIBCFFIError>();
     props._fill(p.ref, arena);
-    final st = _b.bcffi_find_max_range(p, lowAngleDeg, highAngleDeg, out, err);
+    final st = _b.BCLIBCFFI_find_max_range(p, lowAngleDeg, highAngleDeg, out, err);
     if (st != 0) _throwFromError(err.ref);
     return BcMaxRangeResult(out.ref.max_range_ft, out.ref.angle_at_max_rad);
   });
@@ -399,9 +399,9 @@ class BcLibC {
   double findZeroAngle(BcShotProps props, double distanceFt) => using((arena) {
     final p        = arena<BCShotProps>();
     final outAngle = arena<ffi.Double>();
-    final err      = arena<BCFFIError>();
+    final err      = arena<BCLIBCFFIError>();
     props._fill(p.ref, arena);
-    final st = _b.bcffi_find_zero_angle(p, distanceFt, outAngle, err);
+    final st = _b.BCLIBCFFI_find_zero_angle(p, distanceFt, outAngle, err);
     if (st != 0) _throwFromError(err.ref);
     return outAngle.value;
   });
@@ -413,7 +413,7 @@ class BcLibC {
     final pPtr    = arena<ffi.Pointer<BCTrajectoryData>>();
     final pCount  = arena<ffi.Int32>();
     final pReason = arena<ffi.Int32>();
-    final err     = arena<BCFFIError>();
+    final err     = arena<BCLIBCFFIError>();
 
     props._fill(p.ref, arena);
     req.ref.range_limit_ft = request.rangeLimitFt;
@@ -421,14 +421,14 @@ class BcLibC {
     req.ref.time_step      = request.timeStep;
     req.ref.filter_flags   = request.filterFlags;
 
-    final st = _b.bcffi_integrate(p, req, pPtr, pCount, pReason, err);
+    final st = _b.BCLIBCFFI_integrate(p, req, pPtr, pCount, pReason, err);
     if (st != 0) _throwFromError(err.ref);
 
     final count  = pCount.value;
     final rawPtr = pPtr.value;
     final records = List<BcTrajectoryData>.generate(
       count, (i) => BcTrajectoryData._fromNative(rawPtr[i]));
-    if (count > 0) _b.bcffi_free_trajectory(rawPtr);
+    if (count > 0) _b.BCLIBCFFI_free_trajectory(rawPtr);
 
     return BcHitResult(records, pReason.value);
   });
@@ -441,9 +441,9 @@ class BcLibC {
   ) => using((arena) {
     final p   = arena<BCShotProps>();
     final out = arena<BCInterception>();
-    final err = arena<BCFFIError>();
+    final err = arena<BCLIBCFFIError>();
     props._fill(p.ref, arena);
-    final st = _b.bcffi_integrate_at(p, key, targetValue, out, err);
+    final st = _b.BCLIBCFFI_integrate_at(p, key, targetValue, out, err);
     if (st != 0) _throwFromError(err.ref);
     return BcInterception(
       BcBaseTrajData._fromNative(out.ref.raw_data),
@@ -452,11 +452,11 @@ class BcLibC {
   });
 
   double getCorrection(double distanceFt, double offsetFt) =>
-      _b.bcffi_get_correction(distanceFt, offsetFt);
+      _b.BCLIBCFFI_get_correction(distanceFt, offsetFt);
 
   double calculateEnergy(double bulletWeightGrain, double velocityFps) =>
-      _b.bcffi_calculate_energy(bulletWeightGrain, velocityFps);
+      _b.BCLIBCFFI_calculate_energy(bulletWeightGrain, velocityFps);
 
   double calculateOgw(double bulletWeightGrain, double velocityFps) =>
-      _b.bcffi_calculate_ogw(bulletWeightGrain, velocityFps);
+      _b.BCLIBCFFI_calculate_ogw(bulletWeightGrain, velocityFps);
 }

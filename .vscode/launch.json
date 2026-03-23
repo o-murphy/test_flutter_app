@@ -7,7 +7,7 @@
       "request": "launch",
       "program": "test/ffi_test.dart",
       "env": {
-        "LD_LIBRARY_PATH": "${workspaceFolder}/build/native"
+        "LD_LIBRARY_PATH": "${workspaceFolder}/build/bclibc"
       }
     },
     {

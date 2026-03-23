@@ -2,8 +2,8 @@
 
 # Build the native shared library via CMake
 native:
-	cmake -S native -B build/native -DCMAKE_BUILD_TYPE=Release
-	cmake --build build/native -j$$(nproc)
+	cmake -S external/bclibc -B build/bclibc -DCMAKE_BUILD_TYPE=Release
+	cmake --build build/bclibc -j$$(nproc)
 
 # Re-generate Dart FFI bindings from the C header
 ffigen:
@@ -18,4 +18,4 @@ unit:
 	dart test test/unit_test.dart
 
 clean:
-	rm -rf build/native
+	rm -rf build/bclibc

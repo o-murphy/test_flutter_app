@@ -1,4 +1,0 @@
-{
-  global: bcffi_*;
-  local: *;
-};

@@ -12,60 +12,72 @@
 import 'dart:ffi' as ffi;
 
 /// Auto-generated Dart FFI bindings for the bclibc ballistics engine C API.
-class BcLibCBindings {
+class BcLibCFFIBindings {
   /// Holds the symbol lookup function.
   final ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName)
   _lookup;
 
   /// The symbols are looked up in [dynamicLibrary].
-  BcLibCBindings(ffi.DynamicLibrary dynamicLibrary)
+  BcLibCFFIBindings(ffi.DynamicLibrary dynamicLibrary)
     : _lookup = dynamicLibrary.lookup;
 
   /// The symbols are looked up with [lookup].
-  BcLibCBindings.fromLookup(
+  BcLibCFFIBindings.fromLookup(
     ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName) lookup,
   ) : _lookup = lookup;
 
-  /// Find the apex (highest point) of the trajectory.
-  /// @return BCFFI_OK on success, error code otherwise (fills *err).
-  int bcffi_find_apex(
-    ffi.Pointer<BCShotProps> props,
-    ffi.Pointer<BCTrajectoryData> out,
-    ffi.Pointer<BCFFIError> err,
-  ) {
-    return _bcffi_find_apex(props, out, err);
+  /// @brief Returns the library version string.
+  ffi.Pointer<ffi.Char> BCLIBCFFI_get_version() {
+    return _BCLIBCFFI_get_version();
   }
 
-  late final _bcffi_find_apexPtr =
+  late final _BCLIBCFFI_get_versionPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function()>>(
+        'BCLIBCFFI_get_version',
+      );
+  late final _BCLIBCFFI_get_version =
+      _BCLIBCFFI_get_versionPtr.asFunction<ffi.Pointer<ffi.Char> Function()>();
+
+  /// Find the apex (highest point) of the trajectory.
+  /// @return BCLIBCFFI_OK on success, error code otherwise (fills *err).
+  int BCLIBCFFI_find_apex(
+    ffi.Pointer<BCShotProps> props,
+    ffi.Pointer<BCTrajectoryData> out,
+    ffi.Pointer<BCLIBCFFIError> err,
+  ) {
+    return _BCLIBCFFI_find_apex(props, out, err);
+  }
+
+  late final _BCLIBCFFI_find_apexPtr =
       _lookup<
         ffi.NativeFunction<
           ffi.Int32 Function(
             ffi.Pointer<BCShotProps>,
             ffi.Pointer<BCTrajectoryData>,
-            ffi.Pointer<BCFFIError>,
+            ffi.Pointer<BCLIBCFFIError>,
           )
         >
-      >('bcffi_find_apex');
-  late final _bcffi_find_apex = _bcffi_find_apexPtr
-      .asFunction<
+      >('BCLIBCFFI_find_apex');
+  late final _BCLIBCFFI_find_apex =
+      _BCLIBCFFI_find_apexPtr.asFunction<
         int Function(
           ffi.Pointer<BCShotProps>,
           ffi.Pointer<BCTrajectoryData>,
-          ffi.Pointer<BCFFIError>,
+          ffi.Pointer<BCLIBCFFIError>,
         )
       >();
 
   /// Find the maximum range and corresponding angle.
   /// @param low_angle_deg   Lower search bound (degrees).
   /// @param high_angle_deg  Upper search bound (degrees).
-  int bcffi_find_max_range(
+  int BCLIBCFFI_find_max_range(
     ffi.Pointer<BCShotProps> props,
     double low_angle_deg,
     double high_angle_deg,
     ffi.Pointer<BCMaxRangeResult> out,
-    ffi.Pointer<BCFFIError> err,
+    ffi.Pointer<BCLIBCFFIError> err,
   ) {
-    return _bcffi_find_max_range(
+    return _BCLIBCFFI_find_max_range(
       props,
       low_angle_deg,
       high_angle_deg,
@@ -74,7 +86,7 @@ class BcLibCBindings {
     );
   }
 
-  late final _bcffi_find_max_rangePtr =
+  late final _BCLIBCFFI_find_max_rangePtr =
       _lookup<
         ffi.NativeFunction<
           ffi.Int32 Function(
@@ -82,67 +94,67 @@ class BcLibCBindings {
             ffi.Double,
             ffi.Double,
             ffi.Pointer<BCMaxRangeResult>,
-            ffi.Pointer<BCFFIError>,
+            ffi.Pointer<BCLIBCFFIError>,
           )
         >
-      >('bcffi_find_max_range');
-  late final _bcffi_find_max_range = _bcffi_find_max_rangePtr
-      .asFunction<
+      >('BCLIBCFFI_find_max_range');
+  late final _BCLIBCFFI_find_max_range =
+      _BCLIBCFFI_find_max_rangePtr.asFunction<
         int Function(
           ffi.Pointer<BCShotProps>,
           double,
           double,
           ffi.Pointer<BCMaxRangeResult>,
-          ffi.Pointer<BCFFIError>,
+          ffi.Pointer<BCLIBCFFIError>,
         )
       >();
 
   /// Find the barrel elevation angle to zero at the given distance.
   /// @param distance_ft     Slant distance to target (ft).
   /// @param out_angle_rad   Output: barrel elevation (radians).
-  int bcffi_find_zero_angle(
+  int BCLIBCFFI_find_zero_angle(
     ffi.Pointer<BCShotProps> props,
     double distance_ft,
     ffi.Pointer<ffi.Double> out_angle_rad,
-    ffi.Pointer<BCFFIError> err,
+    ffi.Pointer<BCLIBCFFIError> err,
   ) {
-    return _bcffi_find_zero_angle(props, distance_ft, out_angle_rad, err);
+    return _BCLIBCFFI_find_zero_angle(props, distance_ft, out_angle_rad, err);
   }
 
-  late final _bcffi_find_zero_anglePtr =
+  late final _BCLIBCFFI_find_zero_anglePtr =
       _lookup<
         ffi.NativeFunction<
           ffi.Int32 Function(
             ffi.Pointer<BCShotProps>,
             ffi.Double,
             ffi.Pointer<ffi.Double>,
-            ffi.Pointer<BCFFIError>,
+            ffi.Pointer<BCLIBCFFIError>,
           )
         >
-      >('bcffi_find_zero_angle');
-  late final _bcffi_find_zero_angle = _bcffi_find_zero_anglePtr
-      .asFunction<
+      >('BCLIBCFFI_find_zero_angle');
+  late final _BCLIBCFFI_find_zero_angle =
+      _BCLIBCFFI_find_zero_anglePtr.asFunction<
         int Function(
           ffi.Pointer<BCShotProps>,
           double,
           ffi.Pointer<ffi.Double>,
-          ffi.Pointer<BCFFIError>,
+          ffi.Pointer<BCLIBCFFIError>,
         )
       >();
 
   /// Integrate trajectory and return filtered records.
   ///
   /// On success *out_records points to a heap-allocated BCTrajectoryData array
-  /// of length *out_count.  Call bcffi_free_trajectory() to release it.
-  int bcffi_integrate(
+  /// of length *out_count.  Call BCLIBCFFI_free_trajectory() to release it.
+  int BCLIBCFFI_integrate(
     ffi.Pointer<BCShotProps> props,
     ffi.Pointer<BCTrajectoryRequest> request,
     ffi.Pointer<ffi.Pointer<BCTrajectoryData>> out_records,
     ffi.Pointer<ffi.Int32> out_count,
     ffi.Pointer<ffi.Int32> out_reason,
-    ffi.Pointer<BCFFIError> err,
+    ffi.Pointer<BCLIBCFFIError> err,
   ) {
-    return _bcffi_integrate(
+    return _BCLIBCFFI_integrate(
       props,
       request,
       out_records,
@@ -152,7 +164,7 @@ class BcLibCBindings {
     );
   }
 
-  late final _bcffi_integratePtr =
+  late final _BCLIBCFFI_integratePtr =
       _lookup<
         ffi.NativeFunction<
           ffi.Int32 Function(
@@ -161,49 +173,51 @@ class BcLibCBindings {
             ffi.Pointer<ffi.Pointer<BCTrajectoryData>>,
             ffi.Pointer<ffi.Int32>,
             ffi.Pointer<ffi.Int32>,
-            ffi.Pointer<BCFFIError>,
+            ffi.Pointer<BCLIBCFFIError>,
           )
         >
-      >('bcffi_integrate');
-  late final _bcffi_integrate = _bcffi_integratePtr
-      .asFunction<
+      >('BCLIBCFFI_integrate');
+  late final _BCLIBCFFI_integrate =
+      _BCLIBCFFI_integratePtr.asFunction<
         int Function(
           ffi.Pointer<BCShotProps>,
           ffi.Pointer<BCTrajectoryRequest>,
           ffi.Pointer<ffi.Pointer<BCTrajectoryData>>,
           ffi.Pointer<ffi.Int32>,
           ffi.Pointer<ffi.Int32>,
-          ffi.Pointer<BCFFIError>,
+          ffi.Pointer<BCLIBCFFIError>,
         )
       >();
 
-  /// Free a trajectory array allocated by bcffi_integrate().
-  void bcffi_free_trajectory(ffi.Pointer<BCTrajectoryData> records) {
-    return _bcffi_free_trajectory(records);
+  /// Free a trajectory array allocated by BCLIBCFFI_integrate().
+  void BCLIBCFFI_free_trajectory(ffi.Pointer<BCTrajectoryData> records) {
+    return _BCLIBCFFI_free_trajectory(records);
   }
 
-  late final _bcffi_free_trajectoryPtr =
+  late final _BCLIBCFFI_free_trajectoryPtr =
       _lookup<
         ffi.NativeFunction<ffi.Void Function(ffi.Pointer<BCTrajectoryData>)>
-      >('bcffi_free_trajectory');
-  late final _bcffi_free_trajectory = _bcffi_free_trajectoryPtr
-      .asFunction<void Function(ffi.Pointer<BCTrajectoryData>)>();
+      >('BCLIBCFFI_free_trajectory');
+  late final _BCLIBCFFI_free_trajectory =
+      _BCLIBCFFI_free_trajectoryPtr.asFunction<
+        void Function(ffi.Pointer<BCTrajectoryData>)
+      >();
 
   /// Integrate and interpolate the single point where a key field reaches
   /// the target value.
   /// @param key          BCBaseTrajInterpKey
   /// @param target_value Value the key field must reach.
-  int bcffi_integrate_at(
+  int BCLIBCFFI_integrate_at(
     ffi.Pointer<BCShotProps> props,
     int key,
     double target_value,
     ffi.Pointer<BCInterception> out,
-    ffi.Pointer<BCFFIError> err,
+    ffi.Pointer<BCLIBCFFIError> err,
   ) {
-    return _bcffi_integrate_at(props, key, target_value, out, err);
+    return _BCLIBCFFI_integrate_at(props, key, target_value, out, err);
   }
 
-  late final _bcffi_integrate_atPtr =
+  late final _BCLIBCFFI_integrate_atPtr =
       _lookup<
         ffi.NativeFunction<
           ffi.Int32 Function(
@@ -211,73 +225,80 @@ class BcLibCBindings {
             ffi.Int32,
             ffi.Double,
             ffi.Pointer<BCInterception>,
-            ffi.Pointer<BCFFIError>,
+            ffi.Pointer<BCLIBCFFIError>,
           )
         >
-      >('bcffi_integrate_at');
-  late final _bcffi_integrate_at = _bcffi_integrate_atPtr
-      .asFunction<
+      >('BCLIBCFFI_integrate_at');
+  late final _BCLIBCFFI_integrate_at =
+      _BCLIBCFFI_integrate_atPtr.asFunction<
         int Function(
           ffi.Pointer<BCShotProps>,
           int,
           double,
           ffi.Pointer<BCInterception>,
-          ffi.Pointer<BCFFIError>,
+          ffi.Pointer<BCLIBCFFIError>,
         )
       >();
 
   /// Angular correction (radians) to hit target at distance with given offset.
-  double bcffi_get_correction(double distance_ft, double offset_ft) {
-    return _bcffi_get_correction(distance_ft, offset_ft);
+  double BCLIBCFFI_get_correction(double distance_ft, double offset_ft) {
+    return _BCLIBCFFI_get_correction(distance_ft, offset_ft);
   }
 
-  late final _bcffi_get_correctionPtr =
+  late final _BCLIBCFFI_get_correctionPtr =
       _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-        'bcffi_get_correction',
+        'BCLIBCFFI_get_correction',
       );
-  late final _bcffi_get_correction = _bcffi_get_correctionPtr
-      .asFunction<double Function(double, double)>();
+  late final _BCLIBCFFI_get_correction =
+      _BCLIBCFFI_get_correctionPtr.asFunction<
+        double Function(double, double)
+      >();
 
   /// Kinetic energy (ft-lb) from bullet weight (grains) and velocity (fps).
-  double bcffi_calculate_energy(
+  double BCLIBCFFI_calculate_energy(
     double bullet_weight_grain,
     double velocity_fps,
   ) {
-    return _bcffi_calculate_energy(bullet_weight_grain, velocity_fps);
+    return _BCLIBCFFI_calculate_energy(bullet_weight_grain, velocity_fps);
   }
 
-  late final _bcffi_calculate_energyPtr =
+  late final _BCLIBCFFI_calculate_energyPtr =
       _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-        'bcffi_calculate_energy',
+        'BCLIBCFFI_calculate_energy',
       );
-  late final _bcffi_calculate_energy = _bcffi_calculate_energyPtr
-      .asFunction<double Function(double, double)>();
+  late final _BCLIBCFFI_calculate_energy =
+      _BCLIBCFFI_calculate_energyPtr.asFunction<
+        double Function(double, double)
+      >();
 
   /// Optimal Game Weight from bullet weight (grains) and velocity (fps).
-  double bcffi_calculate_ogw(double bullet_weight_grain, double velocity_fps) {
-    return _bcffi_calculate_ogw(bullet_weight_grain, velocity_fps);
+  double BCLIBCFFI_calculate_ogw(
+    double bullet_weight_grain,
+    double velocity_fps,
+  ) {
+    return _BCLIBCFFI_calculate_ogw(bullet_weight_grain, velocity_fps);
   }
 
-  late final _bcffi_calculate_ogwPtr =
+  late final _BCLIBCFFI_calculate_ogwPtr =
       _lookup<ffi.NativeFunction<ffi.Double Function(ffi.Double, ffi.Double)>>(
-        'bcffi_calculate_ogw',
+        'BCLIBCFFI_calculate_ogw',
       );
-  late final _bcffi_calculate_ogw = _bcffi_calculate_ogwPtr
-      .asFunction<double Function(double, double)>();
+  late final _BCLIBCFFI_calculate_ogw =
+      _BCLIBCFFI_calculate_ogwPtr.asFunction<double Function(double, double)>();
 }
 
-abstract class BCFFIStatus {
-  static const int BCFFI_OK = 0;
-  static const int BCFFI_ERR_SOLVER_RUNTIME = 1;
-  static const int BCFFI_ERR_OUT_OF_RANGE = 2;
-  static const int BCFFI_ERR_ZERO_FINDING = 3;
-  static const int BCFFI_ERR_INTERCEPTION = 4;
-  static const int BCFFI_ERR_GENERIC = 5;
+abstract class BCLIBCFFIStatus {
+  static const int BCLIBCFFI_OK = 0;
+  static const int BCLIBCFFI_ERR_SOLVER_RUNTIME = 1;
+  static const int BCLIBCFFI_ERR_OUT_OF_RANGE = 2;
+  static const int BCLIBCFFI_ERR_ZERO_FINDING = 3;
+  static const int BCLIBCFFI_ERR_INTERCEPTION = 4;
+  static const int BCLIBCFFI_ERR_GENERIC = 5;
 }
 
 /// Error output struct – filled by every function on failure.
-final class BCFFIError extends ffi.Struct {
-  /// < BCFFIStatus
+final class BCLIBCFFIError extends ffi.Struct {
+  /// < BCLIBCFFIStatus
   @ffi.Int32()
   external int code;
 

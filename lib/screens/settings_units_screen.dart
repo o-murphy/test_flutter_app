@@ -105,6 +105,13 @@ class UnitsScreen extends ConsumerWidget {
                 options: const [Unit.millimeter, Unit.centimeter, Unit.inch],
                 onChanged: (u) => set('length', u),
               ),
+              SettingsUnitTile(
+                icon: Icons.circle_outlined,
+                label: 'Bullet diameter',
+                current: units.diameter,
+                options: const [Unit.millimeter, Unit.centimeter, Unit.inch],
+                onChanged: (u) => set('diameter', u),
+              ),
               const SizedBox(height: 16),
             ],
           ),

@@ -61,7 +61,7 @@ add_subdirectory("runner")
 # bclibc_ffi – thin C wrapper over the embedded bclibc ballistics engine
 # ============================================================================
 add_subdirectory(
-    "${CMAKE_CURRENT_SOURCE_DIR}/../native"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../external/bclibc"
     "${CMAKE_CURRENT_BINARY_DIR}/bclibc_ffi_build"
 )
 
