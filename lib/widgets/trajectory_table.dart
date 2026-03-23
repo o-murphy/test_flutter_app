@@ -14,6 +14,8 @@ class TrajectoryTable extends ConsumerWidget {
   final double zeroDistanceM;
   /// Display step in metres. Points between steps are skipped.
   final double displayStepM;
+  /// Whether to highlight the first row where mach < 1.
+  final bool showSubsonicTransition;
 
   const TrajectoryTable({
     super.key,
@@ -21,6 +23,7 @@ class TrajectoryTable extends ConsumerWidget {
     required this.availableWidth,
     this.zeroDistanceM = 100.0,
     this.displayStepM  = 100.0,
+    this.showSubsonicTransition = false,
   });
 
   List<TrajectoryData> _filtered() {
@@ -53,10 +56,19 @@ class TrajectoryTable extends ConsumerWidget {
       if (delta < minDelta) { minDelta = delta; zeroIdx = i; }
     }
 
-    final hdr      = theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, color: cs.onSurface);
-    final sub      = theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant);
-    final cell     = theme.textTheme.bodyMedium?.copyWith(fontFamily: 'monospace');
-    final zeroCell = cell?.copyWith(color: cs.error, fontWeight: FontWeight.bold);
+    // First row where mach < 1 (subsonic transition).
+    int? subsonicIdx;
+    if (showSubsonicTransition) {
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].mach < 1.0) { subsonicIdx = i; break; }
+      }
+    }
+
+    final hdr          = theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, color: cs.onSurface);
+    final sub          = theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant);
+    final cell         = theme.textTheme.bodyMedium?.copyWith(fontFamily: 'monospace');
+    final zeroCell     = cell?.copyWith(color: cs.error, fontWeight: FontWeight.bold);
+    final subsonicCell = cell?.copyWith(color: cs.tertiary, fontWeight: FontWeight.bold);
 
     final cols = _columns(units);
 
@@ -74,10 +86,19 @@ class TrajectoryTable extends ConsumerWidget {
           decoration: BoxDecoration(
             color: i == zeroIdx
                 ? cs.errorContainer.withAlpha(80)
-                : (i.isEven ? null : cs.surfaceContainerLowest),
+                : i == subsonicIdx
+                    ? cs.tertiaryContainer.withAlpha(80)
+                    : (i.isEven ? null : cs.surfaceContainerLowest),
           ),
           children: _rowData(rows[i], units)
-              .map((v) => _cell(v, i == zeroIdx ? zeroCell : cell))
+              .map((v) => _cell(
+                    v,
+                    i == zeroIdx
+                        ? zeroCell
+                        : i == subsonicIdx
+                            ? subsonicCell
+                            : cell,
+                  ))
               .toList(),
         ),
     ];

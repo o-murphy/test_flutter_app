@@ -12,6 +12,7 @@ class TrajectoryChart extends StatelessWidget {
   final int? selectedIndex;
   final ValueChanged<int>? onIndexSelected;
   final double snapDistM;
+  final bool showSubsonicLine;
 
   const TrajectoryChart({
     super.key,
@@ -19,6 +20,7 @@ class TrajectoryChart extends StatelessWidget {
     this.selectedIndex,
     this.onIndexSelected,
     this.snapDistM = 1.0,
+    this.showSubsonicLine = false,
   });
 
   int _tapToIndex(double tapX, double paintWidth) {
@@ -70,6 +72,7 @@ class TrajectoryChart extends StatelessWidget {
               gridColor: cs.outlineVariant,
               textColor: cs.onSurface,
               selectedColor: cs.tertiary,
+              subsonicLineColor: showSubsonicLine ? cs.tertiary : null,
             ),
             child: const SizedBox.expand(),
           ),
@@ -83,6 +86,7 @@ class _ChartPainter extends CustomPainter {
   final List<TrajectoryData> traj;
   final int? selectedIndex;
   final Color heightColor, velColor, gridColor, textColor, selectedColor;
+  final Color? subsonicLineColor;
 
   static const _ml = 28.0, _mr = 24.0, _mt = 16.0, _mb = 14.0;
 
@@ -94,6 +98,7 @@ class _ChartPainter extends CustomPainter {
     required this.gridColor,
     required this.textColor,
     required this.selectedColor,
+    this.subsonicLineColor,
   });
 
   @override
@@ -160,6 +165,24 @@ class _ChartPainter extends CustomPainter {
 
     // Height line (solid, on top)
     _drawLine(canvas, dists, heights, px, pyH, heightColor, 2.0);
+
+    // Subsonic transition — vertical dashed line at first mach < 1 point
+    if (subsonicLineColor != null) {
+      final subIdx = traj.indexWhere((p) => p.mach < 1.0);
+      if (subIdx >= 0) {
+        final sx = px(dists[subIdx]);
+        _drawLine(
+          canvas,
+          [sx, sx],
+          [_mt, _mt + ph],
+          (v) => v,
+          (v) => v,
+          subsonicLineColor!,
+          1.0,
+          dashed: true,
+        );
+      }
+    }
 
     // Selected point highlight
     if (selectedIndex != null && traj.isNotEmpty) {
@@ -320,5 +343,7 @@ class _ChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ChartPainter old) =>
-      old.traj != traj || old.selectedIndex != selectedIndex;
+      old.traj != traj ||
+      old.selectedIndex != selectedIndex ||
+      old.subsonicLineColor != subsonicLineColor;
 }

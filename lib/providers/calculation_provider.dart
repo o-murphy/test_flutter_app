@@ -11,23 +11,35 @@ import '../src/solver/unit.dart';
 import 'settings_provider.dart';
 import 'shot_profile_provider.dart';
 
-typedef _TableCalcArgs = (ShotProfile, double, bool, bool);
-typedef _HomeCalcArgs  = (ShotProfile, double, double, bool, bool); // targetDistM, chartStepM
+typedef _TableCalcArgs = (ShotProfile, double, bool);
+typedef _HomeCalcArgs  = (ShotProfile, double, double, bool); // targetDistM, chartStepM, usePowderSens
 
 // ── Table calculation — zeroed at zeroDistance, full 2000 m range ─────────────
 
 HitResult? _runTableCalculation(_TableCalcArgs args) {
-  final (profile, stepM, usePowderSens, useDiffPowderTemp) = args;
+  final (profile, stepM, usePowderSens) = args;
   try {
     final calc     = Calculator();
     final baseAmmo = profile.cartridge.toAmmo();
     final zeroAtmo = profile.zeroConditions ?? profile.conditions;
 
+    // Disable powder sensitivity in ammo if global setting is off.
+    // When enabled, the engine calls getVelocityForTemp(atmo.powderTemp) internally.
+    final Ammo shotAmmo = (usePowderSens && baseAmmo.usePowderSensitivity)
+        ? baseAmmo
+        : Ammo(
+            dm: baseAmmo.dm,
+            mv: baseAmmo.mv,
+            powderTemp: baseAmmo.powderTemp,
+            tempModifier: baseAmmo.tempModifier,
+            usePowderSensitivity: false,
+          );
+
     Shot zeroShot;
     try {
       zeroShot = Shot(
         weapon:    profile.rifle.weapon,
-        ammo:      baseAmmo,
+        ammo:      shotAmmo,
         lookAngle: profile.lookAngle,
         atmo:      zeroAtmo,
         winds:     const [],
@@ -36,29 +48,12 @@ HitResult? _runTableCalculation(_TableCalcArgs args) {
     } catch (_) {
       zeroShot = Shot(
         weapon:    profile.rifle.weapon,
-        ammo:      baseAmmo,
+        ammo:      shotAmmo,
         lookAngle: Angular(0.0, Unit.radian),
         atmo:      zeroAtmo,
         winds:     const [],
       );
       calc.setWeaponZero(zeroShot, profile.zeroDistance);
-    }
-
-    final Ammo shotAmmo;
-    if (usePowderSens && baseAmmo.usePowderSensitivity) {
-      final Temperature currentTemp = useDiffPowderTemp
-          ? profile.conditions.powderTemp
-          : profile.conditions.temperature;
-      final adjustedMv = baseAmmo.getVelocityForTemp(currentTemp);
-      shotAmmo = Ammo(
-        dm:                   baseAmmo.dm,
-        mv:                   adjustedMv,
-        powderTemp:           baseAmmo.powderTemp,
-        tempModifier:         baseAmmo.tempModifier,
-        usePowderSensitivity: baseAmmo.usePowderSensitivity,
-      );
-    } else {
-      shotAmmo = baseAmmo;
     }
 
     final shot = Shot(
@@ -96,15 +91,14 @@ class TableCalculationNotifier extends AsyncNotifier<HitResult?> {
     if (!_dirty) return;
     final profile  = ref.read(shotProfileProvider).value;
     if (profile == null) return;
-    final settings          = ref.read(settingsProvider).value;
-    final tableStep         = settings?.tableDistanceStep ?? 100.0;
-    final stepM             = tableStep < 1.0 ? tableStep : 1.0; // min(1.0, tableStep)
-    final usePowderSens     = settings?.enablePowderSensitivity       ?? false;
-    final useDiffPowderTemp = settings?.useDifferentPowderTemperature ?? false;
+    final settings      = ref.read(settingsProvider).value;
+    final tableStep     = settings?.tableDistanceStep ?? 100.0;
+    final stepM         = tableStep < 1.0 ? tableStep : 1.0;
+    final usePowderSens = settings?.enablePowderSensitivity ?? false;
     _dirty = false;
     state  = const AsyncLoading();
     state  = AsyncData(
-      await compute(_runTableCalculation, (profile, stepM, usePowderSens, useDiffPowderTemp)),
+      await compute(_runTableCalculation, (profile, stepM, usePowderSens)),
     );
   }
 }
@@ -115,43 +109,36 @@ final tableCalculationProvider =
 // ── Home calculation — zeroed at targetDistance ───────────────────────────────
 
 HitResult? _runHomeCalculation(_HomeCalcArgs args) {
-  final (profile, targetDistM, chartStepM, usePowderSens, useDiffPowderTemp) = args;
-  final internalStepM = chartStepM < 1.0 ? chartStepM : 1.0; // min(1.0, chartStep)
+  final (profile, targetDistM, chartStepM, usePowderSens) = args;
+  final internalStepM = chartStepM < 1.0 ? chartStepM : 1.0;
   try {
     final calc     = Calculator();
     final baseAmmo = profile.cartridge.toAmmo();
     final zeroAtmo = profile.zeroConditions ?? profile.conditions;
 
+    // Disable powder sensitivity in ammo if global setting is off.
+    // When enabled, the engine calls getVelocityForTemp(atmo.powderTemp) internally.
+    final Ammo shotAmmo = (usePowderSens && baseAmmo.usePowderSensitivity)
+        ? baseAmmo
+        : Ammo(
+            dm: baseAmmo.dm,
+            mv: baseAmmo.mv,
+            powderTemp: baseAmmo.powderTemp,
+            tempModifier: baseAmmo.tempModifier,
+            usePowderSensitivity: false,
+          );
+
     // 1. Zero the weapon at zeroDistance with zero conditions.
-    //    setWeaponZero stores the elevation in weapon.zeroElevation (mutable).
     final zeroShot = Shot(
       weapon:    profile.rifle.weapon,
-      ammo:      baseAmmo,
+      ammo:      shotAmmo,
       lookAngle: profile.lookAngle,
       atmo:      zeroAtmo,
       winds:     const [],
     );
     calc.setWeaponZero(zeroShot, profile.zeroDistance);
 
-    final Ammo shotAmmo;
-    if (usePowderSens && baseAmmo.usePowderSensitivity) {
-      final Temperature currentTemp = useDiffPowderTemp
-          ? profile.conditions.powderTemp
-          : profile.conditions.temperature;
-      final adjustedMv = baseAmmo.getVelocityForTemp(currentTemp);
-      shotAmmo = Ammo(
-        dm:                   baseAmmo.dm,
-        mv:                   adjustedMv,
-        powderTemp:           baseAmmo.powderTemp,
-        tempModifier:         baseAmmo.tempModifier,
-        usePowderSensitivity: baseAmmo.usePowderSensitivity,
-      );
-    } else {
-      shotAmmo = baseAmmo;
-    }
-
     // 2. New shot with current conditions.
-    //    weapon.zeroElevation is already set, so barrelElevation = zero angle.
     final newShot = Shot(
       weapon:      profile.rifle.weapon,
       ammo:        shotAmmo,
@@ -162,8 +149,7 @@ HitResult? _runHomeCalculation(_HomeCalcArgs args) {
       azimuthDeg:  profile.azimuthDeg,
     );
 
-    // 3. Compute the hold: elevation needed to hit the target minus the stored
-    //    zero elevation (mirrors JS shootTheTarget logic).
+    // 3. Compute the hold.
     final zeroElev   = newShot.weapon.zeroElevation;
     final targetElev = calc.barrelElevationForTarget(
       newShot,
@@ -172,7 +158,7 @@ HitResult? _runHomeCalculation(_HomeCalcArgs args) {
     final holdRad = targetElev.in_(Unit.radian) - zeroElev.in_(Unit.radian);
     newShot.relativeAngle = Angular(holdRad, Unit.radian);
 
-    // 4. Fire — trajectory crosses 0 (LoS) at targetDistance.
+    // 4. Fire.
     return calc.fire(
       shot:            newShot,
       trajectoryRange: Distance(targetDistM + chartStepM, Unit.meter),
@@ -198,17 +184,16 @@ class HomeCalculationNotifier extends AsyncNotifier<HitResult?> {
     if (!_dirty) return;
     final profile  = ref.read(shotProfileProvider).value;
     if (profile == null) return;
-    final settings          = ref.read(settingsProvider).value;
-    final targetDistM       = profile.targetDistance.in_(Unit.meter);
-    final chartStepM        = settings?.chartDistanceStep ?? 100.0;
-    final usePowderSens     = settings?.enablePowderSensitivity       ?? false;
-    final useDiffPowderTemp = settings?.useDifferentPowderTemperature ?? false;
+    final settings      = ref.read(settingsProvider).value;
+    final targetDistM   = profile.targetDistance.in_(Unit.meter);
+    final chartStepM    = settings?.chartDistanceStep ?? 100.0;
+    final usePowderSens = settings?.enablePowderSensitivity ?? false;
     _dirty = false;
     state  = const AsyncLoading();
     state  = AsyncData(
       await compute(
         _runHomeCalculation,
-        (profile, targetDistM, chartStepM, usePowderSens, useDiffPowderTemp),
+        (profile, targetDistM, chartStepM, usePowderSens),
       ),
     );
   }

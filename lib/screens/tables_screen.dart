@@ -48,9 +48,10 @@ class TablesScreen extends ConsumerWidget {
                       child: LayoutBuilder(
                         builder: (context, constraints) => SingleChildScrollView(
                           child: TrajectoryTable(
-                            traj:          traj,
-                            availableWidth: constraints.maxWidth,
-                            displayStepM:  displayStep,
+                            traj:                    traj,
+                            availableWidth:          constraints.maxWidth,
+                            displayStepM:            displayStep,
+                            showSubsonicTransition:  settings?.showSubsonicTransition ?? false,
                           ),
                         ),
                       ),

@@ -730,6 +730,9 @@ eballistica_backup.zip
 | **`DragModelType` enum** | `src/models/projectile.dart` | `g1 / g7 / custom` field on `Projectile`; serialized; seed data set to `g7` ✅ |
 | **Global scroll behavior** | `main.dart` | `_AppScrollBehavior` enables mouse/trackpad drag on all scrollables ✅ |
 | **`showSubsonicTransition` disabled** | `screens/settings_screen.dart`, `app_settings.dart` | Switch shown as disabled + "Not yet implemented" subtitle; default changed to `false` ✅ |
+| **Subsonic transition implemented** | `widgets/trajectory_table.dart`, `widgets/trajectory_chart.dart`, `screens/settings_screen.dart` | Table: first mach<1 row highlighted with tertiaryContainer; chart: vertical dashed tertiary line; setting switch wired ✅ |
+| **Powder sensitivity double-adjustment fix** | `providers/calculation_provider.dart` | Removed pre-adjustment of MV; engine handles it via `getVelocityForTemp(atmo.powderTemp)` internally; pre-adjustment caused double correction ✅ |
+| **`_AdjPanel` overflow fix** | `screens/home_screen.dart` | Wrapped Column in `FittedBox(fit: BoxFit.scaleDown)` + `mainAxisSize: min` to prevent 3.5 px bottom overflow ✅ |
 
 ### 8.2 Pending ⚠️
 
@@ -745,7 +748,7 @@ eballistica_backup.zip
 |------|--------|-------|
 | Page 1 — Reticle placeholder | ✅ Done — `_ReticleView` CustomPainter | 6 |
 | Page 1 — Drop/Windage panel | ✅ Done — `_AdjPanel` with direction indicators per unit | 6 |
-| Page 2 — Compact adjustment tables | ✅ Done — `_PageTable` single table with 5 distance columns | 6 |
+| Page 2 — Compact adjustment tables | ✅ Done — `_PageTable` single table, FittedBox adaptive columns | 6 |
 | Page 3 — Info grid above chart | ✅ Done | 6 |
 | Page 3 — Tap/drag-to-select point on chart | ✅ Done | 6 |
 

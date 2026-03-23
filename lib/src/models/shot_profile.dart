@@ -154,15 +154,13 @@ class ShotProfile {
       zeroDistance: json['zeroDistance'] != null
           ? distanceFromJson(json['zeroDistance'] as Map)
           : null,
-      zeroConditions: zc != null
-          ? Atmo(
-              altitude: distanceFromJson(zc['altitude'] as Map),
-              pressure: pressureFromJson(zc['pressure'] as Map),
-              temperature: temperatureFromJson(zc['temperature'] as Map),
-              humidity: (zc['humidity'] as num).toDouble(),
-              powderTemperature: temperatureFromJson(zc['powderTemp'] as Map),
-            )
-          : null,
+      zeroConditions: Atmo(
+        altitude:    distanceFromJson(   (zc ?? c)['altitude']    as Map),
+        pressure:    pressureFromJson(   (zc ?? c)['pressure']    as Map),
+        temperature: temperatureFromJson((zc ?? c)['temperature'] as Map),
+        humidity:    ((zc ?? c)['humidity'] as num).toDouble(),
+        powderTemperature: temperatureFromJson((zc ?? c)['powderTemp'] as Map),
+      ),
       targetDistance: json['targetDistance'] != null
           ? distanceFromJson(json['targetDistance'] as Map)
           : null,

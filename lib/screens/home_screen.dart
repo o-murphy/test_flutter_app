@@ -574,18 +574,22 @@ class _AdjPanel extends StatelessWidget {
       ],
     );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        sectionHeader('Drop', _elevDir()),
-        const SizedBox(height: 2),
-        ...dispUnits.map((u) => valueRow(_elevVal(u.$1), u.$2)),
-        const Divider(height: 16),
-        sectionHeader('Windage', _windDir()),
-        const SizedBox(height: 2),
-        ...dispUnits.map((u) => valueRow(_windVal(u.$1), u.$2)),
-      ],
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          sectionHeader('Drop', _elevDir()),
+          const SizedBox(height: 2),
+          ...dispUnits.map((u) => valueRow(_elevVal(u.$1), u.$2)),
+          const Divider(height: 16),
+          sectionHeader('Windage', _windDir()),
+          const SizedBox(height: 2),
+          ...dispUnits.map((u) => valueRow(_windVal(u.$1), u.$2)),
+        ],
+      ),
     );
   }
 }
@@ -831,8 +835,9 @@ class _PageChartState extends ConsumerState<_PageChart> {
     }
 
     final units = ref.watch(unitSettingsProvider);
-    final snapDistM =
-        ref.watch(settingsProvider).value?.chartDistanceStep ?? 100.0;
+    final settingsVal    = ref.watch(settingsProvider).value;
+    final snapDistM      = settingsVal?.chartDistanceStep ?? 100.0;
+    final showSubsonic   = settingsVal?.showSubsonicTransition ?? false;
     final traj = hit.trajectory;
     final si = _selectedIndex.clamp(0, traj.length - 1);
 
@@ -844,6 +849,7 @@ class _PageChartState extends ConsumerState<_PageChart> {
             traj: traj,
             selectedIndex: si,
             snapDistM: snapDistM,
+            showSubsonicLine: showSubsonic,
             onIndexSelected: (i) => setState(() => _selectedIndex = i),
           ),
         ),
