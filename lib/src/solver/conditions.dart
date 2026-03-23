@@ -14,7 +14,6 @@ class Atmo {
   late double _mach;
   late double _t0;
   late double _p0;
-  late double _a0;
 
   static final double cLowestTempC = Temperature(
     BallisticConstants.cLowestTempF,
@@ -35,11 +34,11 @@ class Atmo {
     _altitude = altitude ?? Distance(0, Unit.meter);
     _temperature = temperature ?? Atmo.standardTemperature(_altitude);
     _pressure = pressure ?? Atmo.standardPressure(_altitude);
-    _powderTemp = powderTemperature ?? temperature ?? Atmo.standardTemperature(_altitude);
+    _powderTemp =
+        powderTemperature ?? temperature ?? Atmo.standardTemperature(_altitude);
 
     _t0 = _temperature.in_(Unit.celsius);
     _p0 = _pressure.in_(Unit.hPa);
-    _a0 = _altitude.in_(Unit.foot);
     _mach = Atmo.machF(_temperature.in_(Unit.fahrenheit));
 
     this.humidity = humidity;
