@@ -7,6 +7,7 @@ import '../providers/calculation_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/shot_profile_provider.dart';
 import '../router.dart';
+import '../src/models/field_constraints.dart';
 import '../src/solver/conditions.dart' as solver;
 import '../src/solver/unit.dart' as solver;
 import '../src/solver/unit.dart';
@@ -257,7 +258,8 @@ class _PageChartState extends ConsumerState<_PageChart> {
     }
 
     final units = ref.watch(unitSettingsProvider);
-    final snapDistM = ref.watch(settingsProvider).value?.chartDistanceStep ?? 100.0;
+    final snapDistM =
+        ref.watch(settingsProvider).value?.chartDistanceStep ?? 100.0;
     final traj = hit.trajectory;
     final si = _selectedIndex.clamp(0, traj.length - 1);
 
@@ -318,10 +320,25 @@ class _ChartInfoGrid extends StatelessWidget {
     final rightItems = [
       (
         Icons.height,
-        _fmt(htVal.abs(), 1, units.drop.symbol) + (htVal < 0 ? ' ↓' : ' ↑'),
+        _fmt(htVal.abs(), FC.drop.accuracyFor(units.drop), units.drop.symbol) +
+            (htVal < 0 ? ' ↓' : ' ↑'),
       ),
-      (Icons.arrow_downward, _fmt(dropVal, 2, units.adjustment.symbol)),
-      (Icons.arrow_right_alt, _fmt(windVal, 2, units.adjustment.symbol)),
+      (
+        Icons.arrow_downward,
+        _fmt(
+          dropVal,
+          FC.adjustment.accuracyFor(units.adjustment),
+          units.adjustment.symbol,
+        ),
+      ),
+      (
+        Icons.arrow_right_alt,
+        _fmt(
+          windVal,
+          FC.adjustment.accuracyFor(units.adjustment),
+          units.adjustment.symbol,
+        ),
+      ),
       (Icons.air, '${point.mach.toStringAsFixed(2)} M'),
     ];
 
@@ -349,7 +366,7 @@ class _ChartInfoGrid extends StatelessWidget {
     );
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 6),
       child: Row(
         children: [
           Expanded(
