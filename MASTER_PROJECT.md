@@ -220,8 +220,16 @@ Vertically scrollable set of compact tables. Each table: header row with distanc
   - Right column: Height, Drop, Windage, Distance
 - Chart: trajectory curve + velocity curve only (no barrel/sight lines)
 - Default selected point: start of trajectory
-- Tap on chart → highlights nearest point, updates info grid above
-
+- Pan on chart → highlights nearest point, updates info grid above
+- Remove axis labels to have more space for the chart
+    Axis labels
+    _text(canvas, 'Distance (m)', Offset(_ml + pw / 2, size.height - 2),
+        TextStyle(fontSize: 10, color: textColor), center: true);
+    _textRotated(canvas, 'Height (cm)',
+        Offset(10, _mt + ph / 2), TextStyle(fontSize: 10, color: heightColor));
+    _textRotated(canvas, 'Velocity (m/s)',
+        Offset(size.width - 10, _mt + ph / 2), TextStyle(fontSize: 10, color: velColor),
+        rightAligned: true);
 ---
 
 ### 4.2 Conditions Screen
@@ -305,7 +313,7 @@ Layout (top to bottom):
 | **Appearance** | Units of Measurement → `/settings/units` | ✅ |
 | **Ballistics** | Adjustment Display → `/settings/adjustment` | ✅ |
 | **Ballistics** | Subsonic transition switch | ✅ |
-| **Ballistics** | Table distance step (dialog) | ✅ |
+| **Ballistics** | Table distance step (dialog) | ✅ | WARNING! This option should not have effect on Tables screen! The tables screen will have it's own settings. It affects only on Home.bottom_block.page2
 | **Ballistics** | Chart distance step (dialog) | ✅ |
 | **Data** | Export / Import buttons | ⏳ stub |
 | **About** | Version, links (GitHub, Privacy, Terms, Changelog) | ✅ (links stub) |

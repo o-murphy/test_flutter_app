@@ -4,7 +4,7 @@ import 'package:test_app/src/solver/unit.dart';
 class Weapon {
   final Distance sightHeight;
   final Distance twist;
-  final Angular zeroElevation;
+  Angular zeroElevation;
 
   Weapon({
     Distance? sightHeight,

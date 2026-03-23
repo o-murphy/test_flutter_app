@@ -10,27 +10,46 @@ const _ftLbToJ = 1.35582;
 class TrajectoryTable extends StatelessWidget {
   final List<TrajectoryData> traj;
   final double availableWidth;
-  /// Zero distance in metres (e.g. 100.0). Used to pick the correct
-  /// zero-crossing row to highlight in the table.
+  /// Zero distance in metres. Used to highlight the zero-crossing row.
   final double zeroDistanceM;
+  /// Display step in metres. Points between steps are skipped.
+  /// Defaults to 100 m. Set to `min(1.0, tableStep)` for fine-step traj.
+  final double displayStepM;
 
   const TrajectoryTable({
     super.key,
     required this.traj,
     required this.availableWidth,
     this.zeroDistanceM = 100.0,
+    this.displayStepM  = 100.0,
   });
+
+  /// Filter fine-step trajectory to one point per [displayStepM] interval.
+  List<TrajectoryData> _filtered() {
+    if (displayStepM <= 1.0) return traj; // already at display resolution
+    final result = <TrajectoryData>[];
+    double nextTargetM = 0.0;
+    for (final p in traj) {
+      final d = p.distance.in_(Unit.foot) * _ftToM;
+      if (d >= nextTargetM - 0.5) {
+        result.add(p);
+        nextTargetM = ((d / displayStepM).round() + 1) * displayStepM;
+      }
+    }
+    return result;
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final rows = _filtered();
 
     // Highlight the row whose distance is closest to the zero distance.
     int? zeroIdx;
     double minDelta = double.infinity;
-    for (var i = 0; i < traj.length; i++) {
-      final distM = traj[i].distance.in_(Unit.foot) * _ftToM;
+    for (var i = 0; i < rows.length; i++) {
+      final distM = rows[i].distance.in_(Unit.foot) * _ftToM;
       final delta = (distM - zeroDistanceM).abs();
       if (delta < minDelta) { minDelta = delta; zeroIdx = i; }
     }
@@ -46,9 +65,9 @@ class TrajectoryTable extends StatelessWidget {
       ('V',       'm/s'),
       ('Height',  'cm'),
       ('Drop',    'cm'),
-      ('Adj',     'mil'),
+      ('Adj',     'MIL'),
       ('Wind',    'cm'),
-      ('W.Adj',   'mil'),
+      ('W.Adj',   'MIL'),
       ('Mach',    ''),
       ('Density', ''),
       ('Drag',    ''),
@@ -70,7 +89,7 @@ class TrajectoryTable extends StatelessWidget {
       (r.energy.in_(Unit.footPound)  * _ftLbToJ).toStringAsFixed(0),
     ];
 
-    List<TableRow> rows() => [
+    final tableRows = [
       TableRow(
         decoration: BoxDecoration(color: cs.surfaceContainerHighest),
         children: cols.map((c) => _cell(c.$1, hdr)).toList(),
@@ -79,14 +98,14 @@ class TrajectoryTable extends StatelessWidget {
         decoration: BoxDecoration(color: cs.surfaceContainerHigh),
         children: cols.map((c) => _cell(c.$2, sub)).toList(),
       ),
-      for (var i = 0; i < traj.length; i++)
+      for (var i = 0; i < rows.length; i++)
         TableRow(
           decoration: BoxDecoration(
             color: i == zeroIdx
                 ? cs.errorContainer.withAlpha(80)
                 : (i.isEven ? null : cs.surfaceContainerLowest),
           ),
-          children: rowData(traj[i])
+          children: rowData(rows[i])
               .map((v) => _cell(v, i == zeroIdx ? zeroCell : cell))
               .toList(),
         ),
@@ -99,7 +118,7 @@ class TrajectoryTable extends StatelessWidget {
         child: Table(
           defaultColumnWidth: const IntrinsicColumnWidth(flex: 1.0),
           border: TableBorder.all(color: cs.outlineVariant, width: 0.5),
-          children: rows(),
+          children: tableRows,
         ),
       ),
     );

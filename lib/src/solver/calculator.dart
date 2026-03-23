@@ -70,15 +70,16 @@ class Calculator {
     return Unit.radian(totalRad - shot.lookAngle.in_(Unit.radian));
   }
 
-  /// Zeros the weapon by adjusting [shot.barrelElevation] so the bullet
-  /// strikes at [zeroDistance].
+  /// Zeros the weapon by storing the required barrel elevation in
+  /// [Weapon.zeroElevation] and resetting [shot.relativeAngle] to zero.
   ///
-  /// Because [Weapon.zeroElevation] is immutable, this sets [shot.relativeAngle]
-  /// via the [Shot.barrelElevation] setter (functionally identical when
-  /// relativeAngle starts at 0).
+  /// Any subsequent [Shot] that uses the same [Weapon] instance will
+  /// automatically inherit the zero elevation, matching the JS-library
+  /// behaviour where `weapon.zeroElevation` is mutable.
   Angular setWeaponZero(Shot shot, Distance zeroDistance) {
     final elev = barrelElevationForTarget(shot, zeroDistance);
-    shot.barrelElevation = elev;
+    shot.weapon.zeroElevation = elev;
+    shot.relativeAngle = Angular(0, Unit.radian);
     return elev;
   }
 

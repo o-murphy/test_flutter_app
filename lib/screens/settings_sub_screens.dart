@@ -63,6 +63,7 @@ class UnitsScreen extends ConsumerWidget {
                 label: 'Drop / Windage',
                 current: units.drop,
                 options: const [
+                  Unit.meter,
                   Unit.centimeter,
                   Unit.millimeter,
                   Unit.inch,

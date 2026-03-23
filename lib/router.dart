@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'providers/calculation_provider.dart';
+import 'providers/settings_provider.dart';
 import 'providers/shot_profile_provider.dart';
 
 import 'screens/home_screen.dart';
@@ -157,9 +158,20 @@ class _ScaffoldWithNavState extends ConsumerState<_ScaffoldWithNav> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _triggerCalcIfNeeded(widget.shell.currentIndex));
   }
 
+  void _markAndRecalc() {
+    final i = widget.shell.currentIndex;
+    ref.read(tableCalculationProvider.notifier).markDirty();
+    ref.read(homeCalculationProvider.notifier).markDirty();
+    if (_calcTabs.contains(i)) ref.read(tableCalculationProvider.notifier).recalculateIfNeeded();
+    if (i == 0)                ref.read(homeCalculationProvider.notifier).recalculateIfNeeded();
+  }
+
   void _triggerCalcIfNeeded(int i) {
     if (_calcTabs.contains(i)) {
-      ref.read(calculationProvider.notifier).recalculateIfNeeded();
+      ref.read(tableCalculationProvider.notifier).recalculateIfNeeded();
+    }
+    if (i == 0) {
+      ref.read(homeCalculationProvider.notifier).recalculateIfNeeded();
     }
   }
 
@@ -177,12 +189,22 @@ class _ScaffoldWithNavState extends ConsumerState<_ScaffoldWithNav> {
     // accidentally re-running the notifier's build and resetting state.
     ref.listen(shotProfileProvider, (_, next) {
       if (next.hasValue) {
-        final notifier = ref.read(calculationProvider.notifier);
-        notifier.markDirty();
-        if (_calcTabs.contains(widget.shell.currentIndex)) {
-          notifier.recalculateIfNeeded();
-        }
+        _markAndRecalc();
       }
+    });
+
+    // Settings changes can affect calculation (powder sensitivity, chart step).
+    // tableDistanceStep does NOT need recalc (table filters in UI).
+    ref.listen<AsyncValue<dynamic>>(settingsProvider, (prev, next) {
+      if (!next.hasValue) return;
+      final p = prev?.value;
+      final n = next.value;
+      if (n == null) return;
+      final needsRecalc = p == null ||
+          p.enablePowderSensitivity       != n.enablePowderSensitivity       ||
+          p.useDifferentPowderTemperature != n.useDifferentPowderTemperature ||
+          p.chartDistanceStep             != n.chartDistanceStep;
+      if (needsRecalc) _markAndRecalc();
     });
 
     return Scaffold(

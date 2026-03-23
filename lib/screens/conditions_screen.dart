@@ -127,7 +127,7 @@ class ConditionsScreen extends ConsumerWidget {
                 displayUnit: units.pressure,
                 onChanged: (v) => updateAtmo(pressHPa: v),
               ),
-              const Divider(height: 24),
+              const Divider(height: 1),
               // ── Switches ──────────────────────────────────────────────────
               _SwitchTile(
                 label: 'Powder temperature sensitivity',

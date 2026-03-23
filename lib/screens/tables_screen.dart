@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/calculation_provider.dart';
+import '../providers/settings_provider.dart';
 import '../router.dart';
 import '../widgets/trajectory_table.dart';
 
@@ -12,8 +13,10 @@ class TablesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final calc = ref.watch(calculationProvider);
-    final traj = calc.value?.trajectory ?? [];
+    final calc        = ref.watch(tableCalculationProvider);
+    final settings    = ref.watch(settingsProvider).value;
+    final displayStep = settings?.tableDistanceStep ?? 100.0;
+    final traj        = calc.value?.trajectory ?? [];
 
     return Column(
       children: [
@@ -45,8 +48,9 @@ class TablesScreen extends ConsumerWidget {
                       child: LayoutBuilder(
                         builder: (context, constraints) => SingleChildScrollView(
                           child: TrajectoryTable(
-                            traj: traj,
+                            traj:          traj,
                             availableWidth: constraints.maxWidth,
+                            displayStepM:  displayStep,
                           ),
                         ),
                       ),
