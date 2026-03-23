@@ -54,7 +54,7 @@ class Ammo {
           "otherVelocity and temperature can't be same as default");
     }
 
-    tempModifier = (vDelta / tDelta) * (15 / vLower);
+    tempModifier = (vDelta / tDelta) * (15 / vLower) * 100.0;
     return tempModifier;
   }
 

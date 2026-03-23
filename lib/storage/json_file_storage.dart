@@ -14,7 +14,12 @@ class JsonFileStorage implements AppStorage {
   JsonFileStorage._();
   static final JsonFileStorage instance = JsonFileStorage._();
 
-  Future<Directory> get _dir async => getApplicationDocumentsDirectory();
+  Future<Directory> get _dir async {
+    final home = Platform.environment['HOME'] ?? (await getApplicationDocumentsDirectory()).path;
+    final dir = Directory('$home/.eBalistyka');
+    if (!await dir.exists()) await dir.create(recursive: true);
+    return dir;
+  }
 
   Future<File> _file(String name) async =>
       File('${(await _dir).path}/$name.json');

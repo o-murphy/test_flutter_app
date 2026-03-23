@@ -15,7 +15,7 @@ void main() async {
     const windowOptions = WindowOptions(
       size: Size(375, 812),
       center: true,
-      title: 'eBallistica',
+      title: 'eBalistyka',
     );
     windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();

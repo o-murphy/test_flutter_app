@@ -94,6 +94,14 @@ abstract final class FC {
     accuracy: 1,
   );
 
+  static const windDirection = FieldConstraints(
+    rawUnit: Unit.degree,
+    minRaw: 0.0,
+    maxRaw: 360.0,
+    stepRaw: 1.0,
+    accuracy: 0,
+  );
+
   static const targetDistance = FieldConstraints(
     rawUnit: Unit.meter,
     minRaw: 10.0,

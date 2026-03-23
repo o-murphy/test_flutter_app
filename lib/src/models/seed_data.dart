@@ -27,9 +27,9 @@ final seedRifle = Rifle(
   name: '.338 Lapua Magnum',
   description: 'Generic .338LM platform',
   weapon: Weapon(
-    sightHeight:   Distance(8.5,  Unit.millimeter),
-    twist:         Distance(10.0, Unit.inch),
-    zeroElevation: Angular(0.0,   Unit.radian),
+    sightHeight: Distance(8.5, Unit.millimeter),
+    twist: Distance(10.0, Unit.inch),
+    zeroElevation: Angular(0.0, Unit.radian),
   ),
 );
 
@@ -38,8 +38,8 @@ final seedRifle = Rifle(
 final seedSight = Sight(
   id: 'seed-sight-generic',
   name: 'Generic Long-Range Scope',
-  sightHeight:   Distance(0.0, Unit.millimeter),
-  zeroElevation: Angular(0.0,  Unit.radian),
+  sightHeight: Distance(0.0, Unit.millimeter),
+  zeroElevation: Angular(0.0, Unit.radian),
 );
 
 // ── Projectiles ───────────────────────────────────────────────────────────────
@@ -53,9 +53,9 @@ final _projUkrop250 = Projectile(
   dm: createDragModelMultiBC(
     bcPoints: [BCPoint(bc: 0.314, v: Velocity(888.0, Unit.mps))],
     dragTable: tableG7,
-    weight:   Weight(250.0, Unit.grain),
+    weight: Weight(250.0, Unit.grain),
     diameter: Distance(0.338, Unit.inch),
-    length:   Distance(1.555, Unit.inch),
+    length: Distance(1.555, Unit.inch),
   ),
 );
 
@@ -69,9 +69,9 @@ final _projHornady250 = Projectile(
   dm: createDragModelMultiBC(
     bcPoints: [BCPoint(bc: 0.322, v: Velocity(885.0, Unit.mps))],
     dragTable: tableG7,
-    weight:   Weight(250.0, Unit.grain),
+    weight: Weight(250.0, Unit.grain),
     diameter: Distance(0.338, Unit.inch),
-    length:   Distance(1.567, Unit.inch),
+    length: Distance(1.567, Unit.inch),
   ),
 );
 
@@ -85,9 +85,9 @@ final _projLapua300 = Projectile(
   dm: createDragModelMultiBC(
     bcPoints: [BCPoint(bc: 0.381, v: Velocity(825.0, Unit.mps))],
     dragTable: tableG7,
-    weight:   Weight(300.0, Unit.grain),
+    weight: Weight(300.0, Unit.grain),
     diameter: Distance(0.338, Unit.inch),
-    length:   Distance(1.700, Unit.inch),
+    length: Distance(1.700, Unit.inch),
   ),
 );
 
@@ -105,9 +105,9 @@ final _projSts285EldM = Projectile(
       BCPoint(bc: 0.400, v: Velocity(595.0, Unit.mps)),
     ],
     dragTable: tableG7,
-    weight:   Weight(285.0, Unit.grain),
+    weight: Weight(285.0, Unit.grain),
     diameter: Distance(0.338, Unit.inch),
-    length:   Distance(1.746, Unit.inch),
+    length: Distance(1.746, Unit.inch),
   ),
 );
 
@@ -117,32 +117,40 @@ final seedCartridgeUkrop250 = Cartridge(
   id: 'seed-cart-ukrop-250-smk',
   name: '.338LM UKROP 250GR SMK',
   projectile: _projUkrop250,
-  mv:         Velocity(888.0, Unit.mps),
+  mv: Velocity(888.0, Unit.mps),
   powderTemp: Temperature(29.0, Unit.celsius),
+  tempModifier: 2.0,
+  usePowderSensitivity: true,
 );
 
 final seedCartridgeHornady250 = Cartridge(
   id: 'seed-cart-hornady-250-bthp',
   name: '.338LM Hornady 250GR BTHP',
   projectile: _projHornady250,
-  mv:         Velocity(885.0, Unit.mps),
+  mv: Velocity(885.0, Unit.mps),
   powderTemp: Temperature(15.0, Unit.celsius),
+  tempModifier: 0.5,
+  usePowderSensitivity: true,
 );
 
 final seedCartridgeLapua300 = Cartridge(
   id: 'seed-cart-lapua-300-smk',
   name: '.338LM Lapua 300GR SMK',
   projectile: _projLapua300,
-  mv:         Velocity(825.0, Unit.mps),
+  mv: Velocity(825.0, Unit.mps),
   powderTemp: Temperature(15.0, Unit.celsius),
+  tempModifier: 0.5,
+  usePowderSensitivity: true,
 );
 
 final seedCartridgeSts285EldM = Cartridge(
   id: 'seed-cart-sts-285-eld-m',
   name: '.338LM Hornady 285GR ELD-M',
   projectile: _projSts285EldM,
-  mv:         Velocity(810.0, Unit.mps),
+  mv: Velocity(810.0, Unit.mps),
   powderTemp: Temperature(15.0, Unit.celsius),
+  tempModifier: 0.5,
+  usePowderSensitivity: true,
 );
 
 final seedCartridges = [
@@ -157,20 +165,22 @@ final seedCartridges = [
 // Conditions extracted from the .a7p profile — these are the ZERO conditions
 // (altitude, temperature, pressure, humidity at time of zeroing).
 final _seedZeroConditions = Atmo(
-  altitude:    Distance(0.0,    Unit.meter),
+  altitude: Distance(0.0, Unit.meter),
   temperature: Temperature(15.0, Unit.celsius),
-  pressure:    Pressure(1000.0,  Unit.hPa),
-  humidity:    0.50,
+  pressure: Pressure(1000.0, Unit.hPa),
+  humidity: 0.50,
 );
 
 final seedShotProfile = ShotProfile(
   id: 'seed-profile-default',
   name: '.338LM UKROP 250GR SMK',
-  rifle:          seedRifle,
-  sight:          seedSight,
-  cartridge:      seedCartridgeUkrop250,
-  zeroConditions: _seedZeroConditions,  // from a7p — conditions at time of zeroing
-  conditions:     _seedZeroConditions,  // current conditions start equal; user adjusts via Conditions screen
+  rifle: seedRifle,
+  sight: seedSight,
+  cartridge: seedCartridgeUkrop250,
+  zeroConditions:
+      _seedZeroConditions, // from a7p — conditions at time of zeroing
+  conditions:
+      _seedZeroConditions, // current conditions start equal; user adjusts via Conditions screen
   winds: [],
   lookAngle: Angular(0.0, Unit.degree),
 );

@@ -47,7 +47,7 @@ class ConditionsScreen extends ConsumerWidget {
 
     double mvAtTemp(double tC) {
       if (refMvMps <= 0 || tempModifier == 0) return refMvMps;
-      return (tempModifier / (15 / refMvMps)) * (tC - refPowderTempC) +
+      return (tempModifier / 100.0 / (15 / refMvMps)) * (tC - refPowderTempC) +
           refMvMps;
     }
 

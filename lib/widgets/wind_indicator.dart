@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 class WindIndicator extends StatefulWidget {
   final double initialAngle;
   final Function(double, String) onAngleChanged;
+  /// Called when the user taps the center degree label. Receives current degrees (0-360).
+  final void Function(double degrees)? onDirectionTap;
 
   const WindIndicator({
     super.key,
     this.initialAngle = -pi / 2,
     required this.onAngleChanged,
+    this.onDirectionTap,
   });
 
   @override
@@ -22,6 +25,14 @@ class _WindIndicatorState extends State<WindIndicator> {
   void initState() {
     super.initState();
     angle = widget.initialAngle;
+  }
+
+  @override
+  void didUpdateWidget(WindIndicator oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialAngle != widget.initialAngle) {
+      setState(() => angle = widget.initialAngle);
+    }
   }
 
   // Updates local visual state only — does NOT notify parent.
@@ -67,8 +78,17 @@ class _WindIndicatorState extends State<WindIndicator> {
           onPanUpdate: (details) => _updateAngle(details.localPosition, size),
           onPanEnd: (_) => _commit(),
           onTapDown: (details) {
-            _updateAngle(details.localPosition, size);
-            _commit();
+            final center = Offset(size.width / 2, size.height / 2);
+            final dist = (details.localPosition - center).distance;
+            final innerR = min(size.width, size.height) * 0.5 * 0.8;
+            if (dist < innerR * 0.4 && widget.onDirectionTap != null) {
+              double deg = (angle * 180 / pi + 90) % 360;
+              if (deg < 0) deg += 360;
+              widget.onDirectionTap!(deg.roundToDouble());
+            } else {
+              _updateAngle(details.localPosition, size);
+              _commit();
+            }
           },
           child: CustomPaint(
             painter: WindPainter(

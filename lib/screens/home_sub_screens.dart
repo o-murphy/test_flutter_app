@@ -1,4 +1,5 @@
 export '_stub_screen.dart';
+export 'shot_details_screen.dart';
 
 import 'package:flutter/material.dart';
 import '_stub_screen.dart';
@@ -10,4 +11,3 @@ class CartridgeScreen      extends StatelessWidget { const CartridgeScreen({supe
 class CartridgeEditScreen  extends StatelessWidget { const CartridgeEditScreen({super.key});  @override Widget build(BuildContext context) => const StubScreen(title: 'Edit Cartridge'); }
 class ProjectileSelectScreen extends StatelessWidget { const ProjectileSelectScreen({super.key}); @override Widget build(BuildContext context) => const StubScreen(title: 'Select Projectile'); }
 class ProjectileEditScreen extends StatelessWidget { const ProjectileEditScreen({super.key}); @override Widget build(BuildContext context) => const StubScreen(title: 'Edit Projectile'); }
-class ShotDetailsScreen    extends StatelessWidget { const ShotDetailsScreen({super.key});    @override Widget build(BuildContext context) => const StubScreen(title: 'Shot Details'); }

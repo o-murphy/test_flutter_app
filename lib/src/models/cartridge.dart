@@ -35,7 +35,7 @@ class Cartridge {
         dm: projectile.dm,
         mv: mv,
         powderTemp: powderTemp,
-        tempModifier: tempModifier,
+        tempModifier: tempModifier / 100.0,
         usePowderSensitivity: usePowderSensitivity,
       );
 

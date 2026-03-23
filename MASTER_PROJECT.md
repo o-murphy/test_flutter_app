@@ -692,12 +692,16 @@ eballistica_backup.zip
 | **Providers** | `providers/` | Settings, ShotProfile, Library, Calculation, Storage |
 | **Navigation** | `router.dart` | GoRouter with StatefulShellRoute, all routes; tab switch resets branch stack |
 | **Main** | `main.dart` | ProviderScope, MaterialApp.router, static ThemeData, themeModeProvider |
-| **Home screen — top block** | `screens/home_screen.dart` | FAB selectors, wind wheel, SideControlBlock, QuickActionsPanel (stubs) |
+| **Home screen — top block** | `screens/home_screen.dart` | FAB selectors, wind wheel, SideControlBlock, QuickActionsPanel; min-height + SingleChildScrollView for small windows ✅ |
+| **Home screen — Page 1** | `screens/home_screen.dart` | Reticle placeholder (CustomPainter) + Drop/Windage panel: section headers with direction indicator, values per enabled unit from AdjustmentDisplay settings; bullet/MV/drag info row at top ✅ |
+| **Home screen — Page 2** | `screens/home_screen.dart` | Compact single table: 7 rows (Height, Slant Ht, Drop, Windage, Velocity, Energy, Time) × 5 distance columns (target ± 2 steps); target column highlighted; FC-based accuracy; negative distances → '—' ✅ |
 | **Home screen — Page 3** | `screens/home_screen.dart` | Chart + info grid + tap/drag-to-select + page persistence ✅ |
+| **Page dots indicator** | `screens/home_screen.dart` | Animated pill dots below PageView ✅ |
 | **Tables screen** | `screens/tables_screen.dart` | Connected to `calculationProvider`, spinner, topbar, zero-row highlight |
-| **TrajectoryTable** | `widgets/trajectory_table.dart` | Domain types, zero-row highlight by distance |
+| **TrajectoryTable** | `widgets/trajectory_table.dart` | `ConsumerWidget`; unit-aware columns via `UnitSettings`; FC-based accuracy for all columns ✅ |
 | **TrajectoryChart** | `widgets/trajectory_chart.dart` | CustomPainter, domain types |
-| **Settings screen** | `screens/settings_screen.dart` | Theme, subsonic switch, distance steps, language dialog ✅ |
+| **Settings screen** | `screens/settings_screen.dart` | Theme, distance steps (unit-aware), language dialog; subsonic switch disabled (not implemented) ✅ |
+| **`SectionHeader` widget** | `widgets/section_header.dart` | Extracted reusable all-caps section header; used in Settings ✅ |
 | **Settings → Units** | `screens/settings_sub_screens.dart` | All 10 categories, dialog picker, wired to `SettingsNotifier` ✅ |
 | **Settings → Adjustment Display** | `screens/settings_sub_screens.dart` | Format SegmentedButton + 5 switches, wired ✅ |
 | **`AppSettings`** | `src/models/app_settings.dart` | `AdjustmentFormat` enum + 6 adjustment display fields ✅ |
@@ -722,6 +726,10 @@ eballistica_backup.zip
 | **`ShotProfileNotifier` — new methods** | `providers/shot_profile_provider.dart` | `updateZeroDistance`, `updateZeroConditions`, `updateTargetDistance` (fixed), `updateWindSpeed` ✅ |
 | **Phase 5.5 MVP — QuickActionsPanel** | `widgets/quick_actions_panel.dart` | `ConsumerWidget`; reads wind speed, look angle, target distance from providers; tap → `showUnitEditDialog()` ✅ |
 | **Hardcoded units — Home screen** | `screens/home_screen.dart` | temp/alt/press use `unitSettingsProvider` + dynamic symbol ✅ |
+| **FC accuracy everywhere** | `widgets/quick_actions_panel.dart`, `trajectory_table.dart` | All display values now use `FC.accuracyFor(unit)` — no hardcoded decimal places ✅ |
+| **`DragModelType` enum** | `src/models/projectile.dart` | `g1 / g7 / custom` field on `Projectile`; serialized; seed data set to `g7` ✅ |
+| **Global scroll behavior** | `main.dart` | `_AppScrollBehavior` enables mouse/trackpad drag on all scrollables ✅ |
+| **`showSubsonicTransition` disabled** | `screens/settings_screen.dart`, `app_settings.dart` | Switch shown as disabled + "Not yet implemented" subtitle; default changed to `false` ✅ |
 
 ### 8.2 Pending ⚠️
 
@@ -735,9 +743,9 @@ eballistica_backup.zip
 
 | Area | Status | Phase |
 |------|--------|-------|
-| Page 1 — Reticle placeholder | Stub text | 6 |
-| Page 1 — Drop/Windage values | Not implemented (needs `calculationProvider` + adjustment settings) | 6 |
-| Page 2 — Compact adjustment tables | Not implemented | 6 |
+| Page 1 — Reticle placeholder | ✅ Done — `_ReticleView` CustomPainter | 6 |
+| Page 1 — Drop/Windage panel | ✅ Done — `_AdjPanel` with direction indicators per unit | 6 |
+| Page 2 — Compact adjustment tables | ✅ Done — `_PageTable` single table with 5 distance columns | 6 |
 | Page 3 — Info grid above chart | ✅ Done | 6 |
 | Page 3 — Tap/drag-to-select point on chart | ✅ Done | 6 |
 

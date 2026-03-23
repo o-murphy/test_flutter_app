@@ -19,6 +19,7 @@ import '../widgets/trajectory_chart.dart';
 import '../widgets/wind_indicator.dart';
 import '../widgets/side_control_block.dart';
 import '../widgets/quick_actions_panel.dart';
+import '../widgets/unit_value_field.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -52,6 +53,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final disp = (rawUnit(raw) as dynamic).in_(dispUnit) as double;
       return '${disp.toStringAsFixed(dec)} ${dispUnit.symbol}';
     }
+
+    // Wind direction → initial wheel angle
+    final windDirDeg = profile?.winds.isNotEmpty == true
+        ? (profile!.winds.first.directionFrom as dynamic).in_(solver.Unit.degree) as double
+        : 0.0;
+    final windInitialAngle = (windDirDeg - 90) * math.pi / 180;
 
     final conditions = profile?.conditions;
     final tempStr = dimStr(
@@ -156,29 +163,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   Expanded(
                                     flex: 3,
                                     child: WindIndicator(
+                                      initialAngle: windInitialAngle,
                                       onAngleChanged: (degrees, _) {
-                                        final existing =
-                                            ref
-                                                .read(shotProfileProvider)
-                                                .value
-                                                ?.winds ??
-                                            [];
-                                        final wind = solver.Wind(
-                                          velocity: existing.isNotEmpty
-                                              ? existing.first.velocity
-                                              : solver.Velocity(
-                                                  0,
-                                                  solver.Unit.mps,
-                                                ),
-                                          directionFrom: solver.Angular(
-                                            degrees,
-                                            solver.Unit.degree,
+                                        final existing = ref.read(shotProfileProvider).value?.winds ?? [];
+                                        ref.read(shotProfileProvider.notifier).updateWinds([
+                                          solver.Wind(
+                                            velocity: existing.isNotEmpty
+                                                ? existing.first.velocity
+                                                : solver.Velocity(0, solver.Unit.mps),
+                                            directionFrom: solver.Angular(degrees, solver.Unit.degree),
                                           ),
-                                        );
-                                        ref
-                                            .read(shotProfileProvider.notifier)
-                                            .updateWinds([wind]);
+                                        ]);
                                       },
+                                      onDirectionTap: (deg) => showUnitEditDialog(
+                                        context,
+                                        label: 'Wind direction',
+                                        rawValue: deg,
+                                        constraints: FC.windDirection,
+                                        displayUnit: Unit.degree,
+                                        onChanged: (newDeg) {
+                                          final normalized = ((newDeg % 360) + 360) % 360;
+                                          final existing = ref.read(shotProfileProvider).value?.winds ?? [];
+                                          ref.read(shotProfileProvider.notifier).updateWinds([
+                                            solver.Wind(
+                                              velocity: existing.isNotEmpty
+                                                  ? existing.first.velocity
+                                                  : solver.Velocity(0, solver.Unit.mps),
+                                              directionFrom: solver.Angular(normalized, solver.Unit.degree),
+                                            ),
+                                          ]);
+                                        },
+                                      ),
                                     ),
                                   ),
                                   Expanded(
@@ -575,13 +590,219 @@ class _AdjPanel extends StatelessWidget {
   }
 }
 
-// ─── Page 2 — Adjustments Table ───────────────────────────────────────────────
+// ─── Page 2 — Compact Adjustment Tables ──────────────────────────────────────
 
-class _PageTable extends StatelessWidget {
+class _PageTable extends ConsumerWidget {
   const _PageTable();
+
+  double _conv(dynamic dim, Unit raw, Unit disp) {
+    final v = (dim as dynamic).in_(raw) as double;
+    return (raw(v) as dynamic).in_(disp) as double;
+  }
+
   @override
-  Widget build(BuildContext context) =>
-      const Center(child: Text('Adjustments Table'));
+  Widget build(BuildContext context, WidgetRef ref) {
+    final calc = ref.watch(homeCalculationProvider);
+    final settings = ref.watch(settingsProvider).value ?? const AppSettings();
+    final units = ref.watch(unitSettingsProvider);
+    final profile = ref.watch(shotProfileProvider).value;
+
+    final hit = calc.value;
+    if (hit == null || hit.trajectory.isEmpty) {
+      return const Center(child: Text('No data'));
+    }
+
+    final targetM =
+        (profile?.targetDistance as dynamic)?.in_(Unit.meter) as double? ??
+        300.0;
+    final stepM = settings.tableDistanceStep;
+
+    final dists = [
+      targetM - 2 * stepM,
+      targetM - stepM,
+      targetM,
+      targetM + stepM,
+      targetM + 2 * stepM,
+    ];
+
+    final points =
+        dists
+            .map((d) => d < 0 ? null : hit.getAtDistance(Distance(d, Unit.meter)))
+            .toList();
+
+    final distAcc = FC.distance.accuracyFor(units.distance);
+    final distLabels = dists.map((m) {
+      if (m < 0) return '—';
+      final disp = (Unit.meter(m) as dynamic).in_(units.distance) as double;
+      return disp.toStringAsFixed(distAcc);
+    }).toList();
+
+    final milAcc = FC.adjustment.accuracyFor(Unit.mil);
+    final moaAcc = FC.adjustment.accuracyFor(Unit.moa);
+
+    // Each row: (label, unit symbol, value extractor, decimal places)
+    final rows = <(String, String, double? Function(TrajectoryData), int)>[
+      (
+        'Height',
+        units.drop.symbol,
+        (p) => _conv(p.height, Unit.foot, units.drop),
+        FC.drop.accuracyFor(units.drop),
+      ),
+      (
+        'Slant Ht',
+        units.drop.symbol,
+        (p) => _conv(p.slantHeight, Unit.foot, units.drop),
+        FC.drop.accuracyFor(units.drop),
+      ),
+      (
+        'Angle',
+        'MIL',
+        (p) => _conv(p.angle, Unit.mil, Unit.mil),
+        milAcc,
+      ),
+      (
+        'Angle',
+        'MOA',
+        (p) => _conv(p.angle, Unit.mil, Unit.moa),
+        moaAcc,
+      ),
+      (
+        'Drop',
+        'MIL',
+        (p) => _conv(p.dropAngle, Unit.mil, Unit.mil),
+        milAcc,
+      ),
+      (
+        'Drop',
+        'MOA',
+        (p) => _conv(p.dropAngle, Unit.mil, Unit.moa),
+        moaAcc,
+      ),
+      (
+        'Windage',
+        'MIL',
+        (p) => _conv(p.windageAngle, Unit.mil, Unit.mil),
+        milAcc,
+      ),
+      (
+        'Windage',
+        'MOA',
+        (p) => _conv(p.windageAngle, Unit.mil, Unit.moa),
+        moaAcc,
+      ),
+      (
+        'Velocity',
+        units.velocity.symbol,
+        (p) => _conv(p.velocity, Unit.fps, units.velocity),
+        FC.velocity.accuracyFor(units.velocity),
+      ),
+      (
+        'Energy',
+        units.energy.symbol,
+        (p) => _conv(p.energy, Unit.footPound, units.energy),
+        FC.energy.accuracyFor(units.energy),
+      ),
+      ('Time', 's', (p) => p.time, 3),
+    ];
+
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final hdrStyle = theme.textTheme.bodyMedium?.copyWith(
+      fontWeight: FontWeight.w600,
+      color: cs.onSurface,
+    );
+final cellStyle = theme.textTheme.bodyMedium?.copyWith(
+      fontFamily: 'monospace',
+    );
+    final targetCellStyle = cellStyle?.copyWith(
+      color: cs.primary,
+      fontWeight: FontWeight.w700,
+    );
+
+    const targetCol = 2; // index of target column in dists
+
+    Widget cell(String text, TextStyle? style, {Color? bg}) => Container(
+      color: bg,
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerRight,
+        child: Text(text, style: style, textAlign: TextAlign.right),
+      ),
+    );
+
+    final labelStyle = theme.textTheme.bodySmall?.copyWith(
+      fontWeight: FontWeight.w600,
+      color: cs.onSurface,
+    );
+    final labelSubStyle = theme.textTheme.labelSmall?.copyWith(
+      color: cs.onSurfaceVariant,
+    );
+
+    Widget labelCell(String label, String unit) => Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: labelStyle),
+          Text(unit, style: labelSubStyle),
+        ],
+      ),
+    );
+
+    // Build table columns: [label | d0 | d1 | d2 | d3 | d4]
+    final tableRows = <TableRow>[
+      // Distance header row
+      TableRow(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            child: Text(units.distance.symbol, style: labelSubStyle),
+          ),
+          for (var i = 0; i < dists.length; i++)
+            cell(
+              distLabels[i],
+              i == targetCol ? hdrStyle?.copyWith(color: cs.primary) : hdrStyle,
+              bg: i == targetCol ? cs.primaryContainer.withAlpha(60) : null,
+            ),
+        ],
+      ),
+      // Data rows
+      for (var ri = 0; ri < rows.length; ri++)
+        TableRow(
+          children: [
+            labelCell(rows[ri].$1, rows[ri].$2),
+            for (var ci = 0; ci < dists.length; ci++) (() {
+              final p = points[ci];
+              final valStr = p == null
+                  ? '—'
+                  : (rows[ri].$3(p) ?? double.nan)
+                        .toStringAsFixed(rows[ri].$4);
+              return cell(
+                valStr,
+                ci == targetCol ? targetCellStyle : cellStyle,
+                bg: ci == targetCol ? cs.primaryContainer.withAlpha(40) : null,
+              );
+            })(),
+          ],
+        ),
+    ];
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Table(
+          columnWidths: const {0: FlexColumnWidth(1.4)},
+          defaultColumnWidth: const FlexColumnWidth(1.0),
+          border: TableBorder.symmetric(
+            inside: BorderSide(color: cs.outlineVariant, width: 0.5),
+          ),
+          children: tableRows,
+        ),
+      ),
+    );
+  }
 }
 
 class _PageChart extends ConsumerStatefulWidget {
