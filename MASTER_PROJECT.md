@@ -221,15 +221,7 @@ Vertically scrollable set of compact tables. Each table: header row with distanc
 - Chart: trajectory curve + velocity curve only (no barrel/sight lines)
 - Default selected point: start of trajectory
 - Pan on chart → highlights nearest point, updates info grid above
-- Remove axis labels to have more space for the chart
-    Axis labels
-    _text(canvas, 'Distance (m)', Offset(_ml + pw / 2, size.height - 2),
-        TextStyle(fontSize: 10, color: textColor), center: true);
-    _textRotated(canvas, 'Height (cm)',
-        Offset(10, _mt + ph / 2), TextStyle(fontSize: 10, color: heightColor));
-    _textRotated(canvas, 'Velocity (m/s)',
-        Offset(size.width - 10, _mt + ph / 2), TextStyle(fontSize: 10, color: velColor),
-        rightAligned: true);
+- Axis labels removed; numeric tick labels only, right-aligned to chart edges
 ---
 
 ### 4.2 Conditions Screen
@@ -285,7 +277,7 @@ Layout (top to bottom):
 
 > **Purpose:** Collection of unit converters. Sub-screens are placeholders for now.
 
-**Layout:** 2-column scrollable grid. Each tile — square card with rounded corners, large icon, name below.
+**Layout:** Responsive scrollable grid — tile count per row adapts to screen width (`SliverGrid.extent` with `maxCrossAxisExtent ≈ 160 dp`). Each tile — square card with rounded corners, large icon, name below.
 
 **Converters (8 total):**
 
@@ -313,7 +305,7 @@ Layout (top to bottom):
 | **Appearance** | Units of Measurement → `/settings/units` | ✅ |
 | **Ballistics** | Adjustment Display → `/settings/adjustment` | ✅ |
 | **Ballistics** | Subsonic transition switch | ✅ |
-| **Ballistics** | Table distance step (dialog) | ✅ | WARNING! This option should not have effect on Tables screen! The tables screen will have it's own settings. It affects only on Home.bottom_block.page2
+| **Ballistics** | Table distance step (dialog) | ✅ | Affects Home bottom block Page 2 only. Tables screen will have its own per-screen step setting. |
 | **Ballistics** | Chart distance step (dialog) | ✅ |
 | **Data** | Export / Import buttons | ⏳ stub |
 | **About** | Version, links (GitHub, Privacy, Terms, Changelog) | ✅ (links stub) |
@@ -616,31 +608,46 @@ class ShotProfile {
 | `unitSettingsProvider` | `Provider<UnitSettings>` | Sync unit access |
 | `themeModeProvider` | `Provider<ThemeMode>` | Sync theme access |
 | `shotProfileProvider` | `AsyncNotifierProvider<ShotProfileNotifier, ShotProfile>` | Current shot profile |
-| `calculationProvider` | `AsyncNotifierProvider<CalculationNotifier, HitResult?>` | Lazy ballistic calculation |
+| `tableCalculationProvider` | `AsyncNotifierProvider<TableCalculationNotifier, HitResult?>` | Lazy — zeroed at zeroDistance, full 2000 m, used by Tables screen |
+| `homeCalculationProvider` | `AsyncNotifierProvider<HomeCalculationNotifier, HitResult?>` | Lazy — shootTheTarget pattern, up to targetDist+chartStep, used by Home screen |
 | `rifleLibraryProvider` | `AsyncNotifierProvider` | Rifle CRUD |
 | `cartridgeLibraryProvider` | `AsyncNotifierProvider` | Cartridge CRUD |
 | `sightLibraryProvider` | `AsyncNotifierProvider` | Sight CRUD |
 | `appStorageProvider` | `Provider<AppStorage>` | Storage singleton |
 
-**Calculation architecture:** `CalculationNotifier` is lazy with `_dirty` flag. `build()` returns null immediately. `markDirty()` called from `_ScaffoldWithNavState` via `ref.listen(shotProfileProvider)`. `recalculateIfNeeded()` triggered only on Home (tab 0) and Tables (tab 2) tab activation. Runs in isolate via `compute()`.
+**Calculation architecture:** Two separate lazy notifiers with `_dirty` flag. `build()` returns null immediately. `markDirty()` called on both from `_ScaffoldWithNavState` via `ref.listen(shotProfileProvider)` and `ref.listen(settingsProvider)`. `recalculateIfNeeded()` triggered on tab activation (Tables = tab 2, Home = tab 0). Both run in isolate via `compute()`.
 
-**Two-phase calculation flow** (matches reference JS app):
+**Two-phase calculation flow:**
 
+*makeShot (tableCalculationProvider):*
 ```
 Phase 1 — Zero
   atmo     = profile.zeroConditions ?? profile.conditions
   zeroShot = Shot(weapon, baseAmmo, lookAngle, atmo, winds=[])
-  calc.setWeaponZero(zeroShot, profile.zeroDistance)   → stores zeroElevation in calc
+  calc.setWeaponZero(zeroShot, profile.zeroDistance)
+    → stores barrelElevationForTarget(zeroShot, zeroDistance) in weapon.zeroElevation
+    → resets zeroShot.relativeAngle = 0
 
-Phase 2 — Shot (uses same calc instance)
-  if (usePowderSens && usePowderSensitivity):
-    currentTemp = useDiffPowderTemp ? conditions.powderTemp : conditions.temperature
-    shotMv = ammo.getVelocityForTemp(currentTemp)
-    shotAmmo = Ammo(dm, mv=shotMv, ...)
-  else:
-    shotAmmo = baseAmmo
+Phase 2 — Shot
   shot = Shot(weapon, shotAmmo, lookAngle, currentConditions, winds)
-  hitResult = calc.fire(shot, trajectoryRange, trajectoryStep)
+  // weapon.zeroElevation already set → shot.barrelElevation = zero angle
+  hitResult = calc.fire(shot, 2000 m, tableStep)
+```
+
+*shootTheTarget (homeCalculationProvider):*
+```
+Phase 1 — Zero (same as above)
+  calc.setWeaponZero(zeroShot, profile.zeroDistance)
+
+Phase 2 — Hold
+  newShot = Shot(weapon, shotAmmo, lookAngle, currentConditions, winds)
+  targetElev = calc.barrelElevationForTarget(newShot, targetDistance)
+  hold = targetElev - weapon.zeroElevation
+  newShot.relativeAngle = hold
+
+Phase 3 — Fire
+  hitResult = calc.fire(newShot, targetDist + chartStep, chartStep)
+  // trajectory arc crosses 0 at targetDistance
 ```
 
 > Note: `zeroConditions` defaults to null in the seed (= use `conditions`). A dedicated Zero Conditions UI screen is pending (Phase 8.8 follow-up).
@@ -686,7 +693,7 @@ eballistica_backup.zip
 | **Navigation** | `router.dart` | GoRouter with StatefulShellRoute, all routes; tab switch resets branch stack |
 | **Main** | `main.dart` | ProviderScope, MaterialApp.router, static ThemeData, themeModeProvider |
 | **Home screen — top block** | `screens/home_screen.dart` | FAB selectors, wind wheel, SideControlBlock, QuickActionsPanel (stubs) |
-| **Home screen — Page 3** | `screens/home_screen.dart` | Chart connected to `calculationProvider` ✅ |
+| **Home screen — Page 3** | `screens/home_screen.dart` | Chart + info grid + tap/drag-to-select + page persistence ✅ |
 | **Tables screen** | `screens/tables_screen.dart` | Connected to `calculationProvider`, spinner, topbar, zero-row highlight |
 | **TrajectoryTable** | `widgets/trajectory_table.dart` | Domain types, zero-row highlight by distance |
 | **TrajectoryChart** | `widgets/trajectory_chart.dart` | CustomPainter, domain types |
@@ -699,6 +706,14 @@ eballistica_backup.zip
 | **`UnitValueField`** | `widgets/unit_value_field.dart` | `[icon label  value ✎]` tappable row; dialog delegated to `showUnitEditDialog()`; raw↔display via `Unit.call().in_()` ✅ |
 | **`showUnitEditDialog()`** | `widgets/unit_value_field.dart` | Top-level function — reusable `[−] field [+]` dialog; used by `UnitValueField` and `QuickActionsPanel` ✅ |
 | **`FieldConstraints` / `FC`** | `src/models/field_constraints.dart` | Per-role constraints (rawUnit, min, max, step, accuracy) for all physical quantities ✅ |
+| **`FC` display constraints** | `src/models/field_constraints.dart` | Added `drop`, `windage`, `adjustment`, `velocity`, `energy`, `distance` display-only entries ✅ |
+| **`FieldConstraints.accuracyFor(Unit)`** | `src/models/field_constraints.dart` | Computes decimal places dynamically from `stepRaw` converted to display unit — same logic as `UnitValueField` ✅ |
+| **`Weapon.zeroElevation` mutable** | `src/solver/munition.dart` | Changed from `final` to `var`; `setWeaponZero` now stores computed elevation in `weapon.zeroElevation` and resets `relativeAngle=0` — matches JS library behaviour ✅ |
+| **`shootTheTarget` pattern** | `providers/calculation_provider.dart` | `_runHomeCalculation` uses `barrelElevationForTarget` + hold to produce arc crossing 0 at targetDistance ✅ |
+| **Two separate calculation providers** | `providers/calculation_provider.dart` | `tableCalculationProvider` (zeroed at zeroDistance, full 2000 m) and `homeCalculationProvider` (shootTheTarget, up to targetDist + chartStep) ✅ |
+| **Chart improvements** | `widgets/trajectory_chart.dart` | Axis labels removed; margins tightened; velocity axis scaled to actual min/max; `snapDistM` parameter for tap snapping; `rightAlign` text option ✅ |
+| **Drop/Windage supports meters** | `screens/settings_sub_screens.dart` | `Unit.meter` added to Drop/Windage options in Settings → Units ✅ |
+| **Settings change listener** | `router.dart` | Recalculates when `enablePowderSensitivity`, `useDifferentPowderTemperature`, or `chartDistanceStep` changes ✅ |
 | **`AppSettings.useDifferentPowderTemperature`** | `src/models/app_settings.dart` | New field + serialization ✅ |
 | **Powder sensitivity in calc** | `providers/calculation_provider.dart` | MV adjusted via `getVelocityForTemp()` based on settings ✅ |
 | **`Atmo.powderTemp` bug fix** | `src/solver/conditions.dart` | `powderTemperature` param was ignored; now correctly stored ✅ |
@@ -723,8 +738,8 @@ eballistica_backup.zip
 | Page 1 — Reticle placeholder | Stub text | 6 |
 | Page 1 — Drop/Windage values | Not implemented (needs `calculationProvider` + adjustment settings) | 6 |
 | Page 2 — Compact adjustment tables | Not implemented | 6 |
-| Page 3 — Info grid above chart | Not implemented | 6 |
-| Page 3 — Tap-to-select point on chart | Not implemented | 6 |
+| Page 3 — Info grid above chart | ✅ Done | 6 |
+| Page 3 — Tap/drag-to-select point on chart | ✅ Done | 6 |
 
 #### 🟡 Tables Screen
 
@@ -813,10 +828,10 @@ Domain models, storage, providers, navigation. **Done.**
 
 ### Phase 6 — Home Screen Bottom Block
 
-1. **Page 1:** Left — reticle placeholder (rounded square). Right — drop/windage in multiple units from `adjustmentDisplay` settings.
-2. **Page 2:** Scrollable set of compact tables (Height, Slant Height, Drop angle, Windage angle, Velocity, Energy, Time), each ±2 steps around target distance.
-3. **Page 3:** Chart connected to `calculationProvider` ✅ + tap-to-select-point.
-4. Also: placeholder sub-screens for New Note and More buttons.
+1. **Page 1:** Left — reticle placeholder (rounded square). Right — drop/windage in multiple units from `adjustmentDisplay` settings. ⏳
+2. **Page 2:** Scrollable set of compact tables (Height, Slant Height, Drop angle, Windage angle, Velocity, Energy, Time), each ±2 steps around target distance. ⏳
+3. **Page 3:** ✅ Done — chart (trajectory + velocity curves), info grid above, tap/drag-to-select point, page persistence across rebuilds.
+4. Also: placeholder sub-screens for New Note and More buttons. ⏳
 
 ---
 

@@ -14,7 +14,7 @@ class SettingsScreen extends ConsumerWidget {
     final settings = ref.watch(settingsProvider).value ?? const AppSettings();
 
     final notifier = ref.read(settingsProvider.notifier);
-    final tt       = Theme.of(context).textTheme;
+    final tt = Theme.of(context).textTheme;
 
     return Column(
       children: [
@@ -22,7 +22,6 @@ class SettingsScreen extends ConsumerWidget {
         Expanded(
           child: ListView(
             children: [
-
               // ── Language ───────────────────────────────────────────────────
               _SectionHeader('Language'),
               ListTile(
@@ -30,9 +29,13 @@ class SettingsScreen extends ConsumerWidget {
                 title: Text(_languageName(settings.languageCode)),
                 trailing: const Icon(Icons.chevron_right),
                 dense: true,
-                onTap: () => _showLanguageDialog(context, settings.languageCode, notifier.setLanguage),
+                onTap: () => _showLanguageDialog(
+                  context,
+                  settings.languageCode,
+                  notifier.setLanguage,
+                ),
               ),
-              const Divider(height: 1),
+              // const Divider(height: 1),
 
               // ── Appearance ─────────────────────────────────────────────────
               _SectionHeader('Appearance'),
@@ -43,6 +46,11 @@ class SettingsScreen extends ConsumerWidget {
                   onChanged: notifier.setThemeMode,
                 ),
               ),
+
+              const Divider(height: 1),
+
+              // ── Display settings ─────────────────────────────────────────────────
+              _SectionHeader('Display settings'),
               ListTile(
                 leading: const Icon(Icons.straighten_outlined),
                 title: const Text('Units of Measurement'),
@@ -50,10 +58,6 @@ class SettingsScreen extends ConsumerWidget {
                 dense: true,
                 onTap: () => context.push(Routes.settingsUnits),
               ),
-              const Divider(height: 1),
-
-              // ── Ballistics ─────────────────────────────────────────────────
-              _SectionHeader('Ballistics'),
               ListTile(
                 leading: const Icon(Icons.tune_outlined),
                 title: const Text('Adjustment Display'),
@@ -63,11 +67,19 @@ class SettingsScreen extends ConsumerWidget {
               ),
               SwitchListTile(
                 secondary: const Icon(Icons.speed_outlined),
-                title: const Text('Show subsonic transition', style: TextStyle(fontSize: 14)),
+                title: const Text(
+                  'Show subsonic transition',
+                  style: TextStyle(fontSize: 14),
+                ),
                 value: settings.showSubsonicTransition,
                 onChanged: (v) => notifier.setSwitch('subsonicTransition', v),
                 dense: true,
               ),
+              const Divider(height: 1),
+
+              // ── Home screen props ─────────────────────────────────────────────────
+              _SectionHeader('Main screen'),
+
               _StepTile(
                 icon: Icons.table_rows_outlined,
                 label: 'Table distance step',
@@ -165,7 +177,7 @@ class SettingsScreen extends ConsumerWidget {
 
 String _languageName(String code) => switch (code) {
   'uk' => 'Українська',
-  _    => 'English',
+  _ => 'English',
 };
 
 void _showLanguageDialog(
@@ -181,14 +193,16 @@ void _showLanguageDialog(
       content: RadioGroup<String>(
         groupValue: current,
         onChanged: (v) {
-          if (v != null) { onSelect(v); Navigator.pop(ctx); }
+          if (v != null) {
+            onSelect(v);
+            Navigator.pop(ctx);
+          }
         },
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: langs.map((l) => RadioListTile<String>(
-            value: l.$1,
-            title: Text(l.$2),
-          )).toList(),
+          children: langs
+              .map((l) => RadioListTile<String>(value: l.$1, title: Text(l.$2)))
+              .toList(),
         ),
       ),
     ),
@@ -206,7 +220,10 @@ class _Header extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Align(
           alignment: Alignment.centerLeft,
-          child: Text('Settings', style: Theme.of(context).textTheme.titleLarge),
+          child: Text(
+            'Settings',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
         ),
       ),
     );
@@ -248,9 +265,21 @@ class _ThemeSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return SegmentedButton<ThemeMode>(
       segments: const [
-        ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto_outlined), label: Text('System')),
-        ButtonSegment(value: ThemeMode.light,  icon: Icon(Icons.light_mode_outlined),      label: Text('Light')),
-        ButtonSegment(value: ThemeMode.dark,   icon: Icon(Icons.dark_mode_outlined),       label: Text('Dark')),
+        ButtonSegment(
+          value: ThemeMode.system,
+          icon: Icon(Icons.brightness_auto_outlined),
+          label: Text('System'),
+        ),
+        ButtonSegment(
+          value: ThemeMode.light,
+          icon: Icon(Icons.light_mode_outlined),
+          label: Text('Light'),
+        ),
+        ButtonSegment(
+          value: ThemeMode.dark,
+          icon: Icon(Icons.dark_mode_outlined),
+          label: Text('Dark'),
+        ),
       ],
       selected: {current},
       onSelectionChanged: (s) => onChanged(s.first),
@@ -273,11 +302,11 @@ class _StepTile extends StatelessWidget {
     required this.onConfirm,
   });
 
-  final IconData               icon;
-  final String                 label;
-  final double                 value;
-  final String                 unit;
-  final ValueChanged<double>   onConfirm;
+  final IconData icon;
+  final String label;
+  final double value;
+  final String unit;
+  final ValueChanged<double> onConfirm;
 
   @override
   Widget build(BuildContext context) {
@@ -292,7 +321,9 @@ class _StepTile extends StatelessWidget {
   }
 
   void _showDialog(BuildContext context) {
-    final controller = TextEditingController(text: value % 1 == 0 ? '${value.toInt()}' : '$value');
+    final controller = TextEditingController(
+      text: value % 1 == 0 ? '${value.toInt()}' : '$value',
+    );
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -304,7 +335,10 @@ class _StepTile extends StatelessWidget {
           decoration: InputDecoration(suffixText: unit),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () {
               final v = double.tryParse(controller.text);
