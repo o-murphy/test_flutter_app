@@ -30,7 +30,7 @@ class AppSettings {
     this.themeMode                = ThemeMode.system,
     this.tableDistanceStep        = 100,
     this.chartDistanceStep        = 100,
-    this.showSubsonicTransition   = true,
+    this.showSubsonicTransition   = false,
     this.enableCoriolis           = false,
     this.enablePowderSensitivity          = false,
     this.useDifferentPowderTemperature    = false,

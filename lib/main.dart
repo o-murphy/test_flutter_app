@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
@@ -23,6 +24,16 @@ void main() async {
   }
 
   runApp(const ProviderScope(child: MyApp()));
+}
+
+class _AppScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+  };
 }
 
 class MyApp extends ConsumerWidget {
@@ -52,6 +63,7 @@ class MyApp extends ConsumerWidget {
       theme: _lightTheme,
       darkTheme: _darkTheme,
       themeMode: themeMode,
+      scrollBehavior: _AppScrollBehavior(),
     );
   }
 }

@@ -22,16 +22,16 @@ class QuickActionsPanel extends ConsumerWidget {
         ? (profile!.winds.first.velocity as dynamic).in_(Unit.mps) as double
         : 0.0;
     final windDisp = (Unit.mps(windMps) as dynamic).in_(units.velocity) as double;
-    final windStr  = '${windDisp.toStringAsFixed(1)} ${units.velocity.symbol}';
+    final windStr  = '${windDisp.toStringAsFixed(FC.windVelocity.accuracyFor(units.velocity))} ${units.velocity.symbol}';
 
     // ── Look angle ──────────────────────────────────────────────────────────
     final lookDeg = (profile?.lookAngle as dynamic)?.in_(Unit.degree) as double? ?? 0.0;
-    final lookStr = '${lookDeg.toStringAsFixed(1)}°';
+    final lookStr = '${lookDeg.toStringAsFixed(FC.lookAngle.accuracy)}°';
 
     // ── Target distance ─────────────────────────────────────────────────────
     final distM    = (profile?.targetDistance as dynamic)?.in_(Unit.meter) as double? ?? 300.0;
     final distDisp = (Unit.meter(distM) as dynamic).in_(units.distance) as double;
-    final distStr  = '${distDisp.toStringAsFixed(0)} ${units.distance.symbol}';
+    final distStr  = '${distDisp.toStringAsFixed(FC.targetDistance.accuracyFor(units.distance))} ${units.distance.symbol}';
 
     return IconValueButtonRow(
       height: 104,

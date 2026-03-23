@@ -7,6 +7,7 @@ import '../router.dart';
 import '../src/models/app_settings.dart';
 import '../src/models/field_constraints.dart';
 import '../src/solver/unit.dart';
+import '../widgets/section_header.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -25,7 +26,7 @@ class SettingsScreen extends ConsumerWidget {
           child: ListView(
             children: [
               // ── Language ───────────────────────────────────────────────────
-              _SectionHeader('Language'),
+              SectionHeader('Language'),
               ListTile(
                 leading: const Icon(Icons.language_outlined),
                 title: Text(_languageName(settings.languageCode)),
@@ -40,7 +41,7 @@ class SettingsScreen extends ConsumerWidget {
               // const Divider(height: 1),
 
               // ── Appearance ─────────────────────────────────────────────────
-              _SectionHeader('Appearance'),
+              SectionHeader('Appearance'),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                 child: _ThemeSelector(
@@ -52,7 +53,7 @@ class SettingsScreen extends ConsumerWidget {
               const Divider(height: 1),
 
               // ── Display settings ─────────────────────────────────────────────────
-              _SectionHeader('Display settings'),
+              SectionHeader('Display settings'),
               ListTile(
                 leading: const Icon(Icons.straighten_outlined),
                 title: const Text('Units of Measurement'),
@@ -73,14 +74,15 @@ class SettingsScreen extends ConsumerWidget {
                   'Show subsonic transition',
                   style: TextStyle(fontSize: 14),
                 ),
-                value: settings.showSubsonicTransition,
-                onChanged: (v) => notifier.setSwitch('subsonicTransition', v),
+                subtitle: const Text('Not yet implemented', style: TextStyle(fontSize: 11)),
+                value: false,
+                onChanged: null,
                 dense: true,
               ),
               const Divider(height: 1),
 
               // ── Home screen props ─────────────────────────────────────────────────
-              _SectionHeader('Main screen'),
+              SectionHeader('Main screen'),
 
               _StepTile(
                 icon: Icons.table_rows_outlined,
@@ -97,7 +99,7 @@ class SettingsScreen extends ConsumerWidget {
               const Divider(height: 1),
 
               // ── Profiles ───────────────────────────────────────────────────
-              _SectionHeader('Profiles'),
+              SectionHeader('Profiles'),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                 child: Row(
@@ -123,7 +125,7 @@ class SettingsScreen extends ConsumerWidget {
               const Divider(height: 1),
 
               // ── Links ──────────────────────────────────────────────────────
-              _SectionHeader('Links'),
+              SectionHeader('Links'),
               ListTile(
                 leading: const Icon(Icons.code_outlined),
                 title: const Text('GitHub'),
@@ -149,7 +151,7 @@ class SettingsScreen extends ConsumerWidget {
               const Divider(height: 1),
 
               // ── About ──────────────────────────────────────────────────────
-              _SectionHeader('About'),
+              SectionHeader('About'),
               ListTile(
                 leading: const Icon(Icons.info_outline),
                 title: const Text('Version'),
@@ -224,30 +226,6 @@ class _Header extends StatelessWidget {
             'Settings',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Section header ───────────────────────────────────────────────────────────
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.title);
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.8,
-          color: cs.primary,
         ),
       ),
     );

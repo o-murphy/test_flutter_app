@@ -49,6 +49,7 @@ final _projUkrop250 = Projectile(
   id: 'seed-proj-ukrop-250-smk',
   name: 'UKROP 250GR SMK',
   manufacturer: 'Ukrop / Zbroyar',
+  dragType: DragModelType.g7,
   dm: createDragModelMultiBC(
     bcPoints: [BCPoint(bc: 0.314, v: Velocity(888.0, Unit.mps))],
     dragTable: tableG7,
@@ -64,6 +65,7 @@ final _projHornady250 = Projectile(
   id: 'seed-proj-hornady-250-bthp',
   name: 'Hornady 250GR BTHP',
   manufacturer: 'Hornady',
+  dragType: DragModelType.g7,
   dm: createDragModelMultiBC(
     bcPoints: [BCPoint(bc: 0.322, v: Velocity(885.0, Unit.mps))],
     dragTable: tableG7,
@@ -79,6 +81,7 @@ final _projLapua300 = Projectile(
   id: 'seed-proj-lapua-300-smk',
   name: 'Lapua 300GR SMK',
   manufacturer: 'Lapua',
+  dragType: DragModelType.g7,
   dm: createDragModelMultiBC(
     bcPoints: [BCPoint(bc: 0.381, v: Velocity(825.0, Unit.mps))],
     dragTable: tableG7,
@@ -94,6 +97,7 @@ final _projSts285EldM = Projectile(
   id: 'seed-proj-sts-285-eld-m',
   name: 'Hornady 285GR ELD-M',
   manufacturer: 'Hornady / STS',
+  dragType: DragModelType.g7,
   dm: createDragModelMultiBC(
     bcPoints: [
       BCPoint(bc: 0.417, v: Velocity(765.0, Unit.mps)),

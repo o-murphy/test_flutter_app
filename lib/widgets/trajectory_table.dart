@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:test_app/src/solver/trajectory_data.dart';
-import 'package:test_app/src/solver/unit.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-const _ftToM   = 1.0 / 3.28084;
-const _ftToCm  = 30.48;
-const _fpsToms = 1.0 / 3.28084;
-const _ftLbToJ = 1.35582;
+import '../providers/settings_provider.dart';
+import '../src/models/field_constraints.dart';
+import '../src/models/unit_settings.dart';
+import '../src/solver/trajectory_data.dart';
+import '../src/solver/unit.dart';
 
-class TrajectoryTable extends StatelessWidget {
+class TrajectoryTable extends ConsumerWidget {
   final List<TrajectoryData> traj;
   final double availableWidth;
   /// Zero distance in metres. Used to highlight the zero-crossing row.
   final double zeroDistanceM;
   /// Display step in metres. Points between steps are skipped.
-  /// Defaults to 100 m. Set to `min(1.0, tableStep)` for fine-step traj.
   final double displayStepM;
 
   const TrajectoryTable({
@@ -24,13 +23,12 @@ class TrajectoryTable extends StatelessWidget {
     this.displayStepM  = 100.0,
   });
 
-  /// Filter fine-step trajectory to one point per [displayStepM] interval.
   List<TrajectoryData> _filtered() {
-    if (displayStepM <= 1.0) return traj; // already at display resolution
+    if (displayStepM <= 1.0) return traj;
     final result = <TrajectoryData>[];
     double nextTargetM = 0.0;
     for (final p in traj) {
-      final d = p.distance.in_(Unit.foot) * _ftToM;
+      final d = (p.distance as dynamic).in_(Unit.meter) as double;
       if (d >= nextTargetM - 0.5) {
         result.add(p);
         nextTargetM = ((d / displayStepM).round() + 1) * displayStepM;
@@ -40,16 +38,17 @@ class TrajectoryTable extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final units = ref.watch(unitSettingsProvider);
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final rows = _filtered();
+    final cs    = theme.colorScheme;
+    final rows  = _filtered();
 
-    // Highlight the row whose distance is closest to the zero distance.
+    // Highlight row closest to zero distance.
     int? zeroIdx;
     double minDelta = double.infinity;
     for (var i = 0; i < rows.length; i++) {
-      final distM = rows[i].distance.in_(Unit.foot) * _ftToM;
+      final distM = (rows[i].distance as dynamic).in_(Unit.meter) as double;
       final delta = (distM - zeroDistanceM).abs();
       if (delta < minDelta) { minDelta = delta; zeroIdx = i; }
     }
@@ -59,35 +58,7 @@ class TrajectoryTable extends StatelessWidget {
     final cell     = theme.textTheme.bodyMedium?.copyWith(fontFamily: 'monospace');
     final zeroCell = cell?.copyWith(color: cs.error, fontWeight: FontWeight.bold);
 
-    const cols = [
-      ('Time',    's'),
-      ('Range',   'm'),
-      ('V',       'm/s'),
-      ('Height',  'cm'),
-      ('Drop',    'cm'),
-      ('Adj',     'MIL'),
-      ('Wind',    'cm'),
-      ('W.Adj',   'MIL'),
-      ('Mach',    ''),
-      ('Density', ''),
-      ('Drag',    ''),
-      ('Energy',  'J'),
-    ];
-
-    List<String> rowData(TrajectoryData r) => [
-      r.time.toStringAsFixed(3),
-      (r.distance.in_(Unit.foot)     * _ftToM  ).toStringAsFixed(0),
-      (r.velocity.in_(Unit.fps)      * _fpsToms).toStringAsFixed(0),
-      (r.height.in_(Unit.foot)       * _ftToCm ).toStringAsFixed(1),
-      (r.slantHeight.in_(Unit.foot)  * _ftToCm ).toStringAsFixed(1),
-      (r.dropAngle.in_(Unit.radian)  * 1000    ).toStringAsFixed(2),
-      (r.windage.in_(Unit.foot)      * _ftToCm ).toStringAsFixed(1),
-      (r.windageAngle.in_(Unit.radian) * 1000  ).toStringAsFixed(2),
-      r.mach.toStringAsFixed(2),
-      r.densityRatio.toStringAsFixed(3),
-      r.drag.toStringAsFixed(4),
-      (r.energy.in_(Unit.footPound)  * _ftLbToJ).toStringAsFixed(0),
-    ];
+    final cols = _columns(units);
 
     final tableRows = [
       TableRow(
@@ -105,7 +76,7 @@ class TrajectoryTable extends StatelessWidget {
                 ? cs.errorContainer.withAlpha(80)
                 : (i.isEven ? null : cs.surfaceContainerLowest),
           ),
-          children: rowData(rows[i])
+          children: _rowData(rows[i], units)
               .map((v) => _cell(v, i == zeroIdx ? zeroCell : cell))
               .toList(),
         ),
@@ -124,8 +95,49 @@ class TrajectoryTable extends StatelessWidget {
     );
   }
 
+  // ─── Column definitions ────────────────────────────────────────────────────
+
+  List<(String, String)> _columns(UnitSettings u) => [
+    ('Time',   's'),
+    ('Range',  u.distance.symbol),
+    ('V',      u.velocity.symbol),
+    ('Height', u.drop.symbol),
+    ('Drop',   u.drop.symbol),
+    ('Adj',    u.adjustment.symbol),
+    ('Wind',   u.drop.symbol),
+    ('W.Adj',  u.adjustment.symbol),
+    ('Mach',   ''),
+    ('Energy', u.energy.symbol),
+  ];
+
+  // ─── Row formatting ────────────────────────────────────────────────────────
+
+  double _conv(dynamic dim, Unit raw, Unit disp) =>
+      (raw(((dim as dynamic).in_(raw) as double)) as dynamic).in_(disp) as double;
+
+  List<String> _rowData(TrajectoryData r, UnitSettings u) {
+    final distAcc  = FC.distance.accuracyFor(u.distance);
+    final velAcc   = FC.velocity.accuracyFor(u.velocity);
+    final dropAcc  = FC.drop.accuracyFor(u.drop);
+    final adjAcc   = FC.adjustment.accuracyFor(u.adjustment);
+    final energyAcc = FC.energy.accuracyFor(u.energy);
+
+    return [
+      r.time.toStringAsFixed(3),
+      _conv(r.distance,      Unit.foot, u.distance).toStringAsFixed(distAcc),
+      _conv(r.velocity,      Unit.fps,  u.velocity).toStringAsFixed(velAcc),
+      _conv(r.height,        Unit.foot, u.drop).toStringAsFixed(dropAcc),
+      _conv(r.slantHeight,   Unit.foot, u.drop).toStringAsFixed(dropAcc),
+      _conv(r.dropAngle,     Unit.mil,  u.adjustment).toStringAsFixed(adjAcc),
+      _conv(r.windage,       Unit.foot, u.drop).toStringAsFixed(dropAcc),
+      _conv(r.windageAngle,  Unit.mil,  u.adjustment).toStringAsFixed(adjAcc),
+      r.mach.toStringAsFixed(2),
+      _conv(r.energy,        Unit.footPound, u.energy).toStringAsFixed(energyAcc),
+    ];
+  }
+
   Widget _cell(String text, TextStyle? style) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Text(text, style: style, textAlign: TextAlign.right),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    child: Text(text, style: style, textAlign: TextAlign.right),
+  );
 }

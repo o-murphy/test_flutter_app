@@ -3,11 +3,14 @@ import 'package:uuid/uuid.dart';
 import '../solver/drag_model.dart';
 import '_dim.dart';
 
+enum DragModelType { g1, g7, custom }
+
 class Projectile {
   final String id;
   final String name;
   final String? manufacturer;
   final DragModel dm;
+  final DragModelType dragType;
   final String? notes;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -17,6 +20,7 @@ class Projectile {
     required this.name,
     this.manufacturer,
     required this.dm,
+    this.dragType = DragModelType.custom,
     this.notes,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -28,6 +32,7 @@ class Projectile {
     String? name,
     String? manufacturer,
     DragModel? dm,
+    DragModelType? dragType,
     String? notes,
   }) =>
       Projectile(
@@ -35,6 +40,7 @@ class Projectile {
         name: name ?? this.name,
         manufacturer: manufacturer ?? this.manufacturer,
         dm: dm ?? this.dm,
+        dragType: dragType ?? this.dragType,
         notes: notes ?? this.notes,
         createdAt: createdAt,
         updatedAt: DateTime.now(),
@@ -44,6 +50,7 @@ class Projectile {
         'id': id,
         'name': name,
         if (manufacturer != null) 'manufacturer': manufacturer,
+        'dragType': dragType.name,
         'dm': {
           'bc': dm.bc,
           'weight': dimToJson(dm.weight),
@@ -64,6 +71,10 @@ class Projectile {
       id: json['id'] as String,
       name: json['name'] as String,
       manufacturer: json['manufacturer'] as String?,
+      dragType: DragModelType.values.firstWhere(
+        (t) => t.name == (json['dragType'] as String?),
+        orElse: () => DragModelType.custom,
+      ),
       dm: DragModel(
         bc: (d['bc'] as num).toDouble(),
         dragTable: (d['dragTable'] as List)

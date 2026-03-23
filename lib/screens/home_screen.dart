@@ -1,4 +1,5 @@
-import 'package:flutter/gestures.dart';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import '../providers/calculation_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/shot_profile_provider.dart';
+import '../src/models/app_settings.dart';
+import '../src/models/projectile.dart' show DragModelType;
 import '../router.dart';
 import '../src/models/field_constraints.dart';
 import '../src/solver/conditions.dart' as solver;
@@ -26,6 +29,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _pageController = PageController();
+  int _currentPage = 0;
 
   @override
   void dispose() {
@@ -63,167 +67,514 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final topBlockHeight = constraints.maxHeight * 0.55;
-        final botBlockHeight = constraints.maxHeight - topBlockHeight;
+        const minTopH = 300.0;
+        const minBotH = 200.0;
+        final totalH       = math.max(constraints.maxHeight, minTopH + minBotH);
+        final topBlockHeight = math.max(totalH * 0.55, minTopH);
+        final botBlockHeight = totalH - topBlockHeight;
 
-        return Column(
-          children: [
-            // ── Top block ────────────────────────────────────────────────────
-            Container(
-              width: double.infinity,
-              height: topBlockHeight,
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainer,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(32),
-                  bottomRight: Radius.circular(32),
-                ),
-              ),
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
-                  child: Column(
-                    children: [
-                      // Rifle / cartridge selector row
-                      Row(
+        return SingleChildScrollView(
+          physics: totalH > constraints.maxHeight
+              ? const ClampingScrollPhysics()
+              : const NeverScrollableScrollPhysics(),
+          child: SizedBox(
+            height: totalH,
+            child: Column(
+              children: [
+                // ── Top block ────────────────────────────────────────────────────
+                Container(
+                  width: double.infinity,
+                  height: topBlockHeight,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainer,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(32),
+                      bottomRight: Radius.circular(32),
+                    ),
+                  ),
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+                      child: Column(
                         children: [
+                          // Rifle / cartridge selector row
+                          Row(
+                            children: [
+                              Expanded(
+                                child: FilledButton.tonal(
+                                  onPressed: () =>
+                                      context.push(Routes.rifleSelect),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          '$rifleName · $cartridgeName',
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const Icon(Icons.more_horiz_rounded),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton.filledTonal(
+                                onPressed: () =>
+                                    context.push(Routes.projectileSelect),
+                                icon: const Icon(Icons.rocket_launch_outlined),
+                              ),
+                            ],
+                          ),
+
+                          // Wind indicator + side controls
                           Expanded(
-                            child: FilledButton.tonal(
-                              onPressed: () => context.push(Routes.rifleSelect),
+                            child: Container(
+                              padding: const EdgeInsets.fromLTRB(0, 12, 0, 12),
                               child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
-                                    child: Text(
-                                      '$rifleName · $cartridgeName',
-                                      overflow: TextOverflow.ellipsis,
+                                    flex: 1,
+                                    child: SideControlBlock(
+                                      topIcon: Icons.info_outline,
+                                      bottomIcon: Icons.note_add_outlined,
+                                      infoRows: [
+                                        (
+                                          Icons.device_thermostat_outlined,
+                                          tempStr,
+                                        ),
+                                        (Icons.terrain_outlined, altStr),
+                                      ],
+                                      onTopPressed: () =>
+                                          context.push(Routes.shotDetails),
+                                      onBottomPressed: () {},
                                     ),
                                   ),
-                                  const Icon(Icons.more_horiz_rounded),
+                                  Expanded(
+                                    flex: 3,
+                                    child: WindIndicator(
+                                      onAngleChanged: (degrees, _) {
+                                        final existing =
+                                            ref
+                                                .read(shotProfileProvider)
+                                                .value
+                                                ?.winds ??
+                                            [];
+                                        final wind = solver.Wind(
+                                          velocity: existing.isNotEmpty
+                                              ? existing.first.velocity
+                                              : solver.Velocity(
+                                                  0,
+                                                  solver.Unit.mps,
+                                                ),
+                                          directionFrom: solver.Angular(
+                                            degrees,
+                                            solver.Unit.degree,
+                                          ),
+                                        );
+                                        ref
+                                            .read(shotProfileProvider.notifier)
+                                            .updateWinds([wind]);
+                                      },
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 1,
+                                    child: SideControlBlock(
+                                      topIcon: Icons.question_mark_outlined,
+                                      bottomIcon: Icons.more_horiz_outlined,
+                                      infoRows: [
+                                        (Icons.water_drop_outlined, humidStr),
+                                        (Icons.speed_outlined, pressStr),
+                                      ],
+                                      onTopPressed: () {},
+                                      onBottomPressed: () {},
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          IconButton.filledTonal(
-                            onPressed: () =>
-                                context.push(Routes.projectileSelect),
-                            icon: const Icon(Icons.rocket_launch_outlined),
+
+                          SizedBox(
+                            height: 80,
+                            child: const QuickActionsPanel(),
                           ),
-                        ],
-                      ),
-
-                      // Wind indicator + side controls
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.fromLTRB(0, 12, 0, 12),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: 1,
-                                child: SideControlBlock(
-                                  topIcon: Icons.info_outline,
-                                  bottomIcon: Icons.note_add_outlined,
-                                  infoRows: [
-                                    (Icons.device_thermostat_outlined, tempStr),
-                                    (Icons.terrain_outlined, altStr),
-                                  ],
-                                  onTopPressed: () =>
-                                      context.push(Routes.shotDetails),
-                                  onBottomPressed: () {},
-                                ),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: WindIndicator(
-                                  onAngleChanged: (degrees, _) {
-                                    final existing =
-                                        ref
-                                            .read(shotProfileProvider)
-                                            .value
-                                            ?.winds ??
-                                        [];
-                                    final wind = solver.Wind(
-                                      velocity: existing.isNotEmpty
-                                          ? existing.first.velocity
-                                          : solver.Velocity(0, solver.Unit.mps),
-                                      directionFrom: solver.Angular(
-                                        degrees,
-                                        solver.Unit.degree,
-                                      ),
-                                    );
-                                    ref
-                                        .read(shotProfileProvider.notifier)
-                                        .updateWinds([wind]);
-                                  },
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: SideControlBlock(
-                                  topIcon: Icons.question_mark_outlined,
-                                  bottomIcon: Icons.more_horiz_outlined,
-                                  infoRows: [
-                                    (Icons.water_drop_outlined, humidStr),
-                                    (Icons.speed_outlined, pressStr),
-                                  ],
-                                  onTopPressed: () {},
-                                  onBottomPressed: () {},
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(height: 80, child: const QuickActionsPanel()),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // ── Bottom block — 3 pages ────────────────────────────────────────
-            SizedBox(
-              height: botBlockHeight,
-
-              child: ref.watch(homeCalculationProvider).isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ScrollConfiguration(
-                      behavior: ScrollConfiguration.of(context).copyWith(
-                        dragDevices: {
-                          PointerDeviceKind.touch,
-                          PointerDeviceKind.mouse,
-                          PointerDeviceKind.trackpad,
-                        },
-                      ),
-                      child: PageView(
-                        controller: _pageController,
-                        children: const [
-                          _PageReticle(),
-                          _PageTable(),
-                          _PageChart(),
                         ],
                       ),
                     ),
+                  ),
+                ),
+
+                // ── Bottom block — 3 pages ────────────────────────────────────────
+                SizedBox(
+                  height: botBlockHeight,
+                  child: ref.watch(homeCalculationProvider).isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : Column(
+                          children: [
+                            Expanded(
+                              child: PageView(
+                                controller: _pageController,
+                                onPageChanged: (i) =>
+                                    setState(() => _currentPage = i),
+                                children: const [
+                                  _PageReticle(),
+                                  _PageTable(),
+                                  _PageChart(),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 5),
+                              child: _PageDots(current: _currentPage, count: 3),
+                            ),
+                          ],
+                        ),
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
   }
 }
 
-// ─── Page stubs ───────────────────────────────────────────────────────────────
+// ─── Page dots indicator ──────────────────────────────────────────────────────
 
-class _PageReticle extends StatelessWidget {
-  const _PageReticle();
+class _PageDots extends StatelessWidget {
+  const _PageDots({required this.current, required this.count});
+  final int current;
+  final int count;
+
   @override
-  Widget build(BuildContext context) =>
-      const Center(child: Text('Reticle & Adjustments'));
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (i) {
+        final active = i == current;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: active ? 16 : 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: active ? cs.primary : cs.onSurface.withAlpha(60),
+            borderRadius: BorderRadius.circular(3),
+          ),
+        );
+      }),
+    );
+  }
 }
+
+// ─── Page 1 — Reticle & Adjustments ──────────────────────────────────────────
+
+class _PageReticle extends ConsumerWidget {
+  const _PageReticle();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider).value ?? const AppSettings();
+    final units = ref.watch(unitSettingsProvider);
+    final calc = ref.watch(homeCalculationProvider);
+    final profile = ref.watch(shotProfileProvider).value;
+
+    final hit = calc.value;
+    final traj = hit?.trajectory ?? [];
+
+    final targetM =
+        (profile?.targetDistance as dynamic)?.in_(Unit.meter) as double? ??
+        300.0;
+    final point = (hit != null && traj.isNotEmpty)
+        ? hit.getAtDistance(Distance(targetM, Unit.meter))
+        : null;
+
+    final elevAngle = hit?.shot.relativeAngle; // elevation hold (positive = up)
+    final windAngle = point?.windageAngle; // lateral drift (positive = right)
+
+    final dispUnits = <(Unit, String)>[
+      if (settings.showMrad) (Unit.mRad, 'MRAD'),
+      if (settings.showMoa) (Unit.moa, 'MOA'),
+      if (settings.showMil) (Unit.mil, 'MIL'),
+      if (settings.showCmPer100m) (Unit.cmPer100m, 'cm/100m'),
+      if (settings.showInPer100yd) (Unit.inchesPer100Yd, 'in/100yd'),
+    ];
+
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+
+    final proj = profile?.cartridge.projectile;
+    final mvDisp = profile != null
+        ? (profile.cartridge.mv as dynamic).in_(units.velocity) as double
+        : null;
+    final mvStr = mvDisp != null
+        ? '${mvDisp.toStringAsFixed(FC.muzzleVelocity.accuracyFor(units.velocity))} ${units.velocity.symbol}'
+        : '—';
+    final bcAcc = FC.ballisticCoefficient.accuracy;
+    final dragStr = switch (proj?.dragType) {
+      DragModelType.g1 => 'G1 ${proj!.dm.bc.toStringAsFixed(bcAcc)}',
+      DragModelType.g7 => 'G7 ${proj!.dm.bc.toStringAsFixed(bcAcc)}',
+      DragModelType.custom => 'Custom',
+      null => '—',
+    };
+    final cartridgeLabel = proj != null
+        ? '${proj.name};  $mvStr;  $dragStr'
+        : '—';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Bullet / drag info ───────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: Text(
+            cartridgeLabel,
+            style: tt.labelMedium?.copyWith(color: cs.onSurface.withAlpha(160)),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+
+        // ── Reticle + Adjustments ────────────────────────────────────────
+        Expanded(
+          child: Row(
+            children: [
+              // Left: Reticle
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                  child: _ReticleView(cs: cs),
+                ),
+              ),
+              // Right: Adjustment values
+              Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 4, 16, 12),
+                  child: dispUnits.isEmpty
+                      ? Center(
+                          child: Text(
+                            'Enable units in\nSettings → Adjustment Display',
+                            textAlign: TextAlign.center,
+                            style: tt.bodySmall,
+                          ),
+                        )
+                      : _AdjPanel(
+                          dispUnits: dispUnits,
+                          elevAngle: elevAngle,
+                          windAngle: windAngle,
+                          fmt: settings.adjustmentFormat,
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Reticle placeholder ──────────────────────────────────────────────────────
+
+class _ReticleView extends StatelessWidget {
+  const _ReticleView({required this.cs});
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1,
+      child: CustomPaint(painter: _ReticlePainter(cs: cs)),
+    );
+  }
+}
+
+class _ReticlePainter extends CustomPainter {
+  const _ReticlePainter({required this.cs});
+  final ColorScheme cs;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final r = math.min(cx, cy) - 4;
+
+    final stroke = Paint()
+      ..color = cs.onSurface.withAlpha(160)
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(Offset(cx, cy), r, stroke);
+
+    // Crosshair arms with gap at centre
+    final gap = r * 0.09;
+    canvas.drawLine(Offset(cx, cy - r + 2), Offset(cx, cy - gap), stroke);
+    canvas.drawLine(Offset(cx, cy + gap), Offset(cx, cy + r - 2), stroke);
+    canvas.drawLine(Offset(cx - r + 2, cy), Offset(cx - gap, cy), stroke);
+    canvas.drawLine(Offset(cx + gap, cy), Offset(cx + r - 2, cy), stroke);
+
+    // Hash marks on arms at ¼, ½, ¾ radius
+    final tickPaint = Paint()
+      ..color = cs.onSurface.withAlpha(90)
+      ..strokeWidth = 0.8;
+    for (final frac in [0.25, 0.5, 0.75]) {
+      final halfTick = r * 0.055;
+      final yU = cy - r * frac;
+      final yD = cy + r * frac;
+      final xL = cx - r * frac;
+      final xR = cx + r * frac;
+      canvas.drawLine(
+        Offset(cx - halfTick, yU),
+        Offset(cx + halfTick, yU),
+        tickPaint,
+      );
+      canvas.drawLine(
+        Offset(cx - halfTick, yD),
+        Offset(cx + halfTick, yD),
+        tickPaint,
+      );
+      canvas.drawLine(
+        Offset(xL, cy - halfTick),
+        Offset(xL, cy + halfTick),
+        tickPaint,
+      );
+      canvas.drawLine(
+        Offset(xR, cy - halfTick),
+        Offset(xR, cy + halfTick),
+        tickPaint,
+      );
+    }
+
+    // Centre dot
+    canvas.drawCircle(
+      Offset(cx, cy),
+      2.5,
+      Paint()
+        ..color = cs.primary
+        ..style = PaintingStyle.fill,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_ReticlePainter old) => old.cs != cs;
+}
+
+// ─── Adjustment panel ─────────────────────────────────────────────────────────
+
+class _AdjPanel extends StatelessWidget {
+  const _AdjPanel({
+    required this.dispUnits,
+    required this.elevAngle,
+    required this.windAngle,
+    required this.fmt,
+  });
+
+  final List<(Unit, String)> dispUnits;
+  final Angular? elevAngle;
+  final Angular? windAngle;
+  final AdjustmentFormat fmt;
+
+  // Direction indicator shown in the section header.
+  String _elevDir() {
+    if (elevAngle == null) return '';
+    final v = (elevAngle! as dynamic).in_(Unit.mRad) as double;
+    return switch (fmt) {
+      AdjustmentFormat.arrows => v >= 0 ? '↑' : '↓',
+      AdjustmentFormat.signs => v >= 0 ? '+' : '−',
+      AdjustmentFormat.letters => v >= 0 ? 'U' : 'D',
+    };
+  }
+
+  String _windDir() {
+    if (windAngle == null) return '';
+    final corr = -((windAngle! as dynamic).in_(Unit.mRad) as double);
+    return switch (fmt) {
+      AdjustmentFormat.arrows => corr >= 0 ? '→' : '←',
+      AdjustmentFormat.signs => corr >= 0 ? '+' : '−',
+      AdjustmentFormat.letters => corr >= 0 ? 'R' : 'L',
+    };
+  }
+
+  String _elevVal(Unit unit) {
+    if (elevAngle == null) return '—';
+    final v = (elevAngle! as dynamic).in_(unit) as double;
+    return v.abs().toStringAsFixed(unit.accuracy);
+  }
+
+  // Windage correction = opposite of drift.
+  String _windVal(Unit unit) {
+    if (windAngle == null) return '—';
+    final v = (windAngle! as dynamic).in_(unit) as double;
+    return v.abs().toStringAsFixed(unit.accuracy);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+
+    final headerStyle = tt.labelMedium!.copyWith(
+      color: cs.onSurface.withAlpha(180),
+      fontWeight: FontWeight.w600,
+    );
+    final dirStyle = tt.titleSmall!.copyWith(
+      color: cs.primary,
+      fontWeight: FontWeight.w700,
+    );
+    final valStyle = tt.bodyMedium!.copyWith(fontWeight: FontWeight.w700);
+    final unitStyle = tt.bodySmall!.copyWith(
+      color: cs.onSurface.withAlpha(140),
+    );
+
+    Widget valueRow(String val, String unitLabel) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Text(val, style: valStyle),
+          const SizedBox(width: 4),
+          Text(unitLabel, style: unitStyle),
+        ],
+      ),
+    );
+
+    Widget sectionHeader(String label, String dir) => Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(label, style: headerStyle),
+        if (dir.isNotEmpty) ...[
+          const SizedBox(width: 6),
+          Text(dir, style: dirStyle),
+        ],
+      ],
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        sectionHeader('Drop', _elevDir()),
+        const SizedBox(height: 2),
+        ...dispUnits.map((u) => valueRow(_elevVal(u.$1), u.$2)),
+        const Divider(height: 16),
+        sectionHeader('Windage', _windDir()),
+        const SizedBox(height: 2),
+        ...dispUnits.map((u) => valueRow(_windVal(u.$1), u.$2)),
+      ],
+    );
+  }
+}
+
+// ─── Page 2 — Adjustments Table ───────────────────────────────────────────────
 
 class _PageTable extends StatelessWidget {
   const _PageTable();
