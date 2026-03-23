@@ -68,8 +68,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         const minTopH = 350.0;
-        const minBotH = 300.0;
-        final totalH       = math.max(constraints.maxHeight, minTopH + minBotH);
+        const minBotH =
+            300.0; // TODO: change page 1 adjustments layout to avoid overlap
+        final totalH = math.max(constraints.maxHeight, minTopH + minBotH);
         final topBlockHeight = math.max(totalH * 0.55, minTopH);
         final botBlockHeight = totalH - topBlockHeight;
 
@@ -327,7 +328,7 @@ class _PageReticle extends ConsumerWidget {
         : '—';
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ── Bullet / drag info ───────────────────────────────────────────
         Padding(
