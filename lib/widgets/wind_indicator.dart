@@ -87,7 +87,7 @@ class _WindIndicatorState extends State<WindIndicator> {
               widget.onDirectionTap!(deg.roundToDouble());
             } else {
               _updateAngle(details.localPosition, size);
-              _commit();
+              // Don't commit on tap down - only commit on pan end or center tap
             }
           },
           child: CustomPaint(
@@ -138,7 +138,6 @@ class WindPainter extends CustomPainter {
       Paint()..color = color.withValues(alpha: 0.05),
     );
 
-    final textPainter = TextPainter(textDirection: TextDirection.ltr);
     for (int i = 1; i <= 12; i++) {
       double hourAngle = (i * 30 - 90) * pi / 180;
 
@@ -159,22 +158,24 @@ class WindPainter extends CustomPainter {
       );
 
       if (i % 3 != 0) continue;
-      textPainter.text = TextSpan(
-        text: '$i',
-        style: TextStyle(
-          color: color.withOpacity(0.8),
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
+      final hourTextPainter = TextPainter(
+        text: TextSpan(
+          text: '$i',
+          style: TextStyle(
+            color: color.withOpacity(0.8),
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-      );
-      textPainter.layout();
+        textDirection: TextDirection.ltr,
+      )..layout();
       final textPos = Offset(
-        center.dx + (innerRadius - 25) * cos(hourAngle) - textPainter.width / 2,
+        center.dx + (innerRadius - 25) * cos(hourAngle) - hourTextPainter.width / 2,
         center.dy +
             (innerRadius - 25) * sin(hourAngle) -
-            textPainter.height / 2,
+            hourTextPainter.height / 2,
       );
-      textPainter.paint(canvas, textPos);
+      hourTextPainter.paint(canvas, textPos);
     }
 
     const markerR = 16.0;
@@ -272,42 +273,48 @@ class WindPainter extends CustomPainter {
     final clockStr =
         '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
 
-    textPainter.text = TextSpan(
-      text: 'Wind direction',
-      style: TextStyle(color: color.withValues(alpha: 0.55), fontSize: 11),
-    );
-    textPainter.layout();
-    textPainter.paint(
+    final directionTextPainter = TextPainter(
+      text: TextSpan(
+        text: 'Wind direction',
+        style: TextStyle(color: color.withValues(alpha: 0.55), fontSize: 11),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    directionTextPainter.paint(
       canvas,
       Offset(
-        center.dx - textPainter.width / 2,
-        center.dy - textPainter.height / 2 - 28,
+        center.dx - directionTextPainter.width / 2,
+        center.dy - directionTextPainter.height / 2 - 28,
       ),
     );
 
-    textPainter.text = TextSpan(
-      text: '${degrees.toStringAsFixed(0)}°',
-      style: TextStyle(color: color, fontSize: 24, fontWeight: FontWeight.bold),
-    );
-    textPainter.layout();
-    textPainter.paint(
+    final degreesTextPainter = TextPainter(
+      text: TextSpan(
+        text: '${degrees.toStringAsFixed(0)}°',
+        style: TextStyle(color: color, fontSize: 24, fontWeight: FontWeight.bold),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    degreesTextPainter.paint(
       canvas,
       Offset(
-        center.dx - textPainter.width / 2,
-        center.dy - textPainter.height / 2,
+        center.dx - degreesTextPainter.width / 2,
+        center.dy - degreesTextPainter.height / 2,
       ),
     );
 
-    textPainter.text = TextSpan(
-      text: clockStr,
-      style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 13),
-    );
-    textPainter.layout();
-    textPainter.paint(
+    final clockTextPainter = TextPainter(
+      text: TextSpan(
+        text: clockStr,
+        style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 13),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    clockTextPainter.paint(
       canvas,
       Offset(
-        center.dx - textPainter.width / 2,
-        center.dy - textPainter.height / 2 + 28,
+        center.dx - clockTextPainter.width / 2,
+        center.dy - clockTextPainter.height / 2 + 28,
       ),
     );
   }

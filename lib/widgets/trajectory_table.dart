@@ -466,25 +466,34 @@ class _DetailsSpoiler extends ConsumerWidget {
     final diamInch   = convertDimension(dm.diameter, Unit.inch);
     final lenInch    = convertDimension(dm.length, Unit.inch);
 
-    // Zero MV — direct from cartridge
-    final zeroMvMps = convertDimension(cart.mv, Unit.mps);
-
-    // Current MV — apply powder sensitivity if enabled
-    double currentMvMps = zeroMvMps;
+    // Powder sensitivity settings
     final powderSensOn = (settings?.enablePowderSensitivity ?? false) &&
         cart.usePowderSensitivity;
-    if (powderSensOn && cart.tempModifier != 0 && zeroMvMps > 0) {
-      final useDiff  = settings?.useDifferentPowderTemperature ?? false;
-      final zeroAtmo = profile.zeroConditions ?? conds;
-      final currTempC = useDiff
-          ? convertDimension(conds.powderTemp, Unit.celsius)
-          : convertDimension(conds.temperature, Unit.celsius);
-      final zeroPowderTempC = useDiff
-          ? convertDimension(zeroAtmo.powderTemp, Unit.celsius)
-          : convertDimension(zeroAtmo.temperature, Unit.celsius);
-      currentMvMps = (cart.tempModifier / 100.0 / (15 / zeroMvMps)) *
-          (currTempC - zeroPowderTempC) + zeroMvMps;
+    final useDiffTemp = powderSensOn && (settings?.useDifferentPowderTemperature ?? false);
+
+    // Reference values from cartridge
+    final refMvMps = convertDimension(cart.mv, Unit.mps);
+    final refPowderTempC = convertDimension(cart.powderTemp, Unit.celsius);
+
+    // Temperature correction function (same as in shot_details_screen.dart)
+    double mvAtTempC(double tC) {
+      if (refMvMps <= 0 || cart.tempModifier == 0) return refMvMps;
+      return (cart.tempModifier / 100.0 / (15 / refMvMps)) * (tC - refPowderTempC) +
+          refMvMps;
     }
+
+    // Zero MV — apply temperature correction if powder sensitivity enabled
+    final zeroAtmo = profile.zeroConditions ?? conds;
+    final zeroPowderTempC = useDiffTemp
+        ? convertDimension(zeroAtmo.powderTemp, Unit.celsius)
+        : convertDimension(zeroAtmo.temperature, Unit.celsius);
+    final zeroMvMps = powderSensOn ? mvAtTempC(zeroPowderTempC) : refMvMps;
+
+    // Current MV — apply temperature correction if powder sensitivity enabled
+    final currTempC = useDiffTemp
+        ? convertDimension(conds.powderTemp, Unit.celsius)
+        : convertDimension(conds.temperature, Unit.celsius);
+    final currentMvMps = powderSensOn ? mvAtTempC(currTempC) : refMvMps;
 
     // Gyrostability (Miller)
     double? sg;

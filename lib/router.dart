@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'providers/calculation_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/shot_profile_provider.dart';
+import 'src/models/app_settings.dart';
 
 import 'screens/home_screen.dart';
 import 'screens/home_sub_screens.dart';
@@ -158,6 +159,11 @@ class _ScaffoldWithNavState extends ConsumerState<_ScaffoldWithNav> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _triggerCalcIfNeeded(widget.shell.currentIndex));
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
+
   void _markAndRecalc() {
     final i = widget.shell.currentIndex;
     ref.read(tableCalculationProvider.notifier).markDirty();
@@ -184,18 +190,14 @@ class _ScaffoldWithNavState extends ConsumerState<_ScaffoldWithNav> {
 
   @override
   Widget build(BuildContext context) {
-    // Mark calculation dirty whenever the shot profile changes.
-    // Done here (not inside CalculationNotifier.build) to avoid
-    // accidentally re-running the notifier's build and resetting state.
+    // Set up listeners in build method - Riverpod handles lifecycle properly
     ref.listen(shotProfileProvider, (_, next) {
       if (next.hasValue) {
         _markAndRecalc();
       }
     });
 
-    // Settings changes can affect calculation (powder sensitivity, chart step).
-    // tableDistanceStep does NOT need recalc (table filters in UI).
-    ref.listen<AsyncValue<dynamic>>(settingsProvider, (prev, next) {
+    ref.listen<AsyncValue<AppSettings>>(settingsProvider, (prev, next) {
       if (!next.hasValue) return;
       final p = prev?.value;
       final n = next.value;

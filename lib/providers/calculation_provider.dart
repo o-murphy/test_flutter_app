@@ -11,6 +11,18 @@ import '../src/solver/unit.dart';
 import 'settings_provider.dart';
 import 'shot_profile_provider.dart';
 
+/// Custom exception for calculation errors
+class CalculationException implements Exception {
+  final String message;
+  final Object? originalError;
+  final StackTrace? stackTrace;
+
+  CalculationException(this.message, [this.originalError, this.stackTrace]);
+
+  @override
+  String toString() => 'CalculationException: $message${originalError != null ? ' (${originalError.runtimeType}: $originalError)' : ''}';
+}
+
 // ── Zero fingerprint ─────────────────────────────────────────────────────────
 //
 // All inputs that affect setWeaponZero. Flat List<double> — equality via
@@ -119,9 +131,7 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
     );
     return (result, freshZeroElevRad);
   } catch (e, st) {
-    // ignore: avoid_print
-    print('_runTableCalculation error: $e\n$st');
-    return (null, null);
+    throw CalculationException('Table calculation failed', e, st);
   }
 }
 
@@ -134,6 +144,13 @@ class TableCalculationNotifier extends AsyncNotifier<HitResult?> {
   Future<HitResult?> build() async => null;
 
   void markDirty() => _dirty = true;
+
+  void retry() {
+    _dirty = true;
+    _lastZeroKey = null;
+    _cachedZeroElevRad = null;
+    recalculateIfNeeded();
+  }
 
   Future<void> recalculateIfNeeded() async {
     if (!_dirty) return;
@@ -149,15 +166,19 @@ class TableCalculationNotifier extends AsyncNotifier<HitResult?> {
 
     _dirty = false;
     state  = const AsyncLoading();
-    final (hitResult, freshZeroElev) = await compute(
-      _runTableCalculation,
-      (profile, stepM, usePowderSens, cachedElev),
-    );
-    if (freshZeroElev != null) {
-      _lastZeroKey       = zeroKey;
-      _cachedZeroElevRad = freshZeroElev;
+    try {
+      final (hitResult, freshZeroElev) = await compute(
+        _runTableCalculation,
+        (profile, stepM, usePowderSens, cachedElev),
+      );
+      if (freshZeroElev != null) {
+        _lastZeroKey       = zeroKey;
+        _cachedZeroElevRad = freshZeroElev;
+      }
+      state = AsyncData(hitResult);
+    } catch (e, st) {
+      state = AsyncError(e, st);
     }
-    state = AsyncData(hitResult);
   }
 }
 
@@ -236,9 +257,7 @@ _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
     );
     return (result, freshZeroElevRad);
   } catch (e, st) {
-    // ignore: avoid_print
-    print('_runHomeCalculation error: $e\n$st');
-    return (null, null);
+    throw CalculationException('Home calculation failed', e, st);
   }
 }
 
@@ -251,6 +270,13 @@ class HomeCalculationNotifier extends AsyncNotifier<HitResult?> {
   Future<HitResult?> build() async => null;
 
   void markDirty() => _dirty = true;
+
+  void retry() {
+    _dirty = true;
+    _lastZeroKey = null;
+    _cachedZeroElevRad = null;
+    recalculateIfNeeded();
+  }
 
   Future<void> recalculateIfNeeded() async {
     if (!_dirty) return;
@@ -266,15 +292,19 @@ class HomeCalculationNotifier extends AsyncNotifier<HitResult?> {
 
     _dirty = false;
     state  = const AsyncLoading();
-    final (hitResult, freshZeroElev) = await compute(
-      _runHomeCalculation,
-      (profile, targetDistM, chartStepM, usePowderSens, cachedElev),
-    );
-    if (freshZeroElev != null) {
-      _lastZeroKey       = zeroKey;
-      _cachedZeroElevRad = freshZeroElev;
+    try {
+      final (hitResult, freshZeroElev) = await compute(
+        _runHomeCalculation,
+        (profile, targetDistM, chartStepM, usePowderSens, cachedElev),
+      );
+      if (freshZeroElev != null) {
+        _lastZeroKey       = zeroKey;
+        _cachedZeroElevRad = freshZeroElev;
+      }
+      state = AsyncData(hitResult);
+    } catch (e, st) {
+      state = AsyncError(e, st);
     }
-    state = AsyncData(hitResult);
   }
 }
 
