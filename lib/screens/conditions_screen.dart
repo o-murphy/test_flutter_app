@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../helpers/dimension_converter.dart';
 import '../providers/settings_provider.dart';
 import '../providers/shot_profile_provider.dart';
 import '../router.dart';
@@ -37,11 +38,8 @@ class ConditionsScreen extends ConsumerWidget {
 
     // Readonly values calculated from cartridge
     final cartridge = profile?.cartridge;
-    final refMvMps =
-        (cartridge?.mv as dynamic)?.in_(Unit.mps) as double? ?? 0.0;
-    final refPowderTempC =
-        (cartridge?.powderTemp as dynamic)?.in_(Unit.celsius) as double? ??
-        15.0;
+    final refMvMps = safeDimensionValue(cartridge?.mv, Unit.mps) ?? 0.0;
+    final refPowderTempC = safeDimensionValue(cartridge?.powderTemp, Unit.celsius) ?? 15.0;
     final tempModifier = cartridge?.tempModifier ?? 0.0;
 
     double mvAtTemp(double tC) {
@@ -51,8 +49,7 @@ class ConditionsScreen extends ConsumerWidget {
     }
 
     final currentMvMps = mvAtTemp(powderTempRaw);
-    final currentMvDisp =
-        (Unit.mps(currentMvMps) as dynamic).in_(units.velocity) as double;
+    final currentMvDisp = Unit.mps(currentMvMps).in_(units.velocity);
     final mvStr =
         '${currentMvDisp.toStringAsFixed(FC.muzzleVelocity.accuracy)} ${units.velocity.symbol}';
     final sensStr = '${tempModifier.toStringAsFixed(2)} %/15°C';

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import '../helpers/dimension_converter.dart';
 import '../src/models/field_constraints.dart';
 import '../src/solver/unit.dart';
 
@@ -8,12 +9,12 @@ import '../src/solver/unit.dart';
 
 double _toDisp(Unit rawUnit, Unit dispUnit, double raw) {
   if (rawUnit == dispUnit) return raw;
-  return (rawUnit(raw) as dynamic).in_(dispUnit) as double;
+  return valueInUnit(raw, rawUnit, dispUnit);
 }
 
 double _toRawVal(Unit rawUnit, Unit dispUnit, double disp) {
   if (rawUnit == dispUnit) return disp;
-  return (dispUnit(disp) as dynamic).in_(rawUnit) as double;
+  return valueInUnit(disp, dispUnit, rawUnit);
 }
 
 int _calcAccuracy(FieldConstraints c, Unit displayUnit) {
@@ -163,7 +164,7 @@ class UnitValueField extends StatelessWidget {
 
   double _toDisplay(double raw) {
     if (_rawUnit == displayUnit) return raw;
-    return (_rawUnit(raw) as dynamic).in_(displayUnit) as double;
+    return valueInUnit(raw, _rawUnit, displayUnit);
   }
 
   double get _displayValue => _toDisplay(rawValue);

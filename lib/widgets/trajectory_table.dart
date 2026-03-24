@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sticky_headers/sticky_headers.dart';
 
+import '../helpers/dimension_converter.dart';
 import '../providers/settings_provider.dart';
 import '../providers/shot_profile_provider.dart';
 import '../src/models/field_constraints.dart';
@@ -89,8 +90,7 @@ class _TrajectoryTableState extends ConsumerState<TrajectoryTable> {
   // ── Column catalogue ──────────────────────────────────────────────────────
 
   static double _conv(dynamic dim, Unit rawUnit, Unit dispUnit) {
-    final v = (dim as dynamic).in_(rawUnit) as double;
-    return (rawUnit(v) as dynamic).in_(dispUnit) as double;
+    return valueInUnit(convertDimension(dim, rawUnit), rawUnit, dispUnit);
   }
 
   static final _catalogue = <_ColDef>[
@@ -177,7 +177,7 @@ class _TrajectoryTableState extends ConsumerState<TrajectoryTable> {
     final result = <TrajectoryData>[];
     double nextM = startM;
     for (final p in widget.traj) {
-      final d = (p.distance as dynamic).in_(Unit.meter) as double;
+      final d = convertDimension(p.distance, Unit.meter);
       if (d < startM - 0.5) continue;
       if (d > endM   + 0.5) break;
       if (step > 1.0 && d < nextM - 0.5) continue;
@@ -461,13 +461,13 @@ class _DetailsSpoiler extends ConsumerWidget {
     final conds   = profile.conditions;
     final winds   = profile.winds;
 
-    final twistInch  = (rifle.weapon.twist   as dynamic).in_(Unit.inch)  as double;
-    final weightGr   = (dm.weight             as dynamic).in_(Unit.grain) as double;
-    final diamInch   = (dm.diameter           as dynamic).in_(Unit.inch)  as double;
-    final lenInch    = (dm.length             as dynamic).in_(Unit.inch)  as double;
+    final twistInch  = convertDimension(rifle.weapon.twist, Unit.inch);
+    final weightGr   = convertDimension(dm.weight, Unit.grain);
+    final diamInch   = convertDimension(dm.diameter, Unit.inch);
+    final lenInch    = convertDimension(dm.length, Unit.inch);
 
     // Zero MV — direct from cartridge
-    final zeroMvMps = (cart.mv as dynamic).in_(Unit.mps) as double;
+    final zeroMvMps = convertDimension(cart.mv, Unit.mps);
 
     // Current MV — apply powder sensitivity if enabled
     double currentMvMps = zeroMvMps;
@@ -477,11 +477,11 @@ class _DetailsSpoiler extends ConsumerWidget {
       final useDiff  = settings?.useDifferentPowderTemperature ?? false;
       final zeroAtmo = profile.zeroConditions ?? conds;
       final currTempC = useDiff
-          ? ((conds.powderTemp as dynamic).in_(Unit.celsius) as double)
-          : ((conds.temperature as dynamic).in_(Unit.celsius) as double);
+          ? convertDimension(conds.powderTemp, Unit.celsius)
+          : convertDimension(conds.temperature, Unit.celsius);
       final zeroPowderTempC = useDiff
-          ? ((zeroAtmo.powderTemp as dynamic).in_(Unit.celsius) as double)
-          : ((zeroAtmo.temperature as dynamic).in_(Unit.celsius) as double);
+          ? convertDimension(zeroAtmo.powderTemp, Unit.celsius)
+          : convertDimension(zeroAtmo.temperature, Unit.celsius);
       currentMvMps = (cart.tempModifier / 100.0 / (15 / zeroMvMps)) *
           (currTempC - zeroPowderTempC) + zeroMvMps;
     }
@@ -504,7 +504,7 @@ class _DetailsSpoiler extends ConsumerWidget {
     // ── Format helpers ────────────────────────────────────────────────────
 
     String fmtV(double mps) {
-      final disp = (Unit.mps(mps) as dynamic).in_(units.velocity) as double;
+      final disp = Unit.mps(mps).in_(units.velocity);
       return '${disp.toStringAsFixed(FC.muzzleVelocity.accuracyFor(units.velocity))} ${units.velocity.symbol}';
     }
 
@@ -612,7 +612,7 @@ class _DetailsSpoiler extends ConsumerWidget {
             '${ws.toStringAsFixed(FC.windVelocity.accuracyFor(units.velocity))} ${units.velocity.symbol}'));
       }
       if (cfg.spoilerShowWindDir && winds.isNotEmpty) {
-        final wd = (winds.first.directionFrom as dynamic).in_(Unit.degree) as double;
+        final wd = convertDimension(winds.first.directionFrom, Unit.degree);
         items.add(row('Wind direction', '${wd.toStringAsFixed(0)}°'));
       }
     }

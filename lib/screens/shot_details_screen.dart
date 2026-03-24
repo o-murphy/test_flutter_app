@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../helpers/dimension_converter.dart';
 import '../providers/calculation_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/shot_profile_provider.dart';
@@ -20,16 +21,11 @@ class ShotDetailsScreen extends ConsumerWidget {
     final calc = ref.watch(homeCalculationProvider);
 
     final cartridge = profile?.cartridge;
-    final targetDistM =
-        (profile?.targetDistance as dynamic)?.in_(Unit.meter) as double? ??
-        300.0;
+    final targetDistM = safeDimensionValue(profile?.targetDistance, Unit.meter) ?? 300.0;
 
     // ── MV with powder sensitivity ─────────────────────────────────────────
-    final refMvMps =
-        (cartridge?.mv as dynamic)?.in_(Unit.mps) as double? ?? 0.0;
-    final refPowderTempC =
-        (cartridge?.powderTemp as dynamic)?.in_(Unit.celsius) as double? ??
-        15.0;
+    final refMvMps = safeDimensionValue(cartridge?.mv, Unit.mps) ?? 0.0;
+    final refPowderTempC = safeDimensionValue(cartridge?.powderTemp, Unit.celsius) ?? 15.0;
     final tempModifier = cartridge?.tempModifier ?? 0.0;
     final powderSensOn =
         (settings?.enablePowderSensitivity ?? false) &&
@@ -45,31 +41,24 @@ class ShotDetailsScreen extends ConsumerWidget {
 
     final conditions = profile?.conditions;
     final currentPowderTempC = useDiffTemp
-        ? ((conditions?.powderTemp as dynamic)?.in_(Unit.celsius) as double? ??
-              15.0)
-        : ((conditions?.temperature as dynamic)?.in_(Unit.celsius) as double? ??
-              15.0);
+        ? (safeDimensionValue(conditions?.powderTemp, Unit.celsius) ?? 15.0)
+        : (safeDimensionValue(conditions?.temperature, Unit.celsius) ?? 15.0);
     final currentMvMps = powderSensOn
         ? mvAtTempC(currentPowderTempC)
         : refMvMps;
 
     final zeroAtmo = profile?.zeroConditions ?? conditions;
     final zeroPowderTempC = useDiffTemp
-        ? ((zeroAtmo?.powderTemp as dynamic)?.in_(Unit.celsius) as double? ??
-              15.0)
-        : ((zeroAtmo?.temperature as dynamic)?.in_(Unit.celsius) as double? ??
-              15.0);
+        ? (safeDimensionValue(zeroAtmo?.powderTemp, Unit.celsius) ?? 15.0)
+        : (safeDimensionValue(zeroAtmo?.temperature, Unit.celsius) ?? 15.0);
     final zeroMvMps = powderSensOn ? mvAtTempC(zeroPowderTempC) : refMvMps;
 
     // ── Gyroscopic stability factor Sg (Miller formula) ───────────────────
     final dm = cartridge?.projectile.dm;
-    final twistInch =
-        (profile?.rifle.weapon.twist as dynamic)?.in_(Unit.inch) as double? ??
-        0.0;
-    final weightGr = (dm?.weight as dynamic)?.in_(Unit.grain) as double? ?? 0.0;
-    final diamInch =
-        (dm?.diameter as dynamic)?.in_(Unit.inch) as double? ?? 0.0;
-    final lenInch = (dm?.length as dynamic)?.in_(Unit.inch) as double? ?? 0.0;
+    final twistInch = safeDimensionValue(profile?.rifle.weapon.twist, Unit.inch) ?? 0.0;
+    final weightGr = safeDimensionValue(dm?.weight, Unit.grain) ?? 0.0;
+    final diamInch = safeDimensionValue(dm?.diameter, Unit.inch) ?? 0.0;
+    final lenInch = safeDimensionValue(dm?.length, Unit.inch) ?? 0.0;
 
     double? sg;
     if (weightGr > 0 && diamInch > 0 && lenInch > 0 && twistInch > 0) {

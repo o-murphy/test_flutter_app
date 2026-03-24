@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../helpers/dimension_converter.dart';
 import '../providers/calculation_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/shot_profile_provider.dart';
@@ -25,7 +26,7 @@ class HomeReticlePage extends ConsumerWidget {
 
     final hit       = calc.value;
     final traj      = hit?.trajectory ?? [];
-    final targetM   = (profile?.targetDistance as dynamic)?.in_(Unit.meter) as double? ?? 300.0;
+    final targetM   = safeDimensionValue(profile?.targetDistance, Unit.meter) ?? 300.0;
     final point     = (hit != null && traj.isNotEmpty)
         ? hit.getAtDistance(Distance(targetM, Unit.meter))
         : null;
@@ -46,7 +47,7 @@ class HomeReticlePage extends ConsumerWidget {
 
     final proj   = profile?.cartridge.projectile;
     final mvDisp = profile != null
-        ? (profile.cartridge.mv as dynamic).in_(units.velocity) as double
+        ? convertDimension(profile.cartridge.mv, units.velocity)
         : null;
     final mvStr  = mvDisp != null
         ? '${mvDisp.toStringAsFixed(FC.muzzleVelocity.accuracyFor(units.velocity))} ${units.velocity.symbol}'
@@ -61,10 +62,10 @@ class HomeReticlePage extends ConsumerWidget {
     // Gyroscopic stability factor Sg (Miller)
     String? sgStr;
     if (proj != null && profile != null) {
-      final twistInch  = (profile.rifle.weapon.twist as dynamic).in_(Unit.inch) as double;
-      final weightGr   = (proj.dm.weight   as dynamic).in_(Unit.grain) as double;
-      final diamInch   = (proj.dm.diameter as dynamic).in_(Unit.inch)  as double;
-      final lenInch    = (proj.dm.length   as dynamic).in_(Unit.inch)  as double;
+      final twistInch  = convertDimension(profile.rifle.weapon.twist, Unit.inch);
+      final weightGr   = convertDimension(proj.dm.weight, Unit.grain);
+      final diamInch   = convertDimension(proj.dm.diameter, Unit.inch);
+      final lenInch    = convertDimension(proj.dm.length, Unit.inch);
       if (weightGr > 0 && diamInch > 0 && lenInch > 0 && twistInch > 0) {
         final lCal = lenInch / diamInch;
         final nCal = twistInch / diamInch;
@@ -203,7 +204,7 @@ class _AdjPanel extends StatelessWidget {
 
   String _elevDir() {
     if (elevAngle == null) return '';
-    final v = (elevAngle! as dynamic).in_(Unit.mRad) as double;
+    final v = elevAngle!.in_(Unit.mRad);
     return switch (fmt) {
       AdjustmentFormat.arrows  => v >= 0 ? '↑' : '↓',
       AdjustmentFormat.signs   => v >= 0 ? '+' : '−',
@@ -213,7 +214,7 @@ class _AdjPanel extends StatelessWidget {
 
   String _windDir() {
     if (windAngle == null) return '';
-    final corr = -((windAngle! as dynamic).in_(Unit.mRad) as double);
+    final corr = -(windAngle!.in_(Unit.mRad));
     return switch (fmt) {
       AdjustmentFormat.arrows  => corr >= 0 ? '→' : '←',
       AdjustmentFormat.signs   => corr >= 0 ? '+' : '−',
@@ -223,12 +224,12 @@ class _AdjPanel extends StatelessWidget {
 
   String _elevVal(Unit unit) {
     if (elevAngle == null) return '—';
-    return ((elevAngle! as dynamic).in_(unit) as double).abs().toStringAsFixed(unit.accuracy);
+    return (elevAngle!.in_(unit)).abs().toStringAsFixed(unit.accuracy);
   }
 
   String _windVal(Unit unit) {
     if (windAngle == null) return '—';
-    return ((windAngle! as dynamic).in_(unit) as double).abs().toStringAsFixed(unit.accuracy);
+    return (windAngle!.in_(unit)).abs().toStringAsFixed(unit.accuracy);
   }
 
   @override

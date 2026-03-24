@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../helpers/dimension_converter.dart';
 import '../providers/calculation_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/shot_profile_provider.dart';
@@ -15,8 +16,7 @@ class HomeTablePage extends ConsumerWidget {
   const HomeTablePage({super.key});
 
   double _conv(dynamic dim, Unit raw, Unit disp) {
-    final v = (dim as dynamic).in_(raw) as double;
-    return (raw(v) as dynamic).in_(disp) as double;
+    return valueInUnit(convertDimension(dim, raw), raw, disp);
   }
 
   @override
@@ -31,7 +31,7 @@ class HomeTablePage extends ConsumerWidget {
       return const Center(child: Text('No data'));
     }
 
-    final targetM = (profile?.targetDistance as dynamic)?.in_(Unit.meter) as double? ?? 300.0;
+    final targetM = safeDimensionValue(profile?.targetDistance, Unit.meter) ?? 300.0;
     final stepM   = settings.tableConfig.stepM;
 
     final dists = [
@@ -49,7 +49,7 @@ class HomeTablePage extends ConsumerWidget {
     final distAcc    = FC.targetDistance.accuracyFor(units.distance);
     final distLabels = dists.map((m) {
       if (m < 0) return '—';
-      final disp = (Unit.meter(m) as dynamic).in_(units.distance) as double;
+      final disp = Unit.meter(m).in_(units.distance);
       return disp.toStringAsFixed(distAcc);
     }).toList();
 

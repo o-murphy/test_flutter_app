@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../helpers/dimension_converter.dart';
 import '../providers/calculation_provider.dart';
 import '../providers/settings_provider.dart';
 import '../src/models/field_constraints.dart';
@@ -68,8 +69,7 @@ class _ChartInfoGrid extends StatelessWidget {
   final dynamic        units; // UnitSettings
 
   double _conv(dynamic dim, Unit rawUnit, Unit dispUnit) {
-    final raw = (dim as dynamic).in_(rawUnit) as double;
-    return (rawUnit(raw) as dynamic).in_(dispUnit) as double;
+    return valueInUnit(convertDimension(dim, rawUnit), rawUnit, dispUnit);
   }
 
   String _fmt(double val, int dec, String sym) => '${val.toStringAsFixed(dec)} $sym';

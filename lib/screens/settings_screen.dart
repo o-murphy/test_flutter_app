@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../helpers/dimension_converter.dart';
 import '../providers/settings_provider.dart';
 import '../router.dart';
 import '../src/models/app_settings.dart';
@@ -288,7 +289,7 @@ class _StepTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final distUnit = ref.watch(unitSettingsProvider).distance;
     final acc      = FC.targetDistance.accuracyFor(distUnit);
-    final dispVal  = (Unit.meter(valueM) as dynamic).in_(distUnit) as double;
+    final dispVal  = Unit.meter(valueM).in_(distUnit);
     final display  = '${dispVal.toStringAsFixed(acc)} ${distUnit.symbol}';
 
     return ListTile(
@@ -301,7 +302,7 @@ class _StepTile extends ConsumerWidget {
   }
 
   void _showDialog(BuildContext context, Unit distUnit, int acc) {
-    final dispVal    = (Unit.meter(valueM) as dynamic).in_(distUnit) as double;
+    final dispVal    = Unit.meter(valueM).in_(distUnit);
     final controller = TextEditingController(text: dispVal.toStringAsFixed(acc));
     showDialog<void>(
       context: context,
@@ -323,7 +324,7 @@ class _StepTile extends ConsumerWidget {
               final v = double.tryParse(controller.text);
               if (v != null && v > 0) {
                 // convert display unit → metres
-                final metres = (distUnit(v) as dynamic).in_(Unit.meter) as double;
+                final metres = valueInUnit(v, distUnit, Unit.meter);
                 onConfirm(metres);
               }
               Navigator.pop(ctx);
