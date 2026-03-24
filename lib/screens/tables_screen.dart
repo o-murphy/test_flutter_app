@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,7 +14,7 @@ class TablesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final calc        = ref.watch(tableCalculationProvider);
     final settings    = ref.watch(settingsProvider).value;
-    final displayStep = settings?.tableDistanceStep ?? 100.0;
+    final displayStep = settings?.tableConfig.stepM ?? 100.0;
     final traj        = calc.value?.trajectory ?? [];
 
     return Column(
@@ -37,24 +36,11 @@ class TablesScreen extends ConsumerWidget {
                         ],
                       ),
                     )
-                  : ScrollConfiguration(
-                      behavior: ScrollConfiguration.of(context).copyWith(
-                        dragDevices: {
-                          PointerDeviceKind.touch,
-                          PointerDeviceKind.mouse,
-                          PointerDeviceKind.trackpad,
-                        },
-                      ),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) => SingleChildScrollView(
-                          child: TrajectoryTable(
-                            traj:                    traj,
-                            availableWidth:          constraints.maxWidth,
-                            displayStepM:            displayStep,
-                            showSubsonicTransition:  settings?.showSubsonicTransition ?? false,
-                          ),
-                        ),
-                      ),
+                  : TrajectoryTable(
+                      traj:                   traj,
+                      zeros:                  calc.value?.zeros ?? [],
+                      displayStepM:           displayStep,
+                      showSubsonicTransition: settings?.tableConfig.showSubsonicTransition ?? false,
                     ),
         ),
       ],

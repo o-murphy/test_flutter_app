@@ -58,7 +58,24 @@ class HomeReticlePage extends ConsumerWidget {
       DragModelType.custom => 'Custom',
       null                 => '—',
     };
-    final cartridgeLabel = proj != null ? '${proj.name};  $mvStr;  $dragStr' : '—';
+    // Gyroscopic stability factor Sg (Miller)
+    String? sgStr;
+    if (proj != null && profile != null) {
+      final twistInch  = (profile.rifle.weapon.twist as dynamic).in_(Unit.inch) as double;
+      final weightGr   = (proj.dm.weight   as dynamic).in_(Unit.grain) as double;
+      final diamInch   = (proj.dm.diameter as dynamic).in_(Unit.inch)  as double;
+      final lenInch    = (proj.dm.length   as dynamic).in_(Unit.inch)  as double;
+      if (weightGr > 0 && diamInch > 0 && lenInch > 0 && twistInch > 0) {
+        final lCal = lenInch / diamInch;
+        final nCal = twistInch / diamInch;
+        final sg = (30.0 * weightGr) /
+            (nCal * nCal * diamInch * diamInch * diamInch * lCal * (1.0 + lCal * lCal));
+        sgStr = 'Sg ${sg.toStringAsFixed(2)}';
+      }
+    }
+    final cartridgeLabel = proj != null
+        ? '${proj.name};  $mvStr;  $dragStr${sgStr != null ? ';  $sgStr' : ''}'
+        : '—';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

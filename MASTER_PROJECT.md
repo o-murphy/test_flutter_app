@@ -468,9 +468,6 @@ Configure visible columns and distance step for the trajectory table. Saved in `
 
 All values that has no overloads in table configuration - FC-based
 
-
-Tables settings screen
-
 * Start distance
 * End distance
 * Distance step
@@ -489,7 +486,7 @@ Tables settings screen
       * Bullet len
       * Bullet diameter
       * Bullet Weight
-      * ФГС? switch is meant form_factor or sectional_density ? Or derivation?
+      * Gyrostability
     * Sight section switch - for now adding to document not implementing
       * Scope? x1-x20????
       * Focal plane: FFC SFC LWIR switch
@@ -521,7 +518,6 @@ Tables settings screen
     * Energy
 
 
-
 ---
 
 ### 5.12 Convertor Screen (`/convertors/:type`)
@@ -531,6 +527,19 @@ Tables settings screen
 Two input fields with keyboard + unit labels. Real-time recalculation using the existing `Unit`/`Dimension` system.
 
 ---
+
+### 5.13
+
+The wind direction wheel and value input should use step from the FC
+So create special wind_direction FC role 
+
+### 5.14
+
+Shot details screen - add GSF (gyrostability) ✅
+
+### 5.15
+
+Home screen - Page 1 - add GSF to title after dragmodel ✅
 
 ## 6. State Architecture
 
@@ -898,8 +907,8 @@ Domain models, storage, providers, navigation. **Done.**
 
 ### Phase 6 — Home Screen Bottom Block
 
-1. **Page 1:** Left — reticle placeholder (rounded square). Right — drop/windage in multiple units from `adjustmentDisplay` settings. ⏳
-2. **Page 2:** Scrollable set of compact tables (Height, Slant Height, Drop angle, Windage angle, Velocity, Energy, Time), each ±2 steps around target distance. ⏳
+1. **Page 1:** Left — reticle placeholder (circle with crosshairs, non-interactive for now). Right — drop/windage in multiple units from `adjustmentDisplay` settings. ✅
+2. **Page 2:** Scrollable set of compact tables (Height, Slant Height, Drop angle, Windage angle, Velocity, Energy, Time), each ±2 steps around target distance. ✅
 3. **Page 3:** ✅ Done — chart (trajectory + velocity curves), info grid above, tap/drag-to-select point, page persistence across rebuilds.
 4. Also: placeholder sub-screens for New Note and More buttons. ⏳
 
@@ -954,7 +963,7 @@ Grid of 8 tiles → each pushes `/convertors/:type` placeholder. Individual conv
 
 ### Phase 12 — Additional Screens
 
-- `InfoScreen` — read-only ShotProfile display
+- `InfoScreen` — read-only ShotProfile display ✅
 - `ReticleScreen` — full-screen reticle (TBD)
 - `TableConfigScreen` — column visibility + step
 - **Help Overlay** — all-in-one coach marks
@@ -997,14 +1006,14 @@ intl: ^0.19.0
 ---
 
 ---
-## Incomplete changes 
+## Incomplete changes
 
 [+] Extract HomeReticlePage + helpers to widgets/home_reticle_page.dart
 [+] Extract HomeTablePage to widgets/home_table_page.dart
 [+] Extract HomeChartPage + _ChartInfoGrid to widgets/home_chart_page.dart
-[?] Slim down home_screen.dart (remove extracted code, add imports)
-[ ] Split settings_sub_screens.dart into separate files
-[ ] Extract _TempControl to widgets/temperature_control.dart
+[+] Slim down home_screen.dart (remove extracted code, add imports)
+[+] Split settings_sub_screens.dart → settings_units_screen.dart + settings_adjustment_screen.dart + widgets/settings_helpers.dart
+[+] Extract _TempControl to widgets/temperature_control.dart
 
 ---
 
@@ -1023,7 +1032,7 @@ Phase 6         Home Screen bottom block (pages 1 & 2, info grid, tap-select on 
 Phase 8         Tables Screen (frozen header, zero table, spoiler, configure, export)
 Phase 9         Convertors Screen (grid + individual converters)
 Phase 11        Rifle / Cartridge / Sight Selection screens
-Phase 12        Additional Screens (Info, Reticle, TableConfig, Help, Tools)
+Phase 12        Additional Screens (Info ✅, Reticle, TableConfig, Help, Tools)
 Phase 13        Polish & Export (l10n, PDF export, profile import, iOS build)
 ```
 

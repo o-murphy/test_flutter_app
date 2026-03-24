@@ -92,7 +92,7 @@ class TableCalculationNotifier extends AsyncNotifier<HitResult?> {
     final profile  = ref.read(shotProfileProvider).value;
     if (profile == null) return;
     final settings      = ref.read(settingsProvider).value;
-    final tableStep     = settings?.tableDistanceStep ?? 100.0;
+    final tableStep     = settings?.tableConfig.stepM ?? 100.0;
     final stepM         = tableStep < 1.0 ? tableStep : 1.0;
     final usePowderSens = settings?.enablePowderSensitivity ?? false;
     _dirty = false;

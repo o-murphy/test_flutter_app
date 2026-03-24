@@ -15,10 +15,7 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
 
   Future<void> setUnit(String key, Unit unit) async {
     final current = state.value ?? const AppSettings();
-    final updated = current.copyWith(
-      units: _setUnitByKey(current.units, key, unit),
-    );
-    await _save(updated);
+    await _save(current.copyWith(units: _setUnitByKey(current.units, key, unit)));
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
@@ -32,19 +29,20 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
   Future<void> setSwitch(String key, bool value) async {
     final s = state.value ?? const AppSettings();
     await _save(switch (key) {
-      'coriolis'               => s.copyWith(enableCoriolis: value),
-      'powderSensitivity'           => s.copyWith(enablePowderSensitivity: value),
-      'diffPowderTemperature'       => s.copyWith(useDifferentPowderTemperature: value),
-      'derivation'             => s.copyWith(enableDerivation: value),
-      'aerodynamicJump'        => s.copyWith(enableAerodynamicJump: value),
-      'pressureFromAltitude'   => s.copyWith(pressureDependsOnAltitude: value),
-      'subsonicTransition'     => s.copyWith(showSubsonicTransition: value),
-      _                        => s,
+      'coriolis'             => s.copyWith(enableCoriolis: value),
+      'powderSensitivity'    => s.copyWith(enablePowderSensitivity: value),
+      'diffPowderTemperature'=> s.copyWith(useDifferentPowderTemperature: value),
+      'derivation'           => s.copyWith(enableDerivation: value),
+      'aerodynamicJump'      => s.copyWith(enableAerodynamicJump: value),
+      'pressureFromAltitude' => s.copyWith(pressureDependsOnAltitude: value),
+      'subsonicTransition'   => s.copyWith(showSubsonicTransition: value),
+      _                      => s,
     });
   }
 
-  Future<void> setTableDistanceStep(double step) async {
-    await _save((state.value ?? const AppSettings()).copyWith(tableDistanceStep: step));
+  /// Update the full TableConfig at once.
+  Future<void> updateTableConfig(TableConfig config) async {
+    await _save((state.value ?? const AppSettings()).copyWith(tableConfig: config));
   }
 
   Future<void> setChartDistanceStep(double step) async {

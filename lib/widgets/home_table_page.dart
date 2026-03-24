@@ -32,7 +32,7 @@ class HomeTablePage extends ConsumerWidget {
     }
 
     final targetM = (profile?.targetDistance as dynamic)?.in_(Unit.meter) as double? ?? 300.0;
-    final stepM   = settings.tableDistanceStep;
+    final stepM   = settings.tableConfig.stepM;
 
     final dists = [
       targetM - 2 * stepM,

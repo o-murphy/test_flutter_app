@@ -86,8 +86,9 @@ class SettingsScreen extends ConsumerWidget {
               _StepTile(
                 icon: Icons.table_rows_outlined,
                 label: 'Table distance step',
-                valueM: settings.tableDistanceStep,
-                onConfirm: notifier.setTableDistanceStep,
+                valueM: settings.tableConfig.stepM,
+                onConfirm: (v) => notifier.updateTableConfig(
+                    settings.tableConfig.copyWith(stepM: v)),
               ),
               _StepTile(
                 icon: Icons.show_chart_outlined,

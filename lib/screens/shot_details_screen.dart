@@ -47,6 +47,20 @@ class ShotDetailsScreen extends ConsumerWidget {
         : ((zeroAtmo?.temperature as dynamic)?.in_(Unit.celsius) as double? ?? 15.0);
     final zeroMvMps = powderSensOn ? mvAtTempC(zeroPowderTempC) : refMvMps;
 
+    // ── Gyroscopic stability factor Sg (Miller formula) ───────────────────
+    final dm         = cartridge?.projectile.dm;
+    final twistInch  = (profile?.rifle.weapon.twist as dynamic)?.in_(Unit.inch) as double? ?? 0.0;
+    final weightGr   = (dm?.weight  as dynamic)?.in_(Unit.grain) as double? ?? 0.0;
+    final diamInch   = (dm?.diameter as dynamic)?.in_(Unit.inch)  as double? ?? 0.0;
+    final lenInch    = (dm?.length   as dynamic)?.in_(Unit.inch)  as double? ?? 0.0;
+
+    double? sg;
+    if (weightGr > 0 && diamInch > 0 && lenInch > 0 && twistInch > 0) {
+      final lCal = lenInch / diamInch;
+      final nCal = twistInch / diamInch;
+      sg = (30.0 * weightGr) / (nCal * nCal * diamInch * diamInch * diamInch * lCal * (1.0 + lCal * lCal));
+    }
+
     // ── Trajectory data ────────────────────────────────────────────────────
     final hit       = calc.value;
     final traj      = hit?.trajectory ?? [];
@@ -118,6 +132,13 @@ class ShotDetailsScreen extends ConsumerWidget {
       SectionHeader('Energy'),
       _InfoTile(icon: Icons.bolt_outlined, label: 'Energy at muzzle',  value: fmtEnergy(firstPoint?.energy)),
       _InfoTile(icon: Icons.bolt_outlined, label: 'Energy at target',  value: fmtEnergy(atTarget?.energy)),
+      const Divider(height: 1),
+      SectionHeader('Stability'),
+      _InfoTile(
+        icon: Icons.rotate_right_outlined,
+        label: 'Gyroscopic stability factor (Sg)',
+        value: sg != null ? sg.toStringAsFixed(2) : '—',
+      ),
       const Divider(height: 1),
       SectionHeader('Trajectory'),
       _InfoTile(icon: Icons.flag_outlined,           label: 'Shot distance',       value: distStr),
