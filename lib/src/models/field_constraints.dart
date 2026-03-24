@@ -123,8 +123,8 @@ abstract final class FC {
     rawUnit: Unit.inch,
     minRaw: 1.0,
     maxRaw: 30.0,
-    stepRaw: 0.5,
-    accuracy: 1,
+    stepRaw: 0.25,
+    accuracy: 2,
   );
 
   static const zeroDistance = FieldConstraints(
@@ -164,7 +164,7 @@ abstract final class FC {
     rawUnit: Unit.millimeter,
     minRaw: 1.0,
     maxRaw: 30.0,
-    stepRaw: 0.01,
+    stepRaw: 0.1,
     accuracy: 2,
   );
 

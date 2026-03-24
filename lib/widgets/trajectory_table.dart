@@ -544,11 +544,12 @@ class _DetailsSpoiler extends ConsumerWidget {
       items.add(section('Rifle'));
       items.add(row('Name', rifle.name));
       if (cfg.spoilerShowCaliber && diamInch > 0) {
-        items.add(row('Caliber', fmtDist(dm.diameter, Unit.inch, units.diameter)));
+        final calDisp = _conv(dm.diameter, Unit.inch, units.diameter);
+        items.add(row('Caliber', '${calDisp.toStringAsFixed(FC.bulletDiameter.accuracyFor(units.diameter))} ${units.diameter.symbol}'));
       }
       if (cfg.spoilerShowTwist && twistInch > 0) {
         final tw = _conv(rifle.weapon.twist, Unit.inch, units.twist);
-        items.add(row('Twist', '1:${tw.toStringAsFixed(FC.targetDistance.accuracyFor(units.twist))} ${units.twist.symbol}'));
+        items.add(row('Twist', '1:${tw.toStringAsFixed(FC.twistRate.accuracyFor(units.twist))} ${units.twist.symbol}'));
       }
       // spoilerShowTwistDir — no twist direction field in the data model
     }
@@ -578,10 +579,12 @@ class _DetailsSpoiler extends ConsumerWidget {
         items.add(row('Zero distance', fmtDist(profile.zeroDistance, Unit.meter, units.distance)));
       }
       if (cfg.spoilerShowBulletLen && lenInch > 0) {
-        items.add(row('Length', fmtDist(dm.length, Unit.inch, units.length)));
+        final lDisp = _conv(dm.length, Unit.inch, units.length);
+        items.add(row('Length', '${lDisp.toStringAsFixed(FC.bulletLength.accuracyFor(units.length))} ${units.length.symbol}'));
       }
       if (cfg.spoilerShowBulletDiam && diamInch > 0) {
-        items.add(row('Diameter', fmtDist(dm.diameter, Unit.inch, units.diameter)));
+        final dDisp = _conv(dm.diameter, Unit.inch, units.diameter);
+        items.add(row('Diameter', '${dDisp.toStringAsFixed(FC.bulletDiameter.accuracyFor(units.diameter))} ${units.diameter.symbol}'));
       }
       if (cfg.spoilerShowBulletWeight && weightGr > 0) {
         final wDisp = _conv(dm.weight, Unit.grain, units.weight);
