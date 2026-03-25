@@ -121,14 +121,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.8"
-  dart_style:
-    dependency: transitive
-    description:
-      name: dart_style
-      sha256: "29f7ecc274a86d32920b1d9cfc7502fa87220da41ec60b55f329559d5732e2b2"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.1.7"
   fake_async:
     dependency: transitive
     description:
@@ -149,10 +141,10 @@ packages:
     dependency: "direct dev"
     description:
       name: ffigen
-      sha256: b7803707faeec4ce3c1b0c2274906504b796e3b70ad573577e72333bd1c9b3ba
+      sha256: "3e12e80ccb6539bb3917217bb6f32709220efb737de0d0fa8736da0b7cb507da"
       url: "https://pub.dev"
     source: hosted
-    version: "20.1.1"
+    version: "12.0.0"
   file:
     dependency: transitive
     description:
