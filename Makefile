@@ -11,11 +11,11 @@ ffigen:
 
 # Run all tests (native must be built first)
 test: native
-	flutter test test/*.dart 2>&1
+	flutter test 2>&1
 
 # Run only unit tests (no native dependency)
 unit:
-	dart test test/unit_test.dart
+	dart test test/core/solver/unit_test.dart
 
 clean:
 	rm -rf build/bclibc

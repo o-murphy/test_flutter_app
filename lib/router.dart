@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'providers/recalc_coordinator.dart';
+import 'core/providers/recalc_coordinator.dart';
 
-import 'screens/home_screen.dart';
-import 'screens/home_sub_screens.dart';
-import 'screens/conditions_screen.dart';
-import 'screens/tables_screen.dart';
-import 'screens/tables_sub_screens.dart';
-import 'screens/convertor_screen.dart';
-import 'screens/settings_screen.dart';
-import 'screens/settings_sub_screens.dart';
+import 'features/home/home_screen.dart';
+import 'features/home/sub_screens/home_sub_screens.dart';
+import 'features/conditions/conditions_screen.dart';
+import 'features/tables/tables_screen.dart';
+import 'features/tables/tables_config_screen.dart';
+import 'features/convertors/convertor_screen.dart';
+import 'features/settings/settings_screen.dart';
+import 'features/settings/settings_units_screen.dart';
+import 'features/settings/settings_adjustment_screen.dart';
 
 // ─── Route paths ─────────────────────────────────────────────────────────────
 

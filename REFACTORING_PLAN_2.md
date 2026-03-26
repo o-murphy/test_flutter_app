@@ -522,17 +522,17 @@ Low priority. Current ^12 works. Only update when the enum issue has an upstream
 ```
 Phase   Task                                        Depends on   Risk
 ─────   ──────────────────────────────────────────   ──────────   ────
-  1     Feature-first directory restructure          —            Low (pure moves)
+  1     Feature-first directory restructure          —            Low (pure moves)        ✅ DONE
   2     ShotDetailsViewModel                         1 (paths)    Low
   3     FFI enum wrappers (bc_enums.dart)            —            Low
   4     ffigen update to ^20                         3            Medium (enum issue)
+  5     Strict dimension typing (§3.5)               1            High (blast radius)
 ```
 
-### Phase 1 — Feature-first restructure
+### Phase 1 — Feature-first restructure ✅ DONE
 
-**Estimated scope:** ~74 file moves + import updates
-**Verification:** `flutter analyze` + all tests after each feature batch
-**Risk:** Low — no logic changes, purely structural
+**Result:** 72 files moved, all imports updated, 0 errors, 244 tests pass.
+**Structure:** `lib/features/`, `lib/core/`, `lib/shared/`, `lib/main.dart`, `lib/router.dart`
 
 ### Phase 2 — ShotDetailsViewModel
 
@@ -551,6 +551,14 @@ Phase   Task                                        Depends on   Risk
 **Estimated scope:** 1 config change + regenerate 1 file
 **Verification:** Full test suite
 **Risk:** Medium — may require workaround or rollback
+
+### Phase 5 — Strict dimension typing (§3.5)
+
+**Goal:** Replace single `Unit` enum with per-dimension enums (`DistanceUnit`, `VelocityUnit`, etc.) and parameterize `Measurable<T, U>` / `Dimension<T, U>` — mirroring C++ `unit.hpp` architecture.
+**Estimated scope:** ~30+ files (solver, models, viewmodels, screens, tests)
+**Verification:** Full test suite + `flutter analyze`
+**Risk:** High — touches entire codebase, but purely mechanical (type signature changes, no logic changes)
+**Depends on:** Phase 1 (paths), benefits from Phase 3 (FFI enum alignment)
 
 ---
 
