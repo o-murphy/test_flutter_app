@@ -407,7 +407,7 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
             'range',
             'Range',
             (_) => (effUnits.distance).symbol,
-            (r) => _conv(r.distance, Unit.foot, effUnits.distance),
+            (r) => r.distance.in_(effUnits.distance),
             FC.targetDistance.accuracyFor(effUnits.distance),
           ),
           if (!hidden.contains('time'))
@@ -417,7 +417,7 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
               'velocity',
               'V',
               (_) => (effUnits.velocity).symbol,
-              (r) => _conv(r.velocity, Unit.fps, effUnits.velocity),
+              (r) => r.velocity.in_(effUnits.velocity),
               FC.velocity.accuracyFor(effUnits.velocity),
             ),
           if (!hidden.contains('height'))
@@ -425,7 +425,7 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
               'height',
               'Height',
               (_) => (effUnits.drop).symbol,
-              (r) => _conv(r.height, Unit.foot, effUnits.drop),
+              (r) => r.height.in_(effUnits.drop),
               FC.drop.accuracyFor(effUnits.drop),
             ),
           if (!hidden.contains('drop'))
@@ -433,7 +433,7 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
               'drop',
               'Drop',
               (_) => (effUnits.drop).symbol,
-              (r) => _conv(r.slantHeight, Unit.foot, effUnits.drop),
+              (r) => r.slantHeight.in_(effUnits.drop),
               FC.drop.accuracyFor(effUnits.drop),
             ),
           if (!hidden.contains('adjDrop'))
@@ -441,7 +441,7 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
               'adjDrop',
               'Drop°',
               (_) => (effUnits.adjustment).symbol,
-              (r) => _conv(r.dropAngle, Unit.mil, effUnits.adjustment),
+              (r) => r.dropAngle.in_(effUnits.adjustment),
               FC.adjustment.accuracyFor(effUnits.adjustment),
             ),
           if (!hidden.contains('wind'))
@@ -449,7 +449,7 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
               'wind',
               'Wind',
               (_) => (effUnits.drop).symbol,
-              (r) => _conv(r.windage, Unit.foot, effUnits.drop),
+              (r) => r.windage.in_(effUnits.drop),
               FC.drop.accuracyFor(effUnits.drop),
             ),
           if (!hidden.contains('adjWind'))
@@ -457,7 +457,7 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
               'adjWind',
               'Wind°',
               (_) => (effUnits.adjustment).symbol,
-              (r) => _conv(r.windageAngle, Unit.mil, effUnits.adjustment),
+              (r) => r.windageAngle.in_(effUnits.adjustment),
               FC.adjustment.accuracyFor(effUnits.adjustment),
             ),
           if (!hidden.contains('mach'))
@@ -467,7 +467,7 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
               'energy',
               'Energy',
               (_) => (effUnits.energy).symbol,
-              (r) => _conv(r.energy, Unit.footPound, effUnits.energy),
+              (r) => r.energy.in_(effUnits.energy),
               FC.energy.accuracyFor(effUnits.energy),
             ),
         ];
@@ -565,11 +565,6 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
       if (stepM > 1.0) nextM = ((d / stepM).round() + 1) * stepM;
     }
     return result;
-  }
-
-  static double _conv(Dimension dim, Unit rawUnit, Unit dispUnit) {
-    final v = dim.in_(rawUnit);
-    return (rawUnit(v) as Dimension).in_(dispUnit);
   }
 
   // ── Zero key ───────────────────────────────────────────────────────────────

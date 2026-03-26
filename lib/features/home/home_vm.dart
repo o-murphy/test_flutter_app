@@ -376,50 +376,35 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
     final milAcc = FC.adjustment.accuracyFor(Unit.mil);
     final moaAcc = FC.adjustment.accuracyFor(Unit.moa);
 
-    double conv(Dimension dim, Unit rawUnit, Unit dispUnit) {
-      final raw = dim.in_(rawUnit);
-      return (rawUnit(raw) as Dimension).in_(dispUnit);
-    }
-
     final rowDefs = <(String, String, double? Function(TrajectoryData), int)>[
       (
         'Height',
         units.drop.symbol,
-        (p) => conv(p.height, Unit.foot, units.drop),
+        (p) => p.height.in_(units.drop),
         FC.drop.accuracyFor(units.drop),
       ),
       (
         'Slant Ht',
         units.drop.symbol,
-        (p) => conv(p.slantHeight, Unit.foot, units.drop),
+        (p) => p.slantHeight.in_(units.drop),
         FC.drop.accuracyFor(units.drop),
       ),
-      ('Angle', 'MIL', (p) => conv(p.angle, Unit.mil, Unit.mil), milAcc),
-      ('Angle', 'MOA', (p) => conv(p.angle, Unit.mil, Unit.moa), moaAcc),
-      ('Drop', 'MIL', (p) => conv(p.dropAngle, Unit.mil, Unit.mil), milAcc),
-      ('Drop', 'MOA', (p) => conv(p.dropAngle, Unit.mil, Unit.moa), moaAcc),
-      (
-        'Windage',
-        'MIL',
-        (p) => conv(p.windageAngle, Unit.mil, Unit.mil),
-        milAcc,
-      ),
-      (
-        'Windage',
-        'MOA',
-        (p) => conv(p.windageAngle, Unit.mil, Unit.moa),
-        moaAcc,
-      ),
+      ('Angle', 'MIL', (p) => p.angle.in_(Unit.mil), milAcc),
+      ('Angle', 'MOA', (p) => p.angle.in_(Unit.moa), moaAcc),
+      ('Drop', 'MIL', (p) => p.dropAngle.in_(Unit.mil), milAcc),
+      ('Drop', 'MOA', (p) => p.dropAngle.in_(Unit.moa), moaAcc),
+      ('Windage', 'MIL', (p) => p.windageAngle.in_(Unit.mil), milAcc),
+      ('Windage', 'MOA', (p) => p.windageAngle.in_(Unit.moa), moaAcc),
       (
         'Velocity',
         units.velocity.symbol,
-        (p) => conv(p.velocity, Unit.fps, units.velocity),
+        (p) => p.velocity.in_(units.velocity),
         FC.velocity.accuracyFor(units.velocity),
       ),
       (
         'Energy',
         units.energy.symbol,
-        (p) => conv(p.energy, Unit.footPound, units.energy),
+        (p) => p.energy.in_(units.energy),
         FC.energy.accuracyFor(units.energy),
       ),
       ('Time', 's', (p) => p.time, 3),

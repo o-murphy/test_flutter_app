@@ -9,85 +9,80 @@ class UnitFormatterImpl implements UnitFormatter {
 
   const UnitFormatterImpl(this._u);
 
-  // --- Helpers ---
-
-  /// Extract value from a Dimension in the given display unit.
-  double _val(Dimension dim, Unit displayUnit) => dim.in_(displayUnit);
-
   // --- Formatted strings ---
 
   @override
-  String velocity(dynamic dim) {
-    final v = _val(dim, _u.velocity);
+  String velocity(Velocity dim) {
+    final v = dim.in_(_u.velocity);
     return '${v.toStringAsFixed(FC.velocity.accuracyFor(_u.velocity))} ${_u.velocity.symbol}';
   }
 
   @override
-  String muzzleVelocity(dynamic dim) {
-    final v = _val(dim, _u.velocity);
+  String muzzleVelocity(Velocity dim) {
+    final v = dim.in_(_u.velocity);
     return '${v.toStringAsFixed(FC.muzzleVelocity.accuracyFor(_u.velocity))} ${_u.velocity.symbol}';
   }
 
   @override
-  String distance(dynamic dim) {
-    final v = _val(dim, _u.distance);
+  String distance(Distance dim) {
+    final v = dim.in_(_u.distance);
     return '${v.toStringAsFixed(FC.targetDistance.accuracyFor(_u.distance))} ${_u.distance.symbol}';
   }
 
   @override
-  String shortDistance(dynamic dim) {
-    final v = _val(dim, _u.distance);
+  String shortDistance(Distance dim) {
+    final v = dim.in_(_u.distance);
     return v.toStringAsFixed(FC.targetDistance.accuracyFor(_u.distance));
   }
 
   @override
-  String temperature(dynamic dim) {
-    final v = _val(dim, _u.temperature);
+  String temperature(Temperature dim) {
+    final v = dim.in_(_u.temperature);
     return '${v.toStringAsFixed(FC.temperature.accuracyFor(_u.temperature))} ${_u.temperature.symbol}';
   }
 
   @override
-  String pressure(dynamic dim) {
-    final v = _val(dim, _u.pressure);
+  String pressure(Pressure dim) {
+    final v = dim.in_(_u.pressure);
     return '${v.toStringAsFixed(FC.pressure.accuracyFor(_u.pressure))} ${_u.pressure.symbol}';
   }
 
   @override
-  String drop(dynamic dim) {
-    final v = _val(dim, _u.drop);
+  String drop(Distance dim) {
+    final v = dim.in_(_u.drop);
     return '${v.toStringAsFixed(FC.drop.accuracyFor(_u.drop))} ${_u.drop.symbol}';
   }
 
   @override
-  String windage(dynamic dim) => drop(dim);
+  String windage(Distance dim) => drop(dim);
 
   @override
-  String adjustment(dynamic dim) {
-    final v = _val(dim, _u.adjustment);
+  String adjustment(Angular dim) {
+    final v = dim.in_(_u.adjustment);
     return '${v.toStringAsFixed(FC.adjustment.accuracyFor(_u.adjustment))} ${_u.adjustment.symbol}';
   }
 
   @override
-  String energy(dynamic dim) {
-    final v = _val(dim, _u.energy);
+  String energy(Energy dim) {
+    final v = dim.in_(_u.energy);
     return '${v.toStringAsFixed(FC.energy.accuracyFor(_u.energy))} ${_u.energy.symbol}';
   }
 
   @override
-  String weight(dynamic dim) {
-    final v = _val(dim, _u.weight);
+  String weight(Weight dim) {
+    final v = dim.in_(_u.weight);
     return '${v.toStringAsFixed(FC.bulletWeight.accuracyFor(_u.weight))} ${_u.weight.symbol}';
   }
 
   @override
-  String sightHeight(dynamic dim) {
-    final v = _val(dim, _u.sightHeight);
+  String sightHeight(Distance dim) {
+    final v = dim.in_(_u.sightHeight);
     return '${v.toStringAsFixed(FC.sightHeight.accuracyFor(_u.sightHeight))} ${_u.sightHeight.symbol}';
   }
 
   @override
-  String twist(dynamic dim) {
-    final v = _val(dim, _u.twist);
+  String twist(Distance dim) {
+    final v = dim.in_(_u.twist);
     return '1:${v.toStringAsFixed(FC.twistRate.accuracyFor(_u.twist))} ${_u.twist.symbol}';
   }
 
@@ -104,23 +99,23 @@ class UnitFormatterImpl implements UnitFormatter {
   // --- Raw numbers ---
 
   @override
-  double rawVelocity(dynamic dim) => _val(dim, _u.velocity);
+  double rawVelocity(Velocity dim) => dim.in_(_u.velocity);
   @override
-  double rawDistance(dynamic dim) => _val(dim, _u.distance);
+  double rawDistance(Distance dim) => dim.in_(_u.distance);
   @override
-  double rawTemperature(dynamic dim) => _val(dim, _u.temperature);
+  double rawTemperature(Temperature dim) => dim.in_(_u.temperature);
   @override
-  double rawPressure(dynamic dim) => _val(dim, _u.pressure);
+  double rawPressure(Pressure dim) => dim.in_(_u.pressure);
   @override
-  double rawDrop(dynamic dim) => _val(dim, _u.drop);
+  double rawDrop(Distance dim) => dim.in_(_u.drop);
   @override
-  double rawAdjustment(dynamic dim) => _val(dim, _u.adjustment);
+  double rawAdjustment(Angular dim) => dim.in_(_u.adjustment);
   @override
-  double rawEnergy(dynamic dim) => _val(dim, _u.energy);
+  double rawEnergy(Energy dim) => dim.in_(_u.energy);
   @override
-  double rawWeight(dynamic dim) => _val(dim, _u.weight);
+  double rawWeight(Weight dim) => dim.in_(_u.weight);
   @override
-  double rawSightHeight(dynamic dim) => _val(dim, _u.sightHeight);
+  double rawSightHeight(Distance dim) => dim.in_(_u.sightHeight);
 
   // --- Symbols ---
 

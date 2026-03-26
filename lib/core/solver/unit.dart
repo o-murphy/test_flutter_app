@@ -78,7 +78,7 @@ extension UnitCallable on Unit {
 }
 
 extension UnitParser on Unit {
-  static dynamic parse(String input, [Unit? preferred]) {
+  static Dimension parse(String input, [Unit? preferred]) {
     final cleanInput = input.trim().toLowerCase().replaceAll(' ', '');
 
     final match = RegExp(r"^(-?\d+\.?\d*)(.*)$").firstMatch(cleanInput);

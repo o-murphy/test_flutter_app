@@ -98,32 +98,27 @@ class ShotDetailsScreen extends ConsumerWidget {
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
-    double conv(Dimension dim, Unit raw, Unit disp) {
-      final v = dim.in_(raw);
-      return (raw(v) as Dimension).in_(disp);
-    }
-
     String fmtV(double? mps) {
       if (mps == null) return '—';
       final disp = (Unit.mps(mps) as Dimension).in_(units.velocity);
       return '${disp.toStringAsFixed(FC.muzzleVelocity.accuracyFor(units.velocity))} ${units.velocity.symbol}';
     }
 
-    String fmtDist(dynamic dim) {
+    String fmtDist(Dimension? dim) {
       if (dim == null) return '—';
-      final v = conv(dim, Unit.foot, units.distance);
+      final v = dim.in_(units.distance);
       return '${v.toStringAsFixed(FC.targetDistance.accuracyFor(units.distance))} ${units.distance.symbol}';
     }
 
-    String fmtDrop(dynamic dim) {
+    String fmtDrop(Dimension? dim) {
       if (dim == null) return '—';
-      final v = conv(dim, Unit.foot, units.drop);
+      final v = dim.in_(units.drop);
       return '${v.toStringAsFixed(FC.drop.accuracyFor(units.drop))} ${units.drop.symbol}';
     }
 
-    String fmtEnergy(dynamic dim) {
+    String fmtEnergy(Dimension? dim) {
       if (dim == null) return '—';
-      final v = conv(dim, Unit.footPound, units.energy);
+      final v = dim.in_(units.energy);
       return '${v.toStringAsFixed(FC.energy.accuracyFor(units.energy))} ${units.energy.symbol}';
     }
 
@@ -156,9 +151,7 @@ class ShotDetailsScreen extends ConsumerWidget {
       _InfoTile(
         icon: Icons.arrow_forward_outlined,
         label: 'Velocity at target',
-        value: atTarget == null
-            ? '—'
-            : fmtV(conv(atTarget.velocity, Unit.fps, Unit.mps)),
+        value: atTarget == null ? '—' : fmtV(atTarget.velocity.in_(Unit.mps)),
       ),
       const Divider(height: 1),
       SectionHeader('Energy'),
