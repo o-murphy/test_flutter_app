@@ -422,7 +422,7 @@ class _DistanceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final acc = constraints.accuracyFor(units);
-    final disp = (Unit.meter(valueM) as Dimension).in_(units);
+    final disp = Distance(valueM, Unit.meter).in_(units);
     return ListTile(
       leading: Icon(icon),
       title: Text(label, style: const TextStyle(fontSize: 14)),
@@ -446,8 +446,8 @@ class _DistanceTile extends StatelessWidget {
     final effectiveMaxM = (maxValueM != null && maxValueM! < constraints.maxRaw)
         ? maxValueM!
         : constraints.maxRaw;
-    final minDisp = (Unit.meter(effectiveMinM) as Dimension).in_(units);
-    final maxDisp = (Unit.meter(effectiveMaxM) as Dimension).in_(units);
+    final minDisp = Distance(effectiveMinM, Unit.meter).in_(units);
+    final maxDisp = Distance(effectiveMaxM, Unit.meter).in_(units);
     final rangeMsg =
         '${minDisp.toStringAsFixed(acc)}–${maxDisp.toStringAsFixed(acc)} ${units.symbol}';
 
@@ -471,7 +471,7 @@ class _DistanceTile extends StatelessWidget {
                 if (v == null) {
                   error = 'Invalid number';
                 } else {
-                  final rawM = (units(v) as Dimension).in_(Unit.meter);
+                  final rawM = Distance(v, units).in_(Unit.meter);
                   error = (rawM < effectiveMinM || rawM > effectiveMaxM)
                       ? rangeMsg
                       : null;
@@ -490,7 +490,7 @@ class _DistanceTile extends StatelessWidget {
                   : () {
                       final v = double.tryParse(ctrl.text.replaceAll(',', '.'));
                       if (v != null) {
-                        final rawM = (units(v) as Dimension).in_(Unit.meter);
+                        final rawM = Distance(v, units).in_(Unit.meter);
                         onChanged(rawM.clamp(effectiveMinM, effectiveMaxM));
                       }
                       Navigator.pop(ctx);

@@ -304,7 +304,7 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
           : null,
       twist: cfg.spoilerShowTwist && twistInch > 0
           ? () {
-              final tw = (Unit.inch(twistInch) as Dimension).in_(units.twist);
+              final tw = Distance(twistInch, Unit.inch).in_(units.twist);
               return '1:${tw.toStringAsFixed(FC.twistRate.accuracyFor(units.twist))} ${units.twist.symbol}';
             }()
           : null,
@@ -341,9 +341,7 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
           : null,
       bulletWeight: cfg.spoilerShowBulletWeight && weightGr > 0
           ? () {
-              final wDisp = (Unit.grain(weightGr) as Dimension).in_(
-                units.weight,
-              );
+              final wDisp = Weight(weightGr, Unit.grain).in_(units.weight);
               return '${wDisp.toStringAsFixed(FC.bulletWeight.accuracyFor(units.weight))} ${units.weight.symbol}';
             }()
           : null,

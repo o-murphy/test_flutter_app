@@ -81,7 +81,7 @@ class ShotDetailsScreen extends ConsumerWidget {
 
     // Speed of sound: fps / mach at first point
     final double? soundSpeedFps = (traj.isNotEmpty && traj[0].mach > 0)
-        ? ((traj[0].velocity as Dimension).in_(Unit.fps)) / traj[0].mach
+        ? (traj[0].velocity.in_(Unit.fps)) / traj[0].mach
         : null;
 
     // First-point energy (near barrel)
@@ -91,8 +91,8 @@ class ShotDetailsScreen extends ConsumerWidget {
     TrajectoryData? apexPoint;
     if (traj.length > 1) {
       apexPoint = traj.reduce((a, b) {
-        final ha = (a.height as Dimension).in_(Unit.foot);
-        final hb = (b.height as Dimension).in_(Unit.foot);
+        final ha = a.height.in_(Unit.foot);
+        final hb = b.height.in_(Unit.foot);
         return ha >= hb ? a : b;
       });
     }
@@ -123,7 +123,7 @@ class ShotDetailsScreen extends ConsumerWidget {
     }
 
     // ── Values ─────────────────────────────────────────────────────────────
-    final distDisp = (Unit.meter(targetDistM) as Dimension).in_(units.distance);
+    final distDisp = Distance(targetDistM, Unit.meter).in_(units.distance);
     final distStr =
         '${distDisp.toStringAsFixed(FC.targetDistance.accuracyFor(units.distance))} ${units.distance.symbol}';
 
