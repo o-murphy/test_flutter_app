@@ -329,11 +329,158 @@ enum BcIntegrationMethod {
 - Update `BcHitResult.terminationReason` to `BcTerminationReason`
 - No external API changes — enums are internal to FFI layer
 
-### 3.5 Note on Unit Generic
+### 3.5 Note on Unit Generic — Strict Dimension Typing
 
-The `Unit` enum and `Dimension` generic system (`Velocity extends Dimension`, etc.) works well and is extensively tested. The generic approach provides type safety for unit conversions. **Do not remove generics from the unit system** — the current design is correct and well-tested.
+**Проблема:** Dart сторона має один `Unit` enum (50 значень), `UnitCallable.call()` повертає `dynamic`, dispatch по ID ranges. Помилки типу `Unit.celsius(100).in_(Unit.meter)` ловляться тільки в рантаймі.
 
-If specific issues are identified with the generic approach (e.g. unnecessary complexity in `Measurable`), those should be evaluated case-by-case rather than as a blanket removal.
+**Референс:** C++ сторона (`bclibc/unit.hpp`) вже реалізує type-safe підхід:
+
+```cpp
+// C++ — phantom DimTag + unit tag struct з factor/to_raw/from_raw
+template<typename DimTag, typename Unit>
+class Dimension { double _raw; ... };
+
+template<typename Unit> using Distance    = Dimension<DistanceDimTag, Unit>;
+template<typename Unit> using Velocity    = Dimension<VelocityDimTag, Unit>;
+template<typename Unit> using Temperature = Dimension<TemperatureDimTag, Unit>;
+
+// Compile-time safety:
+Distance<Meter> d(100.0);
+auto yd = d.to<Yard>();           // OK
+// d.to<FPS>();                   // COMPILE ERROR — FPS is VelocityDimTag
+
+// Arithmetic across units within same dimension:
+Distance<Meter> sum = d + Distance<Yard>(50.0);  // OK, adds via raw
+// Distance<Meter> x = d + Velocity<MPS>(10.0);  // COMPILE ERROR
+```
+
+**Dart mirror:** параметризувати `Measurable` і `Dimension` другим type parameter `U` (unit enum):
+
+```dart
+// ═══ Крок 1: Окремі enum-и по вимірах (ID-сумісні з BCLIBC_Unit) ═══
+
+enum DistanceUnit implements DimUnit {
+  inch(10, 'inch', 1, 'inch', 1.0),
+  foot(11, 'foot', 2, 'ft', 12.0),
+  yard(12, 'yard', 1, 'yd', 36.0),
+  meter(17, 'meter', 1, 'm', 1000.0 / 25.4),
+  // ...
+  ;
+  const DistanceUnit(this.id, this.label, this.accuracy, this.symbol, this.factor);
+  @override final int id;
+  @override final String label;
+  @override final int accuracy;
+  @override final String symbol;
+  final double factor;
+}
+
+enum VelocityUnit implements DimUnit { mps(60, ...), fps(62, ...), ... }
+enum TemperatureUnit implements DimUnit { celsius(51, ...), fahrenheit(50, ...), ... }
+// ... Angular, Pressure, Energy, Weight, Time
+
+/// Спільний інтерфейс для всіх unit enum-ів (для серіалізації, UI)
+abstract interface class DimUnit {
+  int get id;
+  String get label;
+  int get accuracy;
+  String get symbol;
+}
+
+// ═══ Крок 2: Measurable<T, U> — два type parameters ═══
+
+abstract interface class Measurable<T extends Measurable<T, U>, U extends Enum> {
+  T create(double value, U unit);       // тільки свій enum
+  T createFromRaw(double value, U unit);
+  double in_(U unit);                   // тільки свій enum
+  T to(U unit);                         // тільки свій enum
+  double toRaw(double value, U unit);
+  double fromRaw(double value, U unit);
+  double get rawValue;
+  U get units;
+  Map<U, double> get conversionFactors;
+}
+
+abstract class Dimension<T extends Dimension<T, U>, U extends Enum>
+    implements Measurable<T, U> {
+  late double _rawValue;
+  final U _definedUnits;
+  Dimension(double value, this._definedUnits) {
+    _rawValue = toRaw(value, _definedUnits);
+  }
+  // ... решта як зараз, але U замість Unit
+}
+
+// ═══ Крок 3: Конкретні класи ═══
+
+class Distance extends Dimension<Distance, DistanceUnit> {
+  Distance(super.value, super.unit);
+
+  static final _factors = {
+    DistanceUnit.inch: 1.0,
+    DistanceUnit.foot: 12.0,
+    DistanceUnit.meter: 1000.0 / 25.4,
+    // ...
+  };
+
+  @override
+  Map<DistanceUnit, double> get conversionFactors => _factors;
+
+  @override
+  Distance create(double value, DistanceUnit unit) => Distance(value, unit);
+}
+
+class Temperature extends Dimension<Temperature, TemperatureUnit> {
+  // affine override toRaw/fromRaw — як зараз, але switch по TemperatureUnit
+}
+
+// ═══ Compile-time safety ═══
+
+Distance d = Distance(100, DistanceUnit.meter);
+d.in_(DistanceUnit.yard);     // ✓ OK
+d.in_(VelocityUnit.fps);      // ✗ COMPILE ERROR — VelocityUnit ≠ DistanceUnit
+
+// FieldConstraints стає generic:
+class FieldConstraints<U extends Enum> {
+  final U rawUnit;
+  final double minRaw, maxRaw, stepRaw;
+  final int accuracy;
+}
+static const altitude = FieldConstraints<DistanceUnit>(
+  rawUnit: DistanceUnit.meter, minRaw: -500, maxRaw: 15000, stepRaw: 10, accuracy: 0,
+);
+// altitude.rawUnit → DistanceUnit, не Unit
+
+// UnitSettings — строго типізовані поля:
+class UnitSettings {
+  final DistanceUnit distance;
+  final VelocityUnit velocity;
+  final TemperatureUnit temperature;
+  final AngularUnit angular;
+  // ...
+}
+```
+
+**Ключові відмінності Dart vs C++:**
+- C++ використовує phantom `DimTag` + struct unit tags з `constexpr factor` → Dart використовує `Dimension<T, U>` де `U` це enum з полем `factor`
+- C++ unit tags — окремі struct-и (`Meter`, `Foot`) → Dart — значення enum-у (`DistanceUnit.meter`, `.foot`)
+- C++ `unit_from_enum<BCLIBC_Unit::Meter>::type` для FFI bridge → Dart не потребує (enum values мають `.id` що збігається з `BCLIBC_Unit`)
+- Temperature: і C++ і Dart — affine `toRaw`/`fromRaw` без factor
+- Sentinel units (`Unit.second` для dimensionless humidity/BC): замінити на `Dimensionless` enum або nullable `U?`
+
+**Переваги:**
+- Помилки конверсії ловляться компілятором, не рантаймом
+- `UnitCallable.call()` і `as dynamic` зникають повністю
+- Dart сторона стає дзеркалом C++ `unit.hpp` — єдина ментальна модель
+- `FieldConstraints<U>` — неможливо передати неправильний тип unit
+- ID enum values сумісні з `BCLIBC_Unit` — серіалізація через `int` id
+
+**Трейдофи:**
+- **Blast radius:** торкнеться solver, models, viewmodels, screens, tests — практично весь проект
+- **`UnitSettings` серіалізація:** кожне поле свого типу, але спрощується через `.id` (int)
+- **Crosscutting код:** `accuracyFor()` і подібні потребуватимуть або base interface, або окремі реалізації per dimension
+- **Sentinel units:** `Unit.second` для dimensionless — потрібен `Dimensionless` тип або nullable
+
+**Рішення:** Реалізувати як фазу 5, після завершення фаз 1–4. Пріоритет зростає якщо рантайм помилки unit mismatch стають проблемою.
 
 ---
 
