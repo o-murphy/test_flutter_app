@@ -169,8 +169,8 @@ class TableConfig {
       spoilerShowWindDir: spoilerShowWindDir ?? this.spoilerShowWindDir,
       hiddenCols: hiddenCols ?? this.hiddenCols,
       adjAllUnits: adjAllUnits ?? this.adjAllUnits,
-      dropUnit: dropUnit == _sentinel ? this.dropUnit : dropUnit as Unit?,
-      adjUnit: adjUnit == _sentinel ? this.adjUnit : adjUnit as Unit?,
+      dropUnit: dropUnit == _sentinel ? this.dropUnit : dropUnit as Unit,
+      adjUnit: adjUnit == _sentinel ? this.adjUnit : adjUnit as Unit,
     );
   }
 
@@ -214,6 +214,10 @@ class TableConfig {
 
   factory TableConfig.fromJson(Map<String, dynamic> json) {
     bool b(String key, bool def) => json[key] as bool? ?? def;
+    double d(String key, double default_) {
+      return (json[key] as num?)?.toDouble() ?? default_;
+    }
+
     Unit? u(String key) {
       final name = json[key] as String?;
       if (name == null) return null;
@@ -224,9 +228,9 @@ class TableConfig {
     }
 
     return TableConfig(
-      startM: (json['startM'] as num?)?.toDouble() ?? 0,
-      endM: (json['endM'] as num?)?.toDouble() ?? 2000,
-      stepM: (json['stepM'] as num?)?.toDouble() ?? 100,
+      startM: d('startM', 0),
+      endM: d('endM', 2000),
+      stepM: d('stepM', 100),
       showZeros: b('showZeros', true),
       showSubsonicTransition: b('showSubsonicTransition', false),
       spoilerShowRifle: b('spoilerShowRifle', true),

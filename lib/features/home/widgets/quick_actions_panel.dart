@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Velocity;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/core/providers/settings_provider.dart';
@@ -21,7 +21,7 @@ class QuickActionsPanel extends ConsumerWidget {
     final windMps = profile?.winds.isNotEmpty == true
         ? profile!.winds.first.velocity.in_(Unit.mps)
         : 0.0;
-    final windDisp = Unit.mps(windMps).in_(units.velocity);
+    final windDisp = Velocity(windMps, Unit.mps).in_(units.velocity);
     final windStr =
         '${windDisp.toStringAsFixed(FC.windVelocity.accuracyFor(units.velocity))} ${units.velocity.symbol}';
 
@@ -31,7 +31,7 @@ class QuickActionsPanel extends ConsumerWidget {
 
     // ── Target distance ─────────────────────────────────────────────────────
     final distM = profile?.targetDistance.in_(Unit.meter) ?? 300.0;
-    final distDisp = Unit.meter(distM).in_(units.distance);
+    final distDisp = Distance(distM, Unit.meter).in_(units.distance);
     final distStr =
         '${distDisp.toStringAsFixed(FC.targetDistance.accuracyFor(units.distance))} ${units.distance.symbol}';
 

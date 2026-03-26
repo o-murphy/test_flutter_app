@@ -287,7 +287,7 @@ class _StepTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final distUnit = ref.watch(unitSettingsProvider).distance;
     final acc = FC.targetDistance.accuracyFor(distUnit);
-    final dispVal = Unit.meter(valueM).in_(distUnit);
+    final dispVal = Distance(valueM, Unit.meter).in_(distUnit);
     final display = '${dispVal.toStringAsFixed(acc)} ${distUnit.symbol}';
 
     return ListTile(
@@ -300,7 +300,7 @@ class _StepTile extends ConsumerWidget {
   }
 
   void _showDialog(BuildContext context, Unit distUnit, int acc) {
-    final dispVal = Unit.meter(valueM).in_(distUnit);
+    final dispVal = Distance(valueM, Unit.meter).in_(distUnit);
     final controller = TextEditingController(
       text: dispVal.toStringAsFixed(acc),
     );

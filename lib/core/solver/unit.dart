@@ -86,7 +86,7 @@ extension UnitParser on Unit {
     final match = RegExp(r"^(-?\d+\.?\d*)(.*)$").firstMatch(cleanInput);
 
     if (match != null) {
-      final value = double.parse(match.group(1)!);
+      final double value = .parse(match.group(1)!);
       final alias = match.group(2)!;
 
       if (alias.isEmpty) {
@@ -121,7 +121,7 @@ abstract class Dimension<T extends Dimension<T>> {
 
   double in_(Unit unit) => _fromRaw(_rawValue, unit);
 
-  T to(Unit unit) => create(in_(unit), unit);
+  T to(Unit unit) => _create(in_(unit), unit);
 
   @override
   String toString() {
@@ -129,7 +129,7 @@ abstract class Dimension<T extends Dimension<T>> {
     return '$rounded${_definedUnits.symbol}';
   }
 
-  T create(double value, Unit unit);
+  T _create(double value, Unit unit);
 
   double _getFactor(Unit unit) {
     final factor = conversionFactors[unit];
@@ -168,7 +168,7 @@ class Angular extends Dimension<Angular> {
   Map<Unit, double> get conversionFactors => _conversionFactors;
 
   @override
-  Angular create(double value, Unit unit) => Angular(value, unit);
+  Angular _create(double value, Unit unit) => Angular(value, unit);
 
   @override
   double _toRaw(double value, Unit unit) {
@@ -192,7 +192,7 @@ class Energy extends Dimension<Energy> {
   Map<Unit, double> get conversionFactors => _conversionFactors;
 
   @override
-  Energy create(double value, Unit unit) => Energy(value, unit);
+  Energy _create(double value, Unit unit) => Energy(value, unit);
 }
 
 class Distance extends Dimension<Distance> {
@@ -215,7 +215,7 @@ class Distance extends Dimension<Distance> {
   Map<Unit, double> get conversionFactors => _conversionFactors;
 
   @override
-  Distance create(double value, Unit unit) => Distance(value, unit);
+  Distance _create(double value, Unit unit) => Distance(value, unit);
 }
 
 class Pressure extends Dimension<Pressure> {
@@ -233,7 +233,7 @@ class Pressure extends Dimension<Pressure> {
   Map<Unit, double> get conversionFactors => _conversionFactors;
 
   @override
-  Pressure create(double value, Unit unit) => Pressure(value, unit);
+  Pressure _create(double value, Unit unit) => Pressure(value, unit);
 }
 
 class Temperature extends Dimension<Temperature> {
@@ -243,7 +243,7 @@ class Temperature extends Dimension<Temperature> {
   Map<Unit, double> get conversionFactors => const {};
 
   @override
-  Temperature create(double value, Unit unit) => Temperature(value, unit);
+  Temperature _create(double value, Unit unit) => Temperature(value, unit);
 
   @override
   double _toRaw(double value, Unit unit) {
@@ -284,7 +284,7 @@ class Time extends Dimension<Time> {
   Map<Unit, double> get conversionFactors => _conversionFactors;
 
   @override
-  Time create(double value, Unit unit) => Time(value, unit);
+  Time _create(double value, Unit unit) => Time(value, unit);
 }
 
 class Velocity extends Dimension<Velocity> {
@@ -302,7 +302,7 @@ class Velocity extends Dimension<Velocity> {
   Map<Unit, double> get conversionFactors => _conversionFactors;
 
   @override
-  Velocity create(double value, Unit unit) => Velocity(value, unit);
+  Velocity _create(double value, Unit unit) => Velocity(value, unit);
 }
 
 class Weight extends Dimension<Weight> {
@@ -321,5 +321,5 @@ class Weight extends Dimension<Weight> {
   Map<Unit, double> get conversionFactors => _conversionFactors;
 
   @override
-  Weight create(double value, Unit unit) => Weight(value, unit);
+  Weight _create(double value, Unit unit) => Weight(value, unit);
 }

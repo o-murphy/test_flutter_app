@@ -11,7 +11,7 @@ Map<String, dynamic> dimToJson(Dimension d) => {
 T _parse<T>(Map<String, dynamic> json, T Function(double, Unit) factory) {
   return factory(
     (json['value'] as num).toDouble(),
-    Unit.fromName(json['unit'] as String),
+    .fromName(json['unit'] as String),
   );
 }
 

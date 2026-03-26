@@ -67,7 +67,7 @@ class Calculator {
     final distFt = _toFeet(targetDistance);
     final props = _toBcShotProps(shot);
     final totalRad = _engine.findZeroAngle(props, distFt);
-    return Unit.radian(totalRad - shot.lookAngle.in_(Unit.radian));
+    return Angular(totalRad - shot.lookAngle.in_(Unit.radian), Unit.radian);
   }
 
   /// Zeros the weapon by storing the required barrel elevation in
@@ -212,20 +212,20 @@ class Calculator {
 
   static TrajectoryData _toTrajectoryData(BcTrajectoryData d) => TrajectoryData(
     time: d.time,
-    distance: Unit.foot(d.distanceFt),
-    velocity: Unit.fps(d.velocityFps),
+    distance: Distance(d.distanceFt, Unit.foot),
+    velocity: Velocity(d.velocityFps, Unit.fps),
     mach: d.mach,
-    height: Unit.foot(d.heightFt),
-    slantHeight: Unit.foot(d.slantHeightFt),
-    dropAngle: Unit.radian(d.dropAngleRad),
-    windage: Unit.foot(d.windageFt),
-    windageAngle: Unit.radian(d.windageAngleRad),
-    slantDistance: Unit.foot(d.slantDistanceFt),
-    angle: Unit.radian(d.angleRad),
+    height: Distance(d.heightFt, Unit.foot),
+    slantHeight: Distance(d.slantHeightFt, Unit.foot),
+    dropAngle: Angular(d.dropAngleRad, Unit.radian),
+    windage: Distance(d.windageFt, Unit.foot),
+    windageAngle: Angular(d.windageAngleRad, Unit.radian),
+    slantDistance: Distance(d.slantDistanceFt, Unit.foot),
+    angle: Angular(d.angleRad, Unit.radian),
     densityRatio: d.densityRatio,
     drag: d.drag,
-    energy: Unit.footPound(d.energyFtLb),
-    ogw: Unit.pound(d.ogwLb),
+    energy: Energy(d.energyFtLb, Unit.footPound),
+    ogw: Weight(d.ogwLb, Unit.pound),
     flag: d.flag,
   );
 }

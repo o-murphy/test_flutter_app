@@ -208,7 +208,7 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
     }
 
     final currentMvMps = mvAtTemp(powderTempRaw);
-    final currentMvDisp = Unit.mps(currentMvMps).in_(units.velocity);
+    final currentMvDisp = Velocity(currentMvMps, Unit.mps).in_(units.velocity);
     final mvStr =
         '${currentMvDisp.toStringAsFixed(FC.muzzleVelocity.accuracyFor(units.velocity))} ${units.velocity.symbol}';
     final sensStr = '${tempModifier.toStringAsFixed(2)} %/15°C';

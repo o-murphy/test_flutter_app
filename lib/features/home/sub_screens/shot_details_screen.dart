@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Velocity;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/core/providers/home_calculation_provider.dart';
@@ -100,7 +100,7 @@ class ShotDetailsScreen extends ConsumerWidget {
     // ── Helpers ────────────────────────────────────────────────────────────
     String fmtV(double? mps) {
       if (mps == null) return '—';
-      final disp = (Unit.mps(mps) as Dimension).in_(units.velocity);
+      final disp = Velocity(mps, Unit.mps).in_(units.velocity);
       return '${disp.toStringAsFixed(FC.muzzleVelocity.accuracyFor(units.velocity))} ${units.velocity.symbol}';
     }
 
@@ -129,7 +129,7 @@ class ShotDetailsScreen extends ConsumerWidget {
 
     final soundDisp = soundSpeedFps == null
         ? '—'
-        : '${((Unit.fps(soundSpeedFps) as Dimension).in_(units.velocity)).toStringAsFixed(FC.velocity.accuracyFor(units.velocity))} ${units.velocity.symbol}';
+        : '${(Velocity(soundSpeedFps, Unit.fps).in_(units.velocity)).toStringAsFixed(FC.velocity.accuracyFor(units.velocity))} ${units.velocity.symbol}';
 
     final items = <Widget>[
       SectionHeader('Velocity'),

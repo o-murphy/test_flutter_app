@@ -368,7 +368,7 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
 
     final distHeaders = dists.map<String>((m) {
       if (m < 0) return '—';
-      final disp = Unit.meter(m).in_(units.distance);
+      final disp = Distance(m, Unit.meter).in_(units.distance);
       return disp.toStringAsFixed(distAcc);
     }).toList();
 

@@ -123,7 +123,6 @@ class AppSettings {
     'themeMode': _themeModeNames[themeMode],
     'chartDistanceStep': chartDistanceStep,
     'homeTableStep': homeTableStep,
-    'tableConfig': tableConfig.toJson(),
     'showSubsonicTransition': showSubsonicTransition,
     'enableCoriolis': enableCoriolis,
     'enablePowderSensitivity': enablePowderSensitivity,
@@ -131,45 +130,56 @@ class AppSettings {
     'enableDerivation': enableDerivation,
     'enableAerodynamicJump': enableAerodynamicJump,
     'pressureDependsOnAltitude': pressureDependsOnAltitude,
-    'adjustmentFormat': _adjustmentFormatNames[adjustmentFormat],
     'showMrad': showMrad,
     'showMoa': showMoa,
     'showMil': showMil,
     'showCmPer100m': showCmPer100m,
     'showInPer100yd': showInPer100yd,
+    'adjustmentFormat': _adjustmentFormatNames[adjustmentFormat],
+    'tableConfig': tableConfig.toJson(),
   };
 
-  factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
-    units: UnitSettings.fromJson(json['units'] as Map<String, dynamic>? ?? {}),
-    languageCode: json['languageCode'] as String? ?? 'en',
-    themeMode: _themeModeByName[json['themeMode']] ?? ThemeMode.system,
-    chartDistanceStep: (json['chartDistanceStep'] as num?)?.toDouble() ?? 100,
-    homeTableStep: (json['homeTableStep'] as num?)?.toDouble() ?? 100,
-    tableConfig: json['tableConfig'] != null
-        ? TableConfig.fromJson(json['tableConfig'] as Map<String, dynamic>)
-        : TableConfig(
-            // backward-compat: migrate old flat fields
-            stepM: (json['tableDistanceStep'] as num?)?.toDouble() ?? 100,
-            hiddenCols: Set<String>.from(
-              json['tableHiddenCols'] as List? ?? [],
+  factory AppSettings.fromJson(Map<String, dynamic> json) {
+    bool b(String key, bool default_) {
+      return json[key] as bool? ?? default_;
+    }
+
+    double d(String key, double default_) {
+      return (json[key] as num?)?.toDouble() ?? default_;
+    }
+
+    return AppSettings(
+      units: UnitSettings.fromJson(
+        json['units'] as Map<String, dynamic>? ?? {},
+      ),
+      languageCode: json['languageCode'] as String? ?? 'en',
+      themeMode: _themeModeByName[json['themeMode']] ?? ThemeMode.system,
+      chartDistanceStep: d('chartDistanceStep', 100),
+      homeTableStep: d('homeTableStep', 100),
+      showSubsonicTransition: b('showSubsonicTransition', true),
+      enableCoriolis: b('enableCoriolis', false),
+      enablePowderSensitivity: b('enablePowderSensitivity', false),
+      useDifferentPowderTemperature: b('useDifferentPowderTemperature', false),
+      enableDerivation: b('enableDerivation', false),
+      enableAerodynamicJump: b('enableAerodynamicJump', false),
+      pressureDependsOnAltitude: b('pressureDependsOnAltitude', false),
+      showMrad: b('showMrad', true),
+      showMoa: b('showMoa', false),
+      showMil: b('showMil', false),
+      showCmPer100m: b('showCmPer100m', false),
+      showInPer100yd: b('showInPer100yd', false),
+      adjustmentFormat:
+          _adjustmentFormatByName[json['adjustmentFormat']] ??
+          AdjustmentFormat.arrows,
+      tableConfig: json['tableConfig'] != null
+          ? TableConfig.fromJson(json['tableConfig'] as Map<String, dynamic>)
+          : TableConfig(
+              // backward-compat: migrate old flat fields
+              stepM: d('tableDistanceStep', 100),
+              hiddenCols: Set<String>.from(
+                json['tableHiddenCols'] as List? ?? [],
+              ),
             ),
-          ),
-    showSubsonicTransition: json['showSubsonicTransition'] as bool? ?? true,
-    enableCoriolis: json['enableCoriolis'] as bool? ?? false,
-    enablePowderSensitivity: json['enablePowderSensitivity'] as bool? ?? false,
-    useDifferentPowderTemperature:
-        json['useDifferentPowderTemperature'] as bool? ?? false,
-    enableDerivation: json['enableDerivation'] as bool? ?? false,
-    enableAerodynamicJump: json['enableAerodynamicJump'] as bool? ?? false,
-    pressureDependsOnAltitude:
-        json['pressureDependsOnAltitude'] as bool? ?? false,
-    adjustmentFormat:
-        _adjustmentFormatByName[json['adjustmentFormat']] ??
-        AdjustmentFormat.arrows,
-    showMrad: json['showMrad'] as bool? ?? true,
-    showMoa: json['showMoa'] as bool? ?? false,
-    showMil: json['showMil'] as bool? ?? false,
-    showCmPer100m: json['showCmPer100m'] as bool? ?? false,
-    showInPer100yd: json['showInPer100yd'] as bool? ?? false,
-  );
+    );
+  }
 }

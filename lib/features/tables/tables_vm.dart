@@ -277,7 +277,7 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
     final ff = (sd != null && dm.bc > 0) ? sd / dm.bc : null;
 
     String fmtV(double mps) {
-      final disp = Unit.mps(mps).in_(units.velocity);
+      final disp = Velocity(mps, Unit.mps).in_(units.velocity);
       return '${disp.toStringAsFixed(FC.muzzleVelocity.accuracyFor(units.velocity))} ${units.velocity.symbol}';
     }
 

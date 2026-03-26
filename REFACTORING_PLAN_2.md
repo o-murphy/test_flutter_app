@@ -354,7 +354,7 @@ Distance<Meter> sum = d + Distance<Yard>(50.0);  // OK, adds via raw
 // Distance<Meter> x = d + Velocity<MPS>(10.0);  // COMPILE ERROR
 ```
 
-**Dart mirror:** параметризувати `Measurable` і `Dimension` другим type parameter `U` (unit enum):
+**Dart mirror:** параметризувати `Dimension` другим type parameter `U` (unit enum):
 
 ```dart
 // ═══ Крок 1: Окремі enum-и по вимірах (ID-сумісні з BCLIBC_Unit) ═══
@@ -386,9 +386,14 @@ abstract interface class DimUnit {
   String get symbol;
 }
 
-// ═══ Крок 2: Measurable<T, U> — два type parameters ═══
+// ═══ Крок 2: Dimension<T, U> — два type parameters ═══
 
-abstract interface class Measurable<T extends Measurable<T, U>, U extends Enum> {
+abstract class Dimension<T extends Dimension<T, U>, U extends Enum> {
+  late double _rawValue;
+  final U _definedUnits;
+  Dimension(double value, this._definedUnits) {
+    _rawValue = toRaw(value, _definedUnits);
+  }
   T _create(double value, U unit);       // тільки свій enum
   double in_(U unit);                   // тільки свій enum
   T to(U unit);                         // тільки свій enum
@@ -397,15 +402,6 @@ abstract interface class Measurable<T extends Measurable<T, U>, U extends Enum> 
   double get rawValue;
   U get units;
   Map<U, double> get conversionFactors;
-}
-
-abstract class Dimension<T extends Dimension<T, U>, U extends Enum>
-    implements Measurable<T, U> {
-  late double _rawValue;
-  final U _definedUnits;
-  Dimension(double value, this._definedUnits) {
-    _rawValue = toRaw(value, _definedUnits);
-  }
   // ... решта як зараз, але U замість Unit
 }
 
@@ -551,9 +547,10 @@ Phase   Task                                        Depends on   Risk
 **Verification:** Full test suite
 **Risk:** Medium — may require workaround or rollback
 
-### Phase 5 — Strict dimension typing (§3.5)
+### Phase 5 — Strict dimension typing (§3.5) 
+> [!NOTE] IT IS MAYBE NOT REALLY NEEDED
 
-**Goal:** Replace single `Unit` enum with per-dimension enums (`DistanceUnit`, `VelocityUnit`, etc.) and parameterize `Measurable<T, U>` / `Dimension<T, U>` — mirroring C++ `unit.hpp` architecture.
+**Goal:** Replace single `Unit` enum with per-dimension enums (`DistanceUnit`, `VelocityUnit`, etc.) and parameterize `Dimension<T, U>` — mirroring C++ `unit.hpp` architecture.
 **Estimated scope:** ~30+ files (solver, models, viewmodels, screens, tests)
 **Verification:** Full test suite + `flutter analyze`
 **Risk:** High — touches entire codebase, but purely mechanical (type signature changes, no logic changes)
