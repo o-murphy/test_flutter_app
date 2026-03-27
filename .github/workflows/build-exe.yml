@@ -56,7 +56,7 @@ jobs:
         shell: pwsh
         run: |
           if ("${{ github.event_name }}" -eq "pull_request") {
-            $buildMode = "debug"
+            $buildMode = "release"
           } else {
             $buildMode = "${{ inputs.build_type }}"
             if ($buildMode -eq "") { $buildMode = "release" }
