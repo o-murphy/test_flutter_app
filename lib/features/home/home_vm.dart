@@ -41,6 +41,14 @@ class HomeUiReady extends HomeUiState {
   final String pressDisplay;
   final String humidDisplay;
 
+  // Quick actions
+  final String windSpeedDisplay;
+  final double windSpeedMps;
+  final String lookAngleDisplay;
+  final double lookAngleDeg;
+  final String targetDistanceDisplay;
+  final double targetDistanceM;
+
   // Bottom block — Page 1 (Reticle)
   final String cartridgeInfoLine;
   final AdjustmentData adjustment;
@@ -63,6 +71,12 @@ class HomeUiReady extends HomeUiState {
     required this.pressDisplay,
     required this.humidDisplay,
     required this.cartridgeInfoLine,
+    required this.windSpeedDisplay,
+    required this.windSpeedMps,
+    required this.lookAngleDisplay,
+    required this.lookAngleDeg,
+    required this.targetDistanceDisplay,
+    required this.targetDistanceM,
     required this.adjustment,
     this.adjustmentFormat = AdjustmentFormat.arrows,
     required this.tableData,
@@ -173,6 +187,12 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
         pressDisplay: current.pressDisplay,
         humidDisplay: current.humidDisplay,
         cartridgeInfoLine: current.cartridgeInfoLine,
+        windSpeedDisplay: current.windSpeedDisplay,
+        windSpeedMps: current.windSpeedMps,
+        lookAngleDisplay: current.lookAngleDisplay,
+        lookAngleDeg: current.lookAngleDeg,
+        targetDistanceDisplay: current.targetDistanceDisplay,
+        targetDistanceM: current.targetDistanceM,
         adjustment: current.adjustment,
         adjustmentFormat: current.adjustmentFormat,
         tableData: current.tableData,
@@ -232,6 +252,18 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
     final pressStr = formatter.pressure(conditions.pressure);
     final humidStr = formatter.humidity(conditions.humidity);
 
+    // ── Quick actions ──
+    final windMps = profile.winds.isNotEmpty
+        ? profile.winds.first.velocity.in_(Unit.mps)
+        : 0.0;
+    final windSpeedDisplay = formatter.velocity(Velocity(windMps, Unit.mps));
+
+    final lookDeg = profile.lookAngle.in_(Unit.degree);
+    final lookAngleDisplay =
+        '${lookDeg.toStringAsFixed(FC.lookAngle.accuracy)}°';
+
+    final targetDistanceDisplay = formatter.distance(profile.targetDistance);
+
     // ── Cartridge info line ──
     final cartridgeInfoLine = _buildCartridgeInfoLine(profile, formatter);
 
@@ -257,6 +289,12 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
       pressDisplay: pressStr,
       humidDisplay: humidStr,
       cartridgeInfoLine: cartridgeInfoLine,
+      windSpeedDisplay: windSpeedDisplay,
+      windSpeedMps: windMps,
+      lookAngleDisplay: lookAngleDisplay,
+      lookAngleDeg: lookDeg,
+      targetDistanceDisplay: targetDistanceDisplay,
+      targetDistanceM: targetM,
       adjustment: adjustment,
       adjustmentFormat: settings.adjustmentFormat,
       tableData: tableData,
