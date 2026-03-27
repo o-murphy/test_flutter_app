@@ -21,7 +21,7 @@ on:
 
 env:
   # Використовуємо останню стабільну версію Flutter
-  FLUTTER_VERSION: '3.41.5'  # або 'stable'
+  FLUTTER_VERSION: '3.41.6'  # або 'stable'
 
 jobs:
   build-windows-exe:
