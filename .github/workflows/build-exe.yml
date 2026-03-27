@@ -87,33 +87,61 @@ jobs:
             if ($buildMode -eq "") { $buildMode = "release" }
           }
           
-          $exePath = "build/windows/runner/$buildMode/eballistica.exe"
+          # Правильний шлях для Windows збірки
+          $exePath = "build/windows/x64/runner/$buildMode/eballistica.exe"
+          
+          # Альтернативні шляхи на випадок, якщо основний не знайдено
+          $alternativePaths = @(
+            "build/windows/runner/$buildMode/eballistica.exe",
+            "build/windows/x64/runner/Release/eballistica.exe",
+            "build/windows/runner/Release/eballistica.exe"
+          )
+          
+          $found = $false
+          $actualPath = $null
           
           if (Test-Path $exePath) {
-            Write-Host "Found EXE at: $exePath" -ForegroundColor Green
+            $found = $true
+            $actualPath = $exePath
+          } else {
+            foreach ($altPath in $alternativePaths) {
+              if (Test-Path $altPath) {
+                $found = $true
+                $actualPath = $altPath
+                break
+              }
+            }
+          }
+          
+          if ($found) {
+            Write-Host "Found EXE at: $actualPath" -ForegroundColor Green
             
-            Copy-Item $exePath "artifacts/eballistica.exe"
+            Copy-Item $actualPath "artifacts/eballistica.exe"
             
-            $fileInfo = Get-Item $exePath
+            $fileInfo = Get-Item $actualPath
             $version = $fileInfo.VersionInfo.FileVersion
             if (-not $version) { $version = "0.0.0" }
             Write-Host "Version: $version" -ForegroundColor Green
             
-            Copy-Item -Path "build/windows/runner/$buildMode" -Destination "artifacts/build-output" -Recurse -ErrorAction SilentlyContinue
+            # Copy entire build output directory
+            $buildDir = Split-Path $actualPath -Parent
+            Copy-Item -Path $buildDir -Destination "artifacts/build-output" -Recurse -ErrorAction SilentlyContinue
             
+            # Copy PDB for debug builds
             if ($buildMode -eq "debug") {
-              $pdbPath = "build/windows/runner/debug/eballistica.pdb"
+              $pdbPath = Join-Path $buildDir "eballistica.pdb"
               if (Test-Path $pdbPath) {
                 Copy-Item $pdbPath "artifacts/"
               }
             }
             
-            $dlls = Get-ChildItem -Path "build/windows/runner/$buildMode" -Filter "*.dll"
+            # Copy DLL dependencies
+            $dlls = Get-ChildItem -Path $buildDir -Filter "*.dll"
             foreach ($dll in $dlls) {
               Copy-Item $dll.FullName "artifacts/"
             }
             
-            # Create info file without heredoc
+            # Create info file
             $infoContent = "Build Information:" + "`n" +
                             "- Build Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" + "`n" +
                             "- Commit: ${{ github.sha }}" + "`n" +
@@ -125,9 +153,14 @@ jobs:
             $infoContent | Out-File -FilePath "artifacts/build_info.txt" -Encoding utf8
             
           } else {
-            Write-Host "❌ EXE not found at $exePath" -ForegroundColor Red
-            Write-Host "Directory structure:"
-            Get-ChildItem -Path build/windows/runner -Recurse | Select-Object -Property FullName
+            Write-Host "❌ EXE not found!" -ForegroundColor Red
+            Write-Host "Searching for EXE files in build directory..."
+            Get-ChildItem -Path build -Recurse -Filter "*.exe" | ForEach-Object {
+              Write-Host "  Found: $($_.FullName)"
+            }
+            Write-Host ""
+            Write-Host "Full directory structure:"
+            Get-ChildItem -Path build -Recurse | Select-Object -Property FullName
             exit 1
           }
 
