@@ -70,7 +70,6 @@ class _ChartInfoGrid extends StatelessWidget {
     ];
 
     final valueStyle = TextStyle(
-      fontSize: 11,
       fontWeight: FontWeight.w600,
       color: cs.onSurface,
     );

@@ -7,19 +7,43 @@ import 'package:window_manager/window_manager.dart';
 import 'core/providers/settings_provider.dart';
 import 'router.dart';
 
+// Константи для розмірів вікна
+const _windowMinWidth = 320.0;
+const _windowMinHeight = 600.0;
+const _windowMaxWidth = 1000.0;
+const _windowMaxHeight = 1080.0;
+const _windowInitialWidth = 375.0;
+const _windowInitialHeight = 812.0;
+
+// Константи для обмежень контенту
+const _contentMaxWidth = _windowMaxWidth;
+const _contentMaxHeight = _windowMaxHeight;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (isDesktop) {
     await windowManager.ensureInitialized();
+
     const windowOptions = WindowOptions(
-      size: Size(375, 812),
+      size: Size(_windowInitialWidth, _windowInitialHeight),
+      minimumSize: Size(_windowMinWidth, _windowMinHeight),
+      maximumSize: Size(_windowMaxWidth, _windowMaxHeight),
       center: true,
       title: 'eBalistyka',
     );
+
     windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();
+
+      await windowManager.setMinimumSize(
+        const Size(_windowMinWidth, _windowMinHeight),
+      );
+      await windowManager.setMaximumSize(
+        const Size(_windowMaxWidth, _windowMaxHeight),
+      );
+      await windowManager.setMaximizable(false);
     });
   }
 
@@ -46,6 +70,7 @@ class MyApp extends ConsumerWidget {
       brightness: Brightness.light,
     ),
   );
+
   static final _darkTheme = ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
@@ -64,6 +89,20 @@ class MyApp extends ConsumerWidget {
       darkTheme: _darkTheme,
       themeMode: themeMode,
       scrollBehavior: _AppScrollBehavior(),
+      builder: (context, child) {
+        if (isDesktop) {
+          return Center(
+            child: Container(
+              constraints: const BoxConstraints(
+                maxWidth: _contentMaxWidth,
+                maxHeight: _contentMaxHeight,
+              ),
+              child: child,
+            ),
+          );
+        }
+        return child!;
+      },
     );
   }
 }

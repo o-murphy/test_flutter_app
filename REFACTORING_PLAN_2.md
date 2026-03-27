@@ -522,6 +522,8 @@ Phase   Task                                        Depends on   Risk
   4     ffigen update to ^20                         3            Medium (enum issue)
   5     Strict dimension typing (§3.5)               1            High (blast radius)
   6     Safe JSON parsing loading                    —            not analyzed
+  7     Bug in tables screen, the tables are not     —            not analyzed
+        expands to allowed width if it's anough
 ```
 
 ### Phase 1 — Feature-first restructure ✅ DONE
