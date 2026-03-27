@@ -20,7 +20,8 @@ on:
           - debug
 
 env:
-  FLUTTER_VERSION: '3.24.0'
+  # Використовуємо останню стабільну версію Flutter
+  FLUTTER_VERSION: '3.27.4'  # або 'stable'
 
 jobs:
   build-windows-exe:
