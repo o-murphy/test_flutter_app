@@ -21,7 +21,7 @@ on:
 
 env:
   # Використовуємо останню стабільну версію Flutter
-  FLUTTER_VERSION: '3.29.0'  # або 'stable'
+  FLUTTER_VERSION: '3.41.5'  # або 'stable'
 
 jobs:
   build-windows-exe:
@@ -41,11 +41,6 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
-
-      - name: Upgrade Flutter to latest
-        run: |
-          flutter upgrade
-          flutter --version
 
       - name: Get Flutter version
         run: |
