@@ -4,7 +4,7 @@ project(test_app LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "test_app")
+set(BINARY_NAME "eballistica")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
@@ -45,6 +45,14 @@ function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_definitions(${TARGET} PRIVATE "$<$<CONFIG:Debug>:_DEBUG>")
 endfunction()
 
+# ============================================================================
+# bclibc_ffi – thin C wrapper over the embedded bclibc ballistics engine
+# ============================================================================
+add_subdirectory(
+    "${CMAKE_CURRENT_SOURCE_DIR}/../external/bclibc"
+    "${CMAKE_CURRENT_BINARY_DIR}/bclibc_ffi_build"
+)
+
 # Flutter library and tool build rules.
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 add_subdirectory(${FLUTTER_MANAGED_DIR})
@@ -57,6 +65,8 @@ add_subdirectory("runner")
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+# Ensure bclibc_ffi is built before the main application
+add_dependencies(${BINARY_NAME} bclibc_ffi)
 
 # === Installation ===
 # Support files are copied into place next to the executable, so that it can
@@ -74,6 +84,13 @@ set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}")
 
 install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)
+
+# Install bclibc_ffi library
+install(TARGETS bclibc_ffi
+    RUNTIME DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+    LIBRARY DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+    ARCHIVE DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+    COMPONENT Runtime)
 
 install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
   COMPONENT Runtime)

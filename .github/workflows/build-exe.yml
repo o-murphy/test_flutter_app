@@ -1,0 +1,221 @@
+name: Build EXE on PR
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'lib/**'
+      - 'windows/**'
+      - 'external/**'
+      - 'pubspec.yaml'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
+
+env:
+  FLUTTER_VERSION: '3.24.0'
+
+jobs:
+  build-windows-exe:
+    name: Build Windows EXE
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get Flutter version
+        run: |
+          flutter --version
+          flutter doctor -v
+
+      - name: Install dependencies
+        run: |
+          flutter pub get
+          flutter clean
+
+      - name: Build Windows EXE
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "pull_request") {
+            $buildMode = "debug"
+          } else {
+            $buildMode = "${{ inputs.build_type }}"
+            if ($buildMode -eq "") { $buildMode = "release" }
+          }
+          
+          Write-Host "Building in $buildMode mode..." -ForegroundColor Green
+          
+          if ($buildMode -eq "release") {
+            flutter build windows --release
+          } else {
+            flutter build windows --debug
+          }
+          
+          # Check if build succeeded
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Build failed!" -ForegroundColor Red
+            exit 1
+          }
+
+      - name: Prepare artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path artifacts -Force
+          
+          # Determine build mode
+          if ("${{ github.event_name }}" -eq "pull_request") {
+            $buildMode = "debug"
+          } else {
+            $buildMode = "${{ inputs.build_type }}"
+            if ($buildMode -eq "") { $buildMode = "release" }
+          }
+          
+          $exePath = "build/windows/runner/$buildMode/eballistica.exe"
+          
+          if (Test-Path $exePath) {
+            Write-Host "Found EXE at: $exePath" -ForegroundColor Green
+            
+            # Copy EXE
+            Copy-Item $exePath "artifacts/eballistica.exe"
+            
+            # Get version info from executable
+            $fileInfo = Get-Item $exePath
+            $version = $fileInfo.VersionInfo.FileVersion
+            if (-not $version) { $version = "0.0.0" }
+            Write-Host "Version: $version" -ForegroundColor Green
+            
+            # Copy entire build output for debugging if needed
+            Copy-Item -Path "build/windows/runner/$buildMode" -Destination "artifacts/build-output" -Recurse -ErrorAction SilentlyContinue
+            
+            # Copy PDB for debug builds
+            if ($buildMode -eq "debug") {
+              $pdbPath = "build/windows/runner/debug/eballistica.pdb"
+              if (Test-Path $pdbPath) {
+                Copy-Item $pdbPath "artifacts/"
+              }
+            }
+            
+            # Copy DLL dependencies
+            $dlls = Get-ChildItem -Path "build/windows/runner/$buildMode" -Filter "*.dll"
+            foreach ($dll in $dlls) {
+              Copy-Item $dll.FullName "artifacts/"
+            }
+            
+            # Create info file
+            $infoContent = @"
+            Build Information:
+            - Build Date: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+            - Commit: ${{ github.sha }}
+            - Branch: ${{ github.head_ref }}
+            - PR: ${{ github.event.pull_request.number }}
+            - Build Mode: $buildMode
+            - Version: $version
+            "@
+            $infoContent | Out-File -FilePath "artifacts/build_info.txt" -Encoding utf8
+            
+          } else {
+            Write-Host "❌ EXE not found at $exePath" -ForegroundColor Red
+            Write-Host "Directory structure:"
+            Get-ChildItem -Path build/windows/runner -Recurse | Select-Object -Property FullName
+            exit 1
+          }
+
+      - name: Upload artifacts (PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: eballistica-windows-pr-${{ github.event.pull_request.number }}
+          path: artifacts/
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Upload artifacts (Manual)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: eballistica-windows-${{ inputs.build_type || 'release' }}-${{ github.run_number }}
+          path: artifacts/
+          retention-days: 30
+          if-no-files-found: error
+
+  pr-summary:
+    name: PR Build Summary
+    runs-on: ubuntu-latest
+    needs: [build-windows-exe]
+    if: always() && github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+      issues: write
+    
+    steps:
+      - name: Generate summary comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const buildStatus = '${{ needs.build-windows-exe.result }}';
+            const buildSuccess = buildStatus === 'success';
+            
+            const artifactUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            
+            let comment = `## 🏗️ Windows Build Result\n\n`;
+            
+            if (buildSuccess) {
+              comment += `✅ **Build successful!**\n\n`;
+              comment += `📦 **Download EXE**: [Download from artifacts](${artifactUrl})\n\n`;
+              comment += `### Build Details:\n`;
+              comment += `- **PR**: #${{ github.event.pull_request.number }}\n`;
+              comment += `- **Commit**: \`${{ github.sha }}\`\n`;
+              comment += `- **Build Mode**: Debug (PR builds use debug mode for faster builds)\n`;
+              comment += `- **Artifacts available for**: 7 days\n\n`;
+              comment += `### ⚠️ Note:\n`;
+              comment += `- This is a **debug build** optimized for testing\n`;
+              comment += `- For release builds, use the manual workflow or create a tag\n`;
+            } else {
+              comment += `❌ **Build failed!**\n\n`;
+              comment += `Check the [Actions logs](${artifactUrl}) for details.\n`;
+            }
+            
+            // Find and update or create comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && comment.body.includes('🏗️ Windows Build Result')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
