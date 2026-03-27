@@ -1,7 +1,5 @@
-export '_stub_screen.dart';
-
+import 'package:eballistica/shared/widgets/_stub_screen.dart';
 import 'package:flutter/material.dart';
-import '_stub_screen.dart';
 
 class DistanceConvertorScreen extends StatelessWidget {
   const DistanceConvertorScreen({super.key});
