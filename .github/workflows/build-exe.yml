@@ -20,8 +20,7 @@ on:
           - debug
 
 env:
-  # Використовуємо останню стабільну версію Flutter
-  FLUTTER_VERSION: '3.41.6'  # або 'stable'
+  FLUTTER_VERSION: '3.41.6'
 
 jobs:
   build-windows-exe:
@@ -35,12 +34,13 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Setup Flutter
+      - name: Setup Flutter with cache
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
+          cache-key: flutter-${{ env.FLUTTER_VERSION }}
 
       - name: Get Flutter version
         run: |
@@ -70,7 +70,6 @@ jobs:
             flutter build windows --debug
           }
           
-          # Check if build succeeded
           if ($LASTEXITCODE -ne 0) {
             Write-Host "Build failed!" -ForegroundColor Red
             exit 1
@@ -81,7 +80,6 @@ jobs:
         run: |
           New-Item -ItemType Directory -Path artifacts -Force
           
-          # Determine build mode
           if ("${{ github.event_name }}" -eq "pull_request") {
             $buildMode = "debug"
           } else {
@@ -94,19 +92,15 @@ jobs:
           if (Test-Path $exePath) {
             Write-Host "Found EXE at: $exePath" -ForegroundColor Green
             
-            # Copy EXE
             Copy-Item $exePath "artifacts/eballistica.exe"
             
-            # Get version info from executable
             $fileInfo = Get-Item $exePath
             $version = $fileInfo.VersionInfo.FileVersion
             if (-not $version) { $version = "0.0.0" }
             Write-Host "Version: $version" -ForegroundColor Green
             
-            # Copy entire build output for debugging if needed
             Copy-Item -Path "build/windows/runner/$buildMode" -Destination "artifacts/build-output" -Recurse -ErrorAction SilentlyContinue
             
-            # Copy PDB for debug builds
             if ($buildMode -eq "debug") {
               $pdbPath = "build/windows/runner/debug/eballistica.pdb"
               if (Test-Path $pdbPath) {
@@ -114,22 +108,20 @@ jobs:
               }
             }
             
-            # Copy DLL dependencies
             $dlls = Get-ChildItem -Path "build/windows/runner/$buildMode" -Filter "*.dll"
             foreach ($dll in $dlls) {
               Copy-Item $dll.FullName "artifacts/"
             }
             
-            # Create info file
-            $infoContent = @"
-            Build Information:
-            - Build Date: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-            - Commit: ${{ github.sha }}
-            - Branch: ${{ github.head_ref }}
-            - PR: ${{ github.event.pull_request.number }}
-            - Build Mode: $buildMode
-            - Version: $version
-            "@
+            # Create info file without heredoc
+            $infoContent = "Build Information:" + "`n" +
+                            "- Build Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" + "`n" +
+                            "- Commit: ${{ github.sha }}" + "`n" +
+                            "- Branch: ${{ github.head_ref }}" + "`n" +
+                            "- PR: ${{ github.event.pull_request.number }}" + "`n" +
+                            "- Build Mode: $buildMode" + "`n" +
+                            "- Version: $version"
+            
             $infoContent | Out-File -FilePath "artifacts/build_info.txt" -Encoding utf8
             
           } else {
@@ -194,7 +186,6 @@ jobs:
               comment += `Check the [Actions logs](${artifactUrl}) for details.\n`;
             }
             
-            // Find and update or create comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
