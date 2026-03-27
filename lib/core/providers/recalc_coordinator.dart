@@ -28,13 +28,13 @@ class RecalcCoordinator extends Notifier<void> {
   void onTabActivated(int tabIndex) {
     if (tabIndex == 0) {
       ref.read(homeVmProvider.notifier).recalculate();
+      // Shot details is a sub-screen of Home, so we should ensure
+      // it's fresh when Home branch is active.
+      ref.read(shotDetailsVmProvider.notifier).recalculate();
     }
     if (tabIndex == 2) {
       ref.read(tablesVmProvider.notifier).recalculate();
     }
-    // Shot details is a sub-screen of Home, so we should ensure
-    // it's fresh when Home branch is active.
-    ref.read(shotDetailsVmProvider.notifier).recalculate();
   }
 
   void _triggerAll() {

@@ -98,6 +98,12 @@ HomeUiReady _makeReady({
     altDisplay: '150 m',
     pressDisplay: '1013 hPa',
     humidDisplay: '50 %',
+    windSpeedDisplay: '5 m/s',
+    windSpeedMps: 5.0,
+    lookAngleDisplay: '0°',
+    lookAngleDeg: 0.0,
+    targetDistanceDisplay: '300 m',
+    targetDistanceM: 300.0,
     cartridgeInfoLine: cartridgeInfoLine,
     adjustment: adjustment ??
         const AdjustmentData(

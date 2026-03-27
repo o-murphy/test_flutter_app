@@ -21,6 +21,7 @@ import 'package:eballistica/core/solver/drag_tables.dart';
 import 'package:eballistica/core/solver/munition.dart';
 import 'package:eballistica/core/solver/unit.dart';
 import 'package:eballistica/features/home/home_vm.dart';
+import 'package:eballistica/features/home/shot_details_vm.dart';
 import 'package:eballistica/features/tables/tables_vm.dart';
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
@@ -82,6 +83,18 @@ class _TrackingHomeVM extends HomeViewModel {
   }
 }
 
+class _TrackingShotDetailsVM extends ShotDetailsViewModel {
+  int recalcCount = 0;
+
+  @override
+  Future<ShotDetailsUiState> build() async => const ShotDetailsLoading();
+
+  @override
+  Future<void> recalculate() async {
+    recalcCount++;
+  }
+}
+
 class _TrackingTablesVM extends TablesViewModel {
   int recalcCount = 0;
 
@@ -122,6 +135,7 @@ class _TestContext {
   final ProviderContainer container;
   final _TrackingHomeVM homeVM;
   final _TrackingTablesVM tablesVM;
+  final _TrackingShotDetailsVM shotDetailsVM;
   final _ControllableProfileNotifier profileNotifier;
   final _ControllableSettingsNotifier settingsNotifier;
 
@@ -129,6 +143,7 @@ class _TestContext {
     required this.container,
     required this.homeVM,
     required this.tablesVM,
+    required this.shotDetailsVM,
     required this.profileNotifier,
     required this.settingsNotifier,
   });
@@ -139,6 +154,7 @@ _TestContext _createTestContext({
 }) {
   final homeVM = _TrackingHomeVM();
   final tablesVM = _TrackingTablesVM();
+  final shotDetailsVM = _TrackingShotDetailsVM();
   final profileNotifier = _ControllableProfileNotifier(_makeProfile());
   final settingsNotifier = _ControllableSettingsNotifier(initialSettings);
 
@@ -148,6 +164,7 @@ _TestContext _createTestContext({
       settingsProvider.overrideWith(() => settingsNotifier),
       homeVmProvider.overrideWith(() => homeVM),
       tablesVmProvider.overrideWith(() => tablesVM),
+      shotDetailsVmProvider.overrideWith(() => shotDetailsVM),
     ],
   );
 
@@ -155,6 +172,7 @@ _TestContext _createTestContext({
     container: container,
     homeVM: homeVM,
     tablesVM: tablesVM,
+    shotDetailsVM: shotDetailsVM,
     profileNotifier: profileNotifier,
     settingsNotifier: settingsNotifier,
   );
@@ -183,10 +201,11 @@ void main() {
 
     tearDown(() => ctx.container.dispose());
 
-    test('tab 0 (Home) triggers homeVM only', () {
+    test('tab 0 (Home) triggers home and shot details VMs', () {
       ctx.container.read(recalcCoordinatorProvider.notifier).onTabActivated(0);
 
       expect(ctx.homeVM.recalcCount, 1);
+      expect(ctx.shotDetailsVM.recalcCount, 1);
       expect(ctx.tablesVM.recalcCount, 0);
     });
 
@@ -194,7 +213,8 @@ void main() {
       ctx.container.read(recalcCoordinatorProvider.notifier).onTabActivated(2);
 
       expect(ctx.tablesVM.recalcCount, 1);
-      expect(ctx.homeVM.recalcCount, 0); // Corrected to reflect no homeCalc
+      expect(ctx.homeVM.recalcCount, 0);
+      expect(ctx.shotDetailsVM.recalcCount, 0);
     });
 
     test('tab 1 (Conditions) triggers nothing', () {
@@ -202,6 +222,7 @@ void main() {
 
       expect(ctx.homeVM.recalcCount, 0);
       expect(ctx.tablesVM.recalcCount, 0);
+      expect(ctx.shotDetailsVM.recalcCount, 0);
     });
 
     test('tab 3 (Convertors) triggers nothing', () {
@@ -209,6 +230,7 @@ void main() {
 
       expect(ctx.homeVM.recalcCount, 0);
       expect(ctx.tablesVM.recalcCount, 0);
+      expect(ctx.shotDetailsVM.recalcCount, 0);
     });
 
     test('tab 4 (Settings) triggers nothing', () {
@@ -216,6 +238,7 @@ void main() {
 
       expect(ctx.homeVM.recalcCount, 0);
       expect(ctx.tablesVM.recalcCount, 0);
+      expect(ctx.shotDetailsVM.recalcCount, 0);
     });
   });
 
@@ -236,6 +259,7 @@ void main() {
 
       expect(ctx.homeVM.recalcCount, 1);
       expect(ctx.tablesVM.recalcCount, 1);
+      expect(ctx.shotDetailsVM.recalcCount, 1);
     });
 
     test('multiple profile changes trigger multiple times', () async {
@@ -246,6 +270,7 @@ void main() {
 
       expect(ctx.homeVM.recalcCount, 2);
       expect(ctx.tablesVM.recalcCount, 2);
+      expect(ctx.shotDetailsVM.recalcCount, 2);
     }); // Removed the extra closing brace here.
   });
 
@@ -267,6 +292,7 @@ void main() {
 
       expect(ctx.homeVM.recalcCount, 1);
       expect(ctx.tablesVM.recalcCount, 1);
+      expect(ctx.shotDetailsVM.recalcCount, 1);
     });
 
     test('useDifferentPowderTemperature change triggers recalc', () async {
@@ -277,6 +303,7 @@ void main() {
 
       expect(ctx.homeVM.recalcCount, 1);
       expect(ctx.tablesVM.recalcCount, 1);
+      expect(ctx.shotDetailsVM.recalcCount, 1);
     });
 
     test('chartDistanceStep change triggers recalc', () async {
@@ -285,6 +312,7 @@ void main() {
 
       expect(ctx.homeVM.recalcCount, 1);
       expect(ctx.tablesVM.recalcCount, 1);
+      expect(ctx.shotDetailsVM.recalcCount, 1);
     });
 
     test('tableConfig.stepM change triggers recalc', () async {
@@ -295,6 +323,7 @@ void main() {
 
       expect(ctx.homeVM.recalcCount, 1);
       expect(ctx.tablesVM.recalcCount, 1);
+      expect(ctx.shotDetailsVM.recalcCount, 1);
     });
   });
 
@@ -314,6 +343,7 @@ void main() {
 
       expect(ctx.homeVM.recalcCount, 1);
       expect(ctx.tablesVM.recalcCount, 1);
+      expect(ctx.shotDetailsVM.recalcCount, 1);
     });
 
     test('showMoa change triggers recalc', () async {
@@ -322,6 +352,7 @@ void main() {
 
       expect(ctx.homeVM.recalcCount, 1);
       expect(ctx.tablesVM.recalcCount, 1);
+      expect(ctx.shotDetailsVM.recalcCount, 1);
     });
   });
 
@@ -340,10 +371,12 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(ctx.homeVM.recalcCount, 1);
+      expect(ctx.shotDetailsVM.recalcCount, 1);
 
       ctx.container.read(recalcCoordinatorProvider.notifier).onTabActivated(0);
 
       expect(ctx.homeVM.recalcCount, 2);
+      expect(ctx.shotDetailsVM.recalcCount, 2);
     });
 
     test('settings change with multiple relevant fields triggers once', () async {
@@ -359,6 +392,7 @@ void main() {
 
       expect(ctx.homeVM.recalcCount, 1);
       expect(ctx.tablesVM.recalcCount, 1);
+      expect(ctx.shotDetailsVM.recalcCount, 1);
     });
   });
 }

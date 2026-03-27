@@ -75,8 +75,10 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
     // but usually we want to just update data silently.
     try {
       final newState = await _calculate();
+      if (!ref.mounted) return;
       state = AsyncData(newState);
     } catch (e, st) {
+      if (!ref.mounted) return;
       state = AsyncError(e, st);
     }
   }
