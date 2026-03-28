@@ -30,9 +30,10 @@ FormattedTableData _makeTable({
           FormattedCell(value: '790'),
           FormattedCell(value: '760', isZeroCrossing: includeZeroCrossing),
           FormattedCell(
-              value: '730',
-              isTargetColumn: includeTargetColumn,
-              isSubsonic: includeSubsonic),
+            value: '730',
+            isTargetColumn: includeTargetColumn,
+            isSubsonic: includeSubsonic,
+          ),
         ],
       ),
       FormattedRow(
@@ -51,17 +52,17 @@ FormattedTableData _makeTable({
 const TablesSpoilerData _emptySpoiler = TablesSpoilerData(rifleName: 'R');
 
 TablesSpoilerData _makeFullSpoiler() => const TablesSpoilerData(
-      rifleName: 'Test Rifle',
-      caliber: '7.62 mm',
-      twist: '1:11"',
-      dragModel: 'G7',
-      bc: '0.475 G7',
-      temperature: '20 °C',
-      humidity: '50 %',
-      pressure: '1013 hPa',
-      windSpeed: '3 m/s',
-      windDir: '90°',
-    );
+  rifleName: 'Test Rifle',
+  caliber: '7.62 mm',
+  twist: '1:11"',
+  dragModel: 'G7',
+  bc: '0.475 G7',
+  temperature: '20 °C',
+  humidity: '50 %',
+  pressure: '1013 hPa',
+  windSpeed: '3 m/s',
+  windDir: '90°',
+);
 
 Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
@@ -70,10 +71,9 @@ Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 void main() {
   group('TrajectoryTable — main table rendering', () {
     testWidgets('renders distance headers', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _emptySpoiler,
-      )));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTable(mainTable: _makeTable(), spoiler: _emptySpoiler)),
+      );
       await tester.pump();
 
       expect(find.text('100'), findsWidgets);
@@ -82,10 +82,9 @@ void main() {
     });
 
     testWidgets('renders distance unit label', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _emptySpoiler,
-      )));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTable(mainTable: _makeTable(), spoiler: _emptySpoiler)),
+      );
       await tester.pump();
 
       // 'm' appears in the header row and potentially in cells
@@ -93,10 +92,9 @@ void main() {
     });
 
     testWidgets('renders row labels', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _emptySpoiler,
-      )));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTable(mainTable: _makeTable(), spoiler: _emptySpoiler)),
+      );
       await tester.pump();
 
       expect(find.text('V'), findsOneWidget);
@@ -104,10 +102,9 @@ void main() {
     });
 
     testWidgets('renders row unit symbols', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _emptySpoiler,
-      )));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTable(mainTable: _makeTable(), spoiler: _emptySpoiler)),
+      );
       await tester.pump();
 
       expect(find.text('m/s'), findsOneWidget);
@@ -115,10 +112,9 @@ void main() {
     });
 
     testWidgets('renders cell values', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _emptySpoiler,
-      )));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTable(mainTable: _makeTable(), spoiler: _emptySpoiler)),
+      );
       await tester.pump();
 
       expect(find.text('790'), findsOneWidget);
@@ -127,10 +123,9 @@ void main() {
     });
 
     testWidgets('always shows Trajectory section title', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _emptySpoiler,
-      )));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTable(mainTable: _makeTable(), spoiler: _emptySpoiler)),
+      );
       await tester.pump();
 
       expect(find.text('Trajectory'), findsOneWidget);
@@ -139,36 +134,43 @@ void main() {
 
   group('TrajectoryTable — zero crossings section', () {
     testWidgets('shows Zero Crossings title when provided', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        zeroCrossings: _makeTable(),
-        spoiler: _emptySpoiler,
-      )));
+      await tester.pumpWidget(
+        _wrap(
+          TrajectoryTable(
+            mainTable: _makeTable(),
+            zeroCrossings: _makeTable(),
+            spoiler: _emptySpoiler,
+          ),
+        ),
+      );
       await tester.pump();
 
       expect(find.text('Zero Crossings'), findsOneWidget);
     });
 
     testWidgets('Zero Crossings absent when null', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _emptySpoiler,
-      )));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTable(mainTable: _makeTable(), spoiler: _emptySpoiler)),
+      );
       await tester.pump();
 
       expect(find.text('Zero Crossings'), findsNothing);
     });
 
     testWidgets('Zero Crossings absent when empty headers', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        zeroCrossings: const FormattedTableData(
-          distanceHeaders: [],
-          rows: [],
-          distanceUnit: 'm',
+      await tester.pumpWidget(
+        _wrap(
+          TrajectoryTable(
+            mainTable: _makeTable(),
+            zeroCrossings: const FormattedTableData(
+              distanceHeaders: [],
+              rows: [],
+              distanceUnit: 'm',
+            ),
+            spoiler: _emptySpoiler,
+          ),
         ),
-        spoiler: _emptySpoiler,
-      )));
+      );
       await tester.pump();
 
       expect(find.text('Zero Crossings'), findsNothing);
@@ -176,31 +178,34 @@ void main() {
   });
 
   group('TrajectoryTable — spoiler', () {
-    testWidgets('shows expansion tile when optional fields present', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _makeFullSpoiler(),
-      )));
+    testWidgets('shows expansion tile when optional fields present', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          TrajectoryTable(mainTable: _makeTable(), spoiler: _makeFullSpoiler()),
+        ),
+      );
       await tester.pump();
 
       expect(find.text('Shot details'), findsOneWidget);
     });
 
     testWidgets('spoiler hidden when no optional fields', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _emptySpoiler,
-      )));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTable(mainTable: _makeTable(), spoiler: _emptySpoiler)),
+      );
       await tester.pump();
 
       expect(find.text('Shot details'), findsNothing);
     });
 
     testWidgets('rifle section visible after expanding', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _makeFullSpoiler(),
-      )));
+      await tester.pumpWidget(
+        _wrap(
+          TrajectoryTable(mainTable: _makeTable(), spoiler: _makeFullSpoiler()),
+        ),
+      );
       await tester.pump();
 
       await tester.tap(find.text('Shot details'));
@@ -213,10 +218,11 @@ void main() {
     });
 
     testWidgets('projectile section visible after expanding', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _makeFullSpoiler(),
-      )));
+      await tester.pumpWidget(
+        _wrap(
+          TrajectoryTable(mainTable: _makeTable(), spoiler: _makeFullSpoiler()),
+        ),
+      );
       await tester.pump();
 
       await tester.tap(find.text('Shot details'));
@@ -228,10 +234,11 @@ void main() {
     });
 
     testWidgets('atmosphere section visible after expanding', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _makeFullSpoiler(),
-      )));
+      await tester.pumpWidget(
+        _wrap(
+          TrajectoryTable(mainTable: _makeTable(), spoiler: _makeFullSpoiler()),
+        ),
+      );
       await tester.pump();
 
       await tester.tap(find.text('Shot details'));
@@ -243,11 +250,14 @@ void main() {
       expect(find.text('3 m/s'), findsOneWidget);
     });
 
-    testWidgets('spoiler collapsed by default — section titles not visible', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _makeFullSpoiler(),
-      )));
+    testWidgets('spoiler collapsed by default — section titles not visible', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          TrajectoryTable(mainTable: _makeTable(), spoiler: _makeFullSpoiler()),
+        ),
+      );
       await tester.pump();
 
       // Before expanding, internal section titles should not be visible
@@ -258,10 +268,9 @@ void main() {
 
   group('TrajectoryTable — cell detail dialog', () {
     testWidgets('tapping a cell opens detail dialog', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _emptySpoiler,
-      )));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTable(mainTable: _makeTable(), spoiler: _emptySpoiler)),
+      );
       await tester.pump();
 
       await tester.tap(find.text('790').first);
@@ -271,10 +280,9 @@ void main() {
     });
 
     testWidgets('dialog title contains the distance header', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _emptySpoiler,
-      )));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTable(mainTable: _makeTable(), spoiler: _emptySpoiler)),
+      );
       await tester.pump();
 
       // Tap first cell (column 0 → header '100')
@@ -285,10 +293,9 @@ void main() {
     });
 
     testWidgets('dialog lists all row labels with values', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _emptySpoiler,
-      )));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTable(mainTable: _makeTable(), spoiler: _emptySpoiler)),
+      );
       await tester.pump();
 
       await tester.tap(find.text('790').first);
@@ -302,10 +309,9 @@ void main() {
     });
 
     testWidgets('Close button dismisses dialog', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(
-        mainTable: _makeTable(),
-        spoiler: _emptySpoiler,
-      )));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTable(mainTable: _makeTable(), spoiler: _emptySpoiler)),
+      );
       await tester.pump();
 
       await tester.tap(find.text('790').first);

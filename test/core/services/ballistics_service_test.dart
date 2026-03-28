@@ -149,10 +149,7 @@ void main() {
         second.hitResult.trajectory.length,
         equals(first.hitResult.trajectory.length),
       );
-      expect(
-        second.zeroElevationRad,
-        closeTo(first.zeroElevationRad, 1e-9),
-      );
+      expect(second.zeroElevationRad, closeTo(first.zeroElevationRad, 1e-9));
     });
 
     test('velocity decreases along trajectory', () async {
@@ -225,8 +222,10 @@ void main() {
 
     test('cached zero elevation gives same results', () async {
       final profile = _makeProfile(targetDistM: 300.0);
-      final opts =
-          const TargetCalcOptions(targetDistM: 300.0, chartStepM: 10.0);
+      final opts = const TargetCalcOptions(
+        targetDistM: 300.0,
+        chartStepM: 10.0,
+      );
 
       final first = await service.calculateForTarget(profile, opts);
       final second = await service.calculateForTarget(
@@ -239,10 +238,7 @@ void main() {
         second.hitResult.trajectory.length,
         equals(first.hitResult.trajectory.length),
       );
-      expect(
-        second.zeroElevationRad,
-        closeTo(first.zeroElevationRad, 1e-9),
-      );
+      expect(second.zeroElevationRad, closeTo(first.zeroElevationRad, 1e-9));
     });
 
     test('different target distances produce different results', () async {
@@ -334,9 +330,7 @@ void main() {
         mv: Velocity(10.0, Unit.mps), // extremely low velocity
         powderTemp: Temperature(15.0, Unit.celsius),
       );
-      final weapon = Weapon(
-        sightHeight: Distance(38.0, Unit.millimeter),
-      );
+      final weapon = Weapon(sightHeight: Distance(38.0, Unit.millimeter));
       final rifle = Rifle(name: 'Bad', weapon: weapon);
       final sight = Sight(
         name: 'Bad',

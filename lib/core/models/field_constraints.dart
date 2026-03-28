@@ -29,9 +29,8 @@ class FieldConstraints {
   /// [stepRaw] to [displayUnit] and infers the required precision from it.
   int accuracyFor(Unit displayUnit) {
     if (rawUnit == displayUnit) return accuracy;
-    if (rawUnit == Unit.second) return accuracy; // sentinel (dimensionless)
-    final lo = rawUnit(minRaw).in_(displayUnit);
-    final hi = rawUnit(minRaw + stepRaw).in_(displayUnit);
+    final lo = minRaw.convert(rawUnit, displayUnit);
+    final hi = (minRaw + stepRaw).convert(rawUnit, displayUnit);
     final step = (hi - lo).abs();
     if (step <= 0) return accuracy;
     final d = (-log(step) / ln10).ceil();
@@ -69,7 +68,7 @@ abstract final class FC {
 
   /// Humidity in percent (0–100). No unit conversion.
   static const humidity = FieldConstraints(
-    rawUnit: Unit.second, // sentinel — no conversion used for humidity
+    rawUnit: Unit.dimensionless, // sentinel — no conversion used for humidity
     minRaw: 0.0,
     maxRaw: 100.0,
     stepRaw: 1.0,
@@ -118,7 +117,7 @@ abstract final class FC {
     accuracy: 0,
   );
 
-  static const twistRate = FieldConstraints(
+  static const twist = FieldConstraints(
     rawUnit: Unit.inch,
     minRaw: 1.0,
     maxRaw: 30.0,
@@ -168,7 +167,7 @@ abstract final class FC {
   );
 
   static const ballisticCoefficient = FieldConstraints(
-    rawUnit: Unit.second, // sentinel — dimensionless, no conversion
+    rawUnit: Unit.dimensionless, // sentinel — dimensionless, no conversion
     minRaw: 0.001,
     maxRaw: 2.000,
     stepRaw: 0.001,

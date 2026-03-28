@@ -8,7 +8,6 @@ abstract interface class UnitFormatter {
   // --- Форматовані рядки (з одиницею) ---
   String velocity(Velocity dim); // "888 m/s"
   String distance(Distance dim); // "300 m"
-  String shortDistance(Distance dim); // "300" (без символу, для compact UI)
   String temperature(Temperature dim); // "15 °C"
   String pressure(Pressure dim); // "1013 hPa"
   String drop(Distance dim); // "−12.5 cm"

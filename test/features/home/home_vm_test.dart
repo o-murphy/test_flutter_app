@@ -39,7 +39,11 @@ ShotProfile _makeProfile({
     diameter: Distance(7.62, Unit.millimeter),
     length: Distance(31.0, Unit.millimeter),
   );
-  final projectile = Projectile(name: 'Test 175gr', dm: dm, dragType: DragModelType.g7);
+  final projectile = Projectile(
+    name: 'Test 175gr',
+    dm: dm,
+    dragType: DragModelType.g7,
+  );
   final cartridge = Cartridge(
     name: 'Test .308',
     projectile: projectile,
@@ -92,24 +96,29 @@ List<TrajectoryData> _makeTraj({int points = 31, double stepM = 10.0}) {
     final m = v / 1100.0; // rough mach
     int flag = 0;
     if (i == 10) flag = TrajFlag.zeroUp.value; // zero crossing at 100m
-    result.add(TrajectoryData(
-      time: t,
-      distance: Distance(d * 3.28084, Unit.foot), // meters to feet
-      velocity: Velocity(v, Unit.fps),
-      mach: m,
-      height: Distance(h, Unit.foot),
-      slantHeight: Distance(h, Unit.foot),
-      dropAngle: Angular(h / d.clamp(1, double.infinity) * 1000, Unit.mil),
-      windage: Distance(d * 0.001, Unit.foot),
-      windageAngle: Angular(d * 0.001 / d.clamp(1, double.infinity) * 1000, Unit.mil),
-      slantDistance: Distance(d * 3.28084, Unit.foot),
-      angle: Angular(0, Unit.mil),
-      densityRatio: 1.0,
-      drag: 0.3,
-      energy: Energy(2000 - d * 3.0, Unit.footPound),
-      ogw: Weight(500, Unit.grain),
-      flag: flag,
-    ));
+    result.add(
+      TrajectoryData(
+        time: t,
+        distance: Distance(d * 3.28084, Unit.foot), // meters to feet
+        velocity: Velocity(v, Unit.fps),
+        mach: m,
+        height: Distance(h, Unit.foot),
+        slantHeight: Distance(h, Unit.foot),
+        dropAngle: Angular(h / d.clamp(1, double.infinity) * 1000, Unit.mil),
+        windage: Distance(d * 0.001, Unit.foot),
+        windageAngle: Angular(
+          d * 0.001 / d.clamp(1, double.infinity) * 1000,
+          Unit.mil,
+        ),
+        slantDistance: Distance(d * 3.28084, Unit.foot),
+        angle: Angular(0, Unit.mil),
+        densityRatio: 1.0,
+        drag: 0.3,
+        energy: Energy(2000 - d * 3.0, Unit.footPound),
+        ogw: Weight(500, Unit.grain),
+        flag: flag,
+      ),
+    );
   }
   return result;
 }
@@ -201,10 +210,7 @@ void main() {
 
     setUp(() async {
       service = _FakeBallisticsService(_makeResult());
-      container = _createContainer(
-        profile: _makeProfile(),
-        service: service,
-      );
+      container = _createContainer(profile: _makeProfile(), service: service);
       state = await _recalculate(container);
     });
 
@@ -272,10 +278,7 @@ void main() {
 
     setUp(() async {
       service = _FakeBallisticsService(_makeResult());
-      container = _createContainer(
-        profile: _makeProfile(),
-        service: service,
-      );
+      container = _createContainer(profile: _makeProfile(), service: service);
       await _recalculate(container);
     });
 
@@ -293,7 +296,8 @@ void main() {
 
     test('selectChartPoint with invalid index preserves previous info', () {
       final notifier = container.read(homeVmProvider.notifier);
-      final before = (container.read(homeVmProvider).value as HomeUiReady).selectedPointInfo;
+      final before = (container.read(homeVmProvider).value as HomeUiReady)
+          .selectedPointInfo;
       notifier.selectChartPoint(999);
       final state = container.read(homeVmProvider).value as HomeUiReady;
       expect(state.selectedPointInfo, equals(before));
@@ -348,7 +352,9 @@ void main() {
       final state = await _recalculate(container);
       expect(state.adjustment.elevation.any((v) => v.symbol == 'MOA'), isTrue);
       expect(
-          state.adjustment.elevation.any((v) => v.symbol == 'MRAD'), isFalse);
+        state.adjustment.elevation.any((v) => v.symbol == 'MRAD'),
+        isFalse,
+      );
     });
 
     test('shows multiple units when multiple enabled', () async {
@@ -395,9 +401,11 @@ void main() {
       final container2 = ProviderContainer(
         overrides: [
           shotProfileProvider.overrideWith(
-              () => _FakeProfileNotifier(_makeProfile())),
+            () => _FakeProfileNotifier(_makeProfile()),
+          ),
           settingsProvider.overrideWith(
-              () => _FakeSettingsNotifier(const AppSettings())),
+            () => _FakeSettingsNotifier(const AppSettings()),
+          ),
           ballisticsServiceProvider.overrideWithValue(badService),
         ],
       );

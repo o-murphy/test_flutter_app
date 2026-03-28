@@ -324,7 +324,7 @@ class _StepTile extends ConsumerWidget {
               final v = double.tryParse(controller.text);
               if (v != null && v > 0) {
                 // convert display unit → metres
-                final metres = distUnit(v).in_(Unit.meter);
+                final metres = Distance(v, distUnit).in_(Unit.meter);
                 onConfirm(metres);
               }
               Navigator.pop(ctx);

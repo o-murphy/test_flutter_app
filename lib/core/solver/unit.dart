@@ -1,6 +1,8 @@
 import 'dart:math';
 
 enum Unit {
+  //
+  dimensionless(-1, "", ""),
   radian(0, "radian", "rad"),
   degree(1, "degree", "°"),
   moa(2, "MOA", "MOA"),
@@ -54,54 +56,11 @@ enum Unit {
   final String label;
   final String symbol;
 
-  static Unit fromName(String name) =>
-      Unit.values.firstWhere((u) => u.name == name);
-}
-
-extension UnitCallable on Unit {
-  Dimension<dynamic> call(Object value) {
-    if (value is Dimension) {
-      return value.to(this);
+  static Unit? fromName(String name) {
+    for (var unit in values) {
+      if (unit.name == name) return unit;
     }
-
-    final double val = (value as num).toDouble();
-
-    if (id >= 0 && id < 10) return Angular(val, this);
-    if (id >= 10 && id < 20) return Distance(val, this);
-    if (id >= 30 && id < 40) return Energy(val, this);
-    if (id >= 40 && id < 50) return Pressure(val, this);
-    if (id >= 50 && id < 60) return Temperature(val, this);
-    if (id >= 60 && id < 70) return Velocity(val, this);
-    if (id >= 70 && id < 80) return Weight(val, this);
-    if (id >= 80 && id < 90) return Time(val, this);
-
-    throw Exception('Unit ID $id is not supported for casting');
-  }
-}
-
-extension UnitParser on Unit {
-  static Dimension<dynamic> parse(String input, [Unit? preferred]) {
-    final cleanInput = input.trim().toLowerCase().replaceAll(' ', '');
-
-    final match = RegExp(r"^(-?\d+\.?\d*)(.*)$").firstMatch(cleanInput);
-
-    if (match != null) {
-      final double value = .parse(match.group(1)!);
-      final alias = match.group(2)!;
-
-      if (alias.isEmpty) {
-        if (preferred != null) return preferred(value);
-        throw Exception("No unit alias found and no preferred unit provided");
-      }
-
-      final unit = Unit.values.firstWhere(
-        (u) => u.symbol.toLowerCase() == alias || u.name.toLowerCase() == alias,
-        orElse: () => throw Exception("Unknown unit alias: $alias"),
-      );
-
-      return unit(value);
-    }
-    throw Exception("Could not parse: $input");
+    return null;
   }
 }
 
@@ -147,6 +106,27 @@ abstract class Dimension<T extends Dimension<T>> {
       '$runtimeType(rawValue: $_value, units: ${_units.label})';
 
   double toDouble() => _fromRaw(_value, _units);
+
+  static Dimension<dynamic> auto(Object value, Unit units) {
+    final id = units.id;
+    if (value is Dimension) {
+      return value.to(units);
+    }
+
+    final double val = (value as num).toDouble();
+
+    if (id < 0) return DimensionLess(val);
+    if (id >= 0 && id < 10) return Angular(val, units);
+    if (id >= 10 && id < 20) return Distance(val, units);
+    if (id >= 30 && id < 40) return Energy(val, units);
+    if (id >= 40 && id < 50) return Pressure(val, units);
+    if (id >= 50 && id < 60) return Temperature(val, units);
+    if (id >= 60 && id < 70) return Velocity(val, units);
+    if (id >= 70 && id < 80) return Weight(val, units);
+    if (id >= 80 && id < 90) return Time(val, units);
+
+    throw Exception('Unit ID $id is not supported for casting');
+  }
 }
 
 class Angular extends Dimension<Angular> {
@@ -323,3 +303,56 @@ class Weight extends Dimension<Weight> {
   @override
   Weight _create(double value, Unit unit) => Weight(value, unit);
 }
+
+class DimensionLess extends Dimension<DimensionLess> {
+  DimensionLess._(double value) : super(value, Unit.dimensionless);
+
+  factory DimensionLess(double value) {
+    return DimensionLess._(value);
+  }
+
+  @override
+  DimensionLess _create(double value, Unit unit) => DimensionLess._(value);
+
+  @override
+  Map<Unit, double> get conversionFactors => const {};
+
+  @override
+  double _toRaw(double value, Unit unit) => value;
+
+  @override
+  double _fromRaw(double rawValue, Unit unit) => rawValue;
+}
+
+extension UnitConvertor on double {
+  double convert(Unit from, Unit to) {
+    if (from == to) {
+      return this;
+    }
+    return Dimension.auto(this, from).in_(to);
+  }
+}
+
+// Dimension<dynamic, Unit> parse(String input, [Unit? preferred]) {
+//   final cleanInput = input.trim().toLowerCase().replaceAll(' ', '');
+
+//   final match = RegExp(r"^(-?\d+\.?\d*)(.*)$").firstMatch(cleanInput);
+
+//   if (match != null) {
+//     final double value = .parse(match.group(1)!);
+//     final alias = match.group(2)!;
+
+//     if (alias.isEmpty) {
+//       if (preferred != null) return dimFromUnit(value, preferred);
+//       throw Exception("No unit alias found and no preferred unit provided");
+//     }
+
+//     final unit = Unit.values.firstWhere(
+//       (u) => u.symbol.toLowerCase() == alias || u.name.toLowerCase() == alias,
+//       orElse: () => throw Exception("Unknown unit alias: $alias"),
+//     );
+
+//     return dimFromUnit(value, unit);
+//   }
+//   throw Exception("Could not parse: $input");
+// }

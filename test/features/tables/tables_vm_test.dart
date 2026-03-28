@@ -29,10 +29,7 @@ import 'package:eballistica/features/tables/tables_vm.dart';
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 
-ShotProfile _makeProfile({
-  double windMps = 3.0,
-  double windDeg = 90.0,
-}) {
+ShotProfile _makeProfile({double windMps = 3.0, double windDeg = 90.0}) {
   final dm = DragModel(
     bc: 0.475,
     dragTable: tableG7,
@@ -102,30 +99,29 @@ List<TrajectoryData> _makeTraj({
     if ((d - 100).abs() < 0.5) flag = TrajFlag.zeroUp.value;
     if ((d - 300).abs() < 0.5) flag = TrajFlag.zeroDown.value;
 
-    result.add(TrajectoryData(
-      time: t,
-      distance: Distance(d * 3.28084, Unit.foot),
-      velocity: Velocity(vFps, Unit.fps),
-      mach: m,
-      height: Distance(hFt, Unit.foot),
-      slantHeight: Distance(hFt, Unit.foot),
-      dropAngle: Angular(
-        d > 0 ? hFt / (d * 3.28084) * 1000 : 0,
-        Unit.mil,
+    result.add(
+      TrajectoryData(
+        time: t,
+        distance: Distance(d * 3.28084, Unit.foot),
+        velocity: Velocity(vFps, Unit.fps),
+        mach: m,
+        height: Distance(hFt, Unit.foot),
+        slantHeight: Distance(hFt, Unit.foot),
+        dropAngle: Angular(d > 0 ? hFt / (d * 3.28084) * 1000 : 0, Unit.mil),
+        windage: Distance(d * 0.0005, Unit.foot),
+        windageAngle: Angular(
+          d > 0 ? (d * 0.0005) / (d * 3.28084) * 1000 : 0,
+          Unit.mil,
+        ),
+        slantDistance: Distance(d * 3.28084, Unit.foot),
+        angle: Angular(0, Unit.mil),
+        densityRatio: 1.0,
+        drag: 0.3,
+        energy: Energy(3000 - d * 1.2, Unit.footPound),
+        ogw: Weight(500, Unit.grain),
+        flag: flag,
       ),
-      windage: Distance(d * 0.0005, Unit.foot),
-      windageAngle: Angular(
-        d > 0 ? (d * 0.0005) / (d * 3.28084) * 1000 : 0,
-        Unit.mil,
-      ),
-      slantDistance: Distance(d * 3.28084, Unit.foot),
-      angle: Angular(0, Unit.mil),
-      densityRatio: 1.0,
-      drag: 0.3,
-      energy: Energy(3000 - d * 1.2, Unit.footPound),
-      ogw: Weight(500, Unit.grain),
-      flag: flag,
-    ));
+    );
   }
   return result;
 }
@@ -216,10 +212,7 @@ void main() {
 
     setUp(() async {
       service = _FakeBallisticsService(_makeResult());
-      container = _createContainer(
-        profile: _makeProfile(),
-        service: service,
-      );
+      container = _createContainer(profile: _makeProfile(), service: service);
       state = await _recalculate(container);
     });
 
@@ -311,9 +304,7 @@ void main() {
       container = _createContainer(
         profile: _makeProfile(),
         service: service,
-        settings: const AppSettings(
-          tableConfig: TableConfig(showZeros: true),
-        ),
+        settings: const AppSettings(tableConfig: TableConfig(showZeros: true)),
       );
       state = await _recalculate(container);
     });
@@ -354,8 +345,10 @@ void main() {
       addTearDown(containerHidden.dispose);
       final stateHidden = await _recalculate(containerHidden);
 
-      expect(stateHidden.mainTable.rows.length,
-          lessThan(stateAll.mainTable.rows.length));
+      expect(
+        stateHidden.mainTable.rows.length,
+        lessThan(stateAll.mainTable.rows.length),
+      );
     });
   });
 
@@ -459,7 +452,8 @@ void main() {
         overrides: [
           shotProfileProvider.overrideWith(() => _PendingProfileNotifier()),
           settingsProvider.overrideWith(
-              () => _FakeSettingsNotifier(const AppSettings())),
+            () => _FakeSettingsNotifier(const AppSettings()),
+          ),
           ballisticsServiceProvider.overrideWithValue(service),
         ],
       );
@@ -482,11 +476,14 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           shotProfileProvider.overrideWith(
-              () => _FakeProfileNotifier(_makeProfile())),
+            () => _FakeProfileNotifier(_makeProfile()),
+          ),
           settingsProvider.overrideWith(
-              () => _FakeSettingsNotifier(const AppSettings())),
-          ballisticsServiceProvider
-              .overrideWithValue(_ThrowingBallisticsService()),
+            () => _FakeSettingsNotifier(const AppSettings()),
+          ),
+          ballisticsServiceProvider.overrideWithValue(
+            _ThrowingBallisticsService(),
+          ),
         ],
       );
       addTearDown(container.dispose);

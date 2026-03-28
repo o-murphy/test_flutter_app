@@ -9,10 +9,12 @@ Map<String, dynamic> dimToJson(Dimension d) => {
 };
 
 T _parse<T>(Map<String, dynamic> json, T Function(double, Unit) factory) {
-  return factory(
-    (json['value'] as num).toDouble(),
-    .fromName(json['unit'] as String),
-  );
+  final unitName = json['unit'] as String?;
+  final unit = Unit.fromName(unitName ?? '');
+
+  if (unit == null) throw StateError('No unit found by name: $unitName');
+
+  return factory((json['value'] as num).toDouble(), unit);
 }
 
 Angular angularFromJson(Map<String, dynamic> json) => _parse(json, Angular.new);

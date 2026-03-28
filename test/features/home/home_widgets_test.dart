@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:eballistica/core/models/app_settings.dart' show AdjustmentFormat;
+import 'package:eballistica/core/models/app_settings.dart'
+    show AdjustmentFormat;
 import 'package:eballistica/features/home/home_vm.dart';
 import 'package:eballistica/shared/models/adjustment_data.dart';
 import 'package:eballistica/shared/models/chart_point.dart';
@@ -47,9 +48,36 @@ const _kDefaultInfo = HomeChartPointInfo(
 );
 
 const _kDefaultPoints = [
-  ChartPoint(distanceM: 0,   heightCm: 0,    velocityMps: 800, mach: 2.3, energyJ: 3000, time: 0,     dropAngleMil: 0,    windageAngleMil: 0),
-  ChartPoint(distanceM: 100, heightCm: 2.5,  velocityMps: 760, mach: 2.2, energyJ: 2700, time: 0.125, dropAngleMil: 0.5,  windageAngleMil: 0.1),
-  ChartPoint(distanceM: 300, heightCm: -20,  velocityMps: 680, mach: 2.0, energyJ: 2100, time: 0.4,   dropAngleMil: -1.5, windageAngleMil: 0.3),
+  ChartPoint(
+    distanceM: 0,
+    heightCm: 0,
+    velocityMps: 800,
+    mach: 2.3,
+    energyJ: 3000,
+    time: 0,
+    dropAngleMil: 0,
+    windageAngleMil: 0,
+  ),
+  ChartPoint(
+    distanceM: 100,
+    heightCm: 2.5,
+    velocityMps: 760,
+    mach: 2.2,
+    energyJ: 2700,
+    time: 0.125,
+    dropAngleMil: 0.5,
+    windageAngleMil: 0.1,
+  ),
+  ChartPoint(
+    distanceM: 300,
+    heightCm: -20,
+    velocityMps: 680,
+    mach: 2.0,
+    energyJ: 2100,
+    time: 0.4,
+    dropAngleMil: -1.5,
+    windageAngleMil: 0.3,
+  ),
 ];
 
 const _kDefaultTableData = FormattedTableData(
@@ -105,13 +133,24 @@ HomeUiReady _makeReady({
     targetDistanceDisplay: '300 m',
     targetDistanceM: 300.0,
     cartridgeInfoLine: cartridgeInfoLine,
-    adjustment: adjustment ??
+    adjustment:
+        adjustment ??
         const AdjustmentData(
           elevation: [
-            AdjustmentValue(absValue: 2.5, isPositive: true,  symbol: 'MRAD', decimals: 2),
+            AdjustmentValue(
+              absValue: 2.5,
+              isPositive: true,
+              symbol: 'MRAD',
+              decimals: 2,
+            ),
           ],
           windage: [
-            AdjustmentValue(absValue: 1.2, isPositive: false, symbol: 'MRAD', decimals: 2),
+            AdjustmentValue(
+              absValue: 1.2,
+              isPositive: false,
+              symbol: 'MRAD',
+              decimals: 2,
+            ),
           ],
         ),
     adjustmentFormat: fmt,
@@ -123,16 +162,18 @@ HomeUiReady _makeReady({
 }
 
 Widget _scoped(HomeUiState state, Widget child) => ProviderScope(
-      overrides: [homeVmProvider.overrideWith(() => _FakeHomeVM(state))],
-      child: MaterialApp(home: Scaffold(body: child)),
-    );
+  overrides: [homeVmProvider.overrideWith(() => _FakeHomeVM(state))],
+  child: MaterialApp(home: Scaffold(body: child)),
+);
 
 // ── HomeChartPage ─────────────────────────────────────────────────────────────
 
 void main() {
   group('HomeChartPage — non-ready states', () {
     testWidgets('shows spinner when state is HomeUiLoading', (tester) async {
-      await tester.pumpWidget(_scoped(const HomeUiLoading(), const HomeChartPage()));
+      await tester.pumpWidget(
+        _scoped(const HomeUiLoading(), const HomeChartPage()),
+      );
       await tester.pump();
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -141,7 +182,8 @@ void main() {
 
     testWidgets('shows spinner for HomeUiError', (tester) async {
       await tester.pumpWidget(
-          _scoped(const HomeUiError('oops'), const HomeChartPage()));
+        _scoped(const HomeUiError('oops'), const HomeChartPage()),
+      );
       await tester.pump();
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -203,8 +245,13 @@ void main() {
       expect(find.text('2.00'), findsOneWidget);
     });
 
-    testWidgets('empty SizedBox shown when selectedPointInfo is null', (tester) async {
-      final state = _makeReady(selectedPointInfo: null, selectedChartIndex: null);
+    testWidgets('empty SizedBox shown when selectedPointInfo is null', (
+      tester,
+    ) async {
+      final state = _makeReady(
+        selectedPointInfo: null,
+        selectedChartIndex: null,
+      );
       await tester.pumpWidget(_scoped(state, const HomeChartPage()));
       await tester.pump();
 
@@ -218,7 +265,9 @@ void main() {
 
   group('HomeTablePage — non-ready states', () {
     testWidgets('shows spinner when state is HomeUiLoading', (tester) async {
-      await tester.pumpWidget(_scoped(const HomeUiLoading(), const HomeTablePage()));
+      await tester.pumpWidget(
+        _scoped(const HomeUiLoading(), const HomeTablePage()),
+      );
       await tester.pump();
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -286,7 +335,8 @@ void main() {
   group('HomeReticlePage — non-ready states', () {
     testWidgets('shows spinner when state is HomeUiLoading', (tester) async {
       await tester.pumpWidget(
-          _scoped(const HomeUiLoading(), const HomeReticlePage()));
+        _scoped(const HomeUiLoading(), const HomeReticlePage()),
+      );
       await tester.pump();
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -295,10 +345,12 @@ void main() {
 
   group('HomeReticlePage — ready state content', () {
     testWidgets('shows cartridgeInfoLine text', (tester) async {
-      await tester.pumpWidget(_scoped(
-        _makeReady(cartridgeInfoLine: 'Test 175gr · G7 · 800 m/s'),
-        const HomeReticlePage(),
-      ));
+      await tester.pumpWidget(
+        _scoped(
+          _makeReady(cartridgeInfoLine: 'Test 175gr · G7 · 800 m/s'),
+          const HomeReticlePage(),
+        ),
+      );
       await tester.pump();
 
       expect(find.text('Test 175gr · G7 · 800 m/s'), findsOneWidget);
@@ -313,7 +365,9 @@ void main() {
       expect(find.textContaining('MRAD'), findsWidgets);
     });
 
-    testWidgets('shows Enable units message when elevation is empty', (tester) async {
+    testWidgets('shows Enable units message when elevation is empty', (
+      tester,
+    ) async {
       final state = _makeReady(adjustment: AdjustmentData.empty);
       await tester.pumpWidget(_scoped(state, const HomeReticlePage()));
       await tester.pump();
@@ -327,8 +381,22 @@ void main() {
       final state = _makeReady(
         fmt: AdjustmentFormat.arrows,
         adjustment: const AdjustmentData(
-          elevation: [AdjustmentValue(absValue: 2.5, isPositive: true,  symbol: 'MRAD', decimals: 2)],
-          windage:   [AdjustmentValue(absValue: 1.2, isPositive: true,  symbol: 'MRAD', decimals: 2)],
+          elevation: [
+            AdjustmentValue(
+              absValue: 2.5,
+              isPositive: true,
+              symbol: 'MRAD',
+              decimals: 2,
+            ),
+          ],
+          windage: [
+            AdjustmentValue(
+              absValue: 1.2,
+              isPositive: true,
+              symbol: 'MRAD',
+              decimals: 2,
+            ),
+          ],
         ),
       );
       await tester.pumpWidget(_scoped(state, const HomeReticlePage()));
@@ -342,8 +410,22 @@ void main() {
       final state = _makeReady(
         fmt: AdjustmentFormat.arrows,
         adjustment: const AdjustmentData(
-          elevation: [AdjustmentValue(absValue: 2.5, isPositive: false, symbol: 'MRAD', decimals: 2)],
-          windage:   [AdjustmentValue(absValue: 1.2, isPositive: false, symbol: 'MRAD', decimals: 2)],
+          elevation: [
+            AdjustmentValue(
+              absValue: 2.5,
+              isPositive: false,
+              symbol: 'MRAD',
+              decimals: 2,
+            ),
+          ],
+          windage: [
+            AdjustmentValue(
+              absValue: 1.2,
+              isPositive: false,
+              symbol: 'MRAD',
+              decimals: 2,
+            ),
+          ],
         ),
       );
       await tester.pumpWidget(_scoped(state, const HomeReticlePage()));
@@ -357,8 +439,22 @@ void main() {
       final state = _makeReady(
         fmt: AdjustmentFormat.signs,
         adjustment: const AdjustmentData(
-          elevation: [AdjustmentValue(absValue: 2.5, isPositive: true,  symbol: 'MRAD', decimals: 2)],
-          windage:   [AdjustmentValue(absValue: 1.2, isPositive: false, symbol: 'MRAD', decimals: 2)],
+          elevation: [
+            AdjustmentValue(
+              absValue: 2.5,
+              isPositive: true,
+              symbol: 'MRAD',
+              decimals: 2,
+            ),
+          ],
+          windage: [
+            AdjustmentValue(
+              absValue: 1.2,
+              isPositive: false,
+              symbol: 'MRAD',
+              decimals: 2,
+            ),
+          ],
         ),
       );
       await tester.pumpWidget(_scoped(state, const HomeReticlePage()));
@@ -368,12 +464,28 @@ void main() {
       expect(find.text('−'), findsOneWidget);
     });
 
-    testWidgets('letters format: positive elevation shows U, R', (tester) async {
+    testWidgets('letters format: positive elevation shows U, R', (
+      tester,
+    ) async {
       final state = _makeReady(
         fmt: AdjustmentFormat.letters,
         adjustment: const AdjustmentData(
-          elevation: [AdjustmentValue(absValue: 2.5, isPositive: true,  symbol: 'MRAD', decimals: 2)],
-          windage:   [AdjustmentValue(absValue: 1.2, isPositive: true,  symbol: 'MRAD', decimals: 2)],
+          elevation: [
+            AdjustmentValue(
+              absValue: 2.5,
+              isPositive: true,
+              symbol: 'MRAD',
+              decimals: 2,
+            ),
+          ],
+          windage: [
+            AdjustmentValue(
+              absValue: 1.2,
+              isPositive: true,
+              symbol: 'MRAD',
+              decimals: 2,
+            ),
+          ],
         ),
       );
       await tester.pumpWidget(_scoped(state, const HomeReticlePage()));
@@ -383,12 +495,28 @@ void main() {
       expect(find.text('R'), findsOneWidget);
     });
 
-    testWidgets('letters format: negative elevation shows D, L', (tester) async {
+    testWidgets('letters format: negative elevation shows D, L', (
+      tester,
+    ) async {
       final state = _makeReady(
         fmt: AdjustmentFormat.letters,
         adjustment: const AdjustmentData(
-          elevation: [AdjustmentValue(absValue: 2.5, isPositive: false, symbol: 'MRAD', decimals: 2)],
-          windage:   [AdjustmentValue(absValue: 1.2, isPositive: false, symbol: 'MRAD', decimals: 2)],
+          elevation: [
+            AdjustmentValue(
+              absValue: 2.5,
+              isPositive: false,
+              symbol: 'MRAD',
+              decimals: 2,
+            ),
+          ],
+          windage: [
+            AdjustmentValue(
+              absValue: 1.2,
+              isPositive: false,
+              symbol: 'MRAD',
+              decimals: 2,
+            ),
+          ],
         ),
       );
       await tester.pumpWidget(_scoped(state, const HomeReticlePage()));

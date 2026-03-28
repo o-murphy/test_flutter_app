@@ -29,13 +29,6 @@ void main() {
       expect(s, contains('300'));
     });
 
-    test('shortDistance() returns value only (no unit)', () {
-      final d = Distance(500.0, Unit.meter);
-      final s = fmt.shortDistance(d);
-      expect(s, isNot(contains('m')));
-      expect(s, contains('500'));
-    });
-
     test('temperature() formats celsius', () {
       final t = Temperature(15.0, Unit.celsius);
       final s = fmt.temperature(t);

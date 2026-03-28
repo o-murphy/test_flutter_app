@@ -129,8 +129,8 @@ class TableConfig {
     bool? spoilerShowWindDir,
     Set<String>? hiddenCols,
     bool? adjAllUnits,
-    Object? dropUnit = _sentinel,
-    Object? adjUnit = _sentinel,
+    Unit? dropUnit,
+    Unit? adjUnit,
   }) {
     return TableConfig(
       startM: startM ?? this.startM,
@@ -169,12 +169,10 @@ class TableConfig {
       spoilerShowWindDir: spoilerShowWindDir ?? this.spoilerShowWindDir,
       hiddenCols: hiddenCols ?? this.hiddenCols,
       adjAllUnits: adjAllUnits ?? this.adjAllUnits,
-      dropUnit: dropUnit == _sentinel ? this.dropUnit : dropUnit as Unit,
-      adjUnit: adjUnit == _sentinel ? this.adjUnit : adjUnit as Unit,
+      dropUnit: dropUnit ?? this.dropUnit,
+      adjUnit: adjUnit ?? this.adjUnit,
     );
   }
-
-  static const _sentinel = Object();
 
   // ── Serialisation ────────────────────────────────────────────────────────
 
@@ -221,10 +219,7 @@ class TableConfig {
     Unit? u(String key) {
       final name = json[key] as String?;
       if (name == null) return null;
-      return Unit.values.firstWhere(
-        (u) => u.name == name,
-        orElse: () => Unit.mil,
-      );
+      return .fromName(name) ?? Unit.mil;
     }
 
     return TableConfig(

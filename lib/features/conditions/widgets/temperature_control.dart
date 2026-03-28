@@ -21,20 +21,10 @@ class TempControl extends StatelessWidget {
 
   static final _fc = FC.temperature;
 
-  double get _display {
-    if (_fc.rawUnit == displayUnit) return rawValue;
-    return _fc.rawUnit(rawValue).in_(displayUnit);
-  }
+  double get _display => rawValue.convert(_fc.rawUnit, displayUnit);
 
-  double _toDisplay(double raw) {
-    if (_fc.rawUnit == displayUnit) return raw;
-    return _fc.rawUnit(raw).in_(displayUnit);
-  }
-
-  double _toRaw(double display) {
-    if (_fc.rawUnit == displayUnit) return display;
-    return displayUnit(display).in_(_fc.rawUnit);
-  }
+  double _toDisplay(double raw) => raw.convert(_fc.rawUnit, displayUnit);
+  double _toRaw(double display) => display.convert(displayUnit, _fc.rawUnit);
 
   int get _accuracy {
     if (_fc.rawUnit == displayUnit) return _fc.accuracy;

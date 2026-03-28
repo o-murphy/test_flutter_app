@@ -6,15 +6,11 @@ import 'package:eballistica/core/solver/unit.dart';
 
 // ── Standalone dialog helper ──────────────────────────────────────────────────
 
-double _toDisp(Unit rawUnit, Unit dispUnit, double raw) {
-  if (rawUnit == dispUnit) return raw;
-  return rawUnit(raw).in_(dispUnit);
-}
+double _toDisp(Unit rawUnit, Unit dispUnit, double raw) =>
+    raw.convert(rawUnit, dispUnit);
 
-double _toRawVal(Unit rawUnit, Unit dispUnit, double disp) {
-  if (rawUnit == dispUnit) return disp;
-  return dispUnit(disp).in_(rawUnit);
-}
+double _toRawVal(Unit rawUnit, Unit dispUnit, double disp) =>
+    disp.convert(dispUnit, rawUnit);
 
 int _calcAccuracy(FieldConstraints c, Unit displayUnit) {
   if (c.rawUnit == displayUnit) return c.accuracy;
@@ -180,7 +176,7 @@ class UnitValueField extends StatelessWidget {
 
   double _toDisplay(double raw) {
     if (_rawUnit == displayUnit) return raw;
-    return _rawUnit(raw).in_(displayUnit);
+    return Dimension.auto(raw, _rawUnit).in_(displayUnit);
   }
 
   double get _displayValue => _toDisplay(rawValue);

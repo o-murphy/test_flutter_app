@@ -9,80 +9,51 @@ class UnitFormatterImpl implements UnitFormatter {
 
   const UnitFormatterImpl(this._u);
 
+  String _fmt(Dimension dim, FieldConstraints fc, Unit unit) {
+    final value = dim.in_(unit);
+    final accuracy = fc.accuracyFor(unit);
+    return '${value.toStringAsFixed(accuracy)} ${unit.symbol}';
+  }
+
   // --- Formatted strings ---
 
   @override
-  String velocity(Velocity dim) {
-    final v = dim.in_(_u.velocity);
-    return '${v.toStringAsFixed(FC.velocity.accuracyFor(_u.velocity))} ${_u.velocity.symbol}';
-  }
+  String velocity(Velocity dim) => _fmt(dim, FC.velocity, _u.velocity);
 
   @override
-  String distance(Distance dim) {
-    final v = dim.in_(_u.distance);
-    return '${v.toStringAsFixed(FC.targetDistance.accuracyFor(_u.distance))} ${_u.distance.symbol}';
-  }
+  String distance(Distance dim) => _fmt(dim, FC.targetDistance, _u.distance);
 
   @override
-  String shortDistance(Distance dim) {
-    final v = dim.in_(_u.distance);
-    return v.toStringAsFixed(FC.targetDistance.accuracyFor(_u.distance));
-  }
+  String temperature(Temperature dim) =>
+      _fmt(dim, FC.temperature, _u.temperature);
 
   @override
-  String temperature(Temperature dim) {
-    final v = dim.in_(_u.temperature);
-    return '${v.toStringAsFixed(FC.temperature.accuracyFor(_u.temperature))} ${_u.temperature.symbol}';
-  }
+  String pressure(Pressure dim) => _fmt(dim, FC.pressure, _u.pressure);
 
   @override
-  String pressure(Pressure dim) {
-    final v = dim.in_(_u.pressure);
-    return '${v.toStringAsFixed(FC.pressure.accuracyFor(_u.pressure))} ${_u.pressure.symbol}';
-  }
-
-  @override
-  String drop(Distance dim) {
-    final v = dim.in_(_u.drop);
-    return '${v.toStringAsFixed(FC.drop.accuracyFor(_u.drop))} ${_u.drop.symbol}';
-  }
+  String drop(Distance dim) => _fmt(dim, FC.drop, _u.drop);
 
   @override
   String windage(Distance dim) => drop(dim);
 
   @override
-  String adjustment(Angular dim) {
-    final v = dim.in_(_u.adjustment);
-    return '${v.toStringAsFixed(FC.adjustment.accuracyFor(_u.adjustment))} ${_u.adjustment.symbol}';
-  }
+  String adjustment(Angular dim) => _fmt(dim, FC.adjustment, _u.adjustment);
 
   @override
-  String energy(Energy dim) {
-    final v = dim.in_(_u.energy);
-    return '${v.toStringAsFixed(FC.energy.accuracyFor(_u.energy))} ${_u.energy.symbol}';
-  }
+  String energy(Energy dim) => _fmt(dim, FC.energy, _u.energy);
 
   @override
-  String weight(Weight dim) {
-    final v = dim.in_(_u.weight);
-    return '${v.toStringAsFixed(FC.bulletWeight.accuracyFor(_u.weight))} ${_u.weight.symbol}';
-  }
+  String weight(Weight dim) => _fmt(dim, FC.bulletWeight, _u.weight);
 
   @override
-  String sightHeight(Distance dim) {
-    final v = dim.in_(_u.sightHeight);
-    return '${v.toStringAsFixed(FC.sightHeight.accuracyFor(_u.sightHeight))} ${_u.sightHeight.symbol}';
-  }
+  String sightHeight(Distance dim) => _fmt(dim, FC.sightHeight, _u.sightHeight);
 
   @override
-  String twist(Distance dim) {
-    final v = dim.in_(_u.twist);
-    return '1:${v.toStringAsFixed(FC.twistRate.accuracyFor(_u.twist))} ${_u.twist.symbol}';
-  }
+  String twist(Distance dim) => '1:${_fmt(dim, FC.twist, _u.twist)}';
 
   @override
   String humidity(double fraction) =>
-      '${(fraction * 100).toStringAsFixed(0)} %';
+      '${(fraction * 100).toStringAsFixed(FC.humidity.accuracy)} %';
 
   @override
   String mach(double m) => '${m.toStringAsFixed(2)} M';

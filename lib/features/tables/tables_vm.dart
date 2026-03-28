@@ -268,31 +268,19 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
       return '${disp.toStringAsFixed(FC.velocity.accuracyFor(units.velocity))} ${units.velocity.symbol}';
     }
 
-    String fmtWithAcc(
-      Dimension dim,
-      Unit rawUnit,
-      Unit dispUnit,
-      FieldConstraints fc,
-    ) {
-      final v = dim.in_(rawUnit);
-      final d = rawUnit(v).in_(dispUnit);
-      return '${d.toStringAsFixed(fc.accuracyFor(dispUnit))} ${dispUnit.symbol}';
+    String fmtWithAcc(Dimension dim, Unit dispUnit, FieldConstraints fc) {
+      return '${dim.in_(dispUnit).toStringAsFixed(fc.accuracyFor(dispUnit))} ${dispUnit.symbol}';
     }
 
     return TablesSpoilerData(
       rifleName: rifle.name,
       caliber: cfg.spoilerShowCaliber && diamInch > 0
-          ? fmtWithAcc(
-              dm.diameter,
-              Unit.inch,
-              units.diameter,
-              FC.bulletDiameter,
-            )
+          ? fmtWithAcc(dm.diameter, units.diameter, FC.bulletDiameter)
           : null,
       twist: cfg.spoilerShowTwist && twistInch > 0
           ? () {
               final tw = Distance(twistInch, Unit.inch).in_(units.twist);
-              return '1:${tw.toStringAsFixed(FC.twistRate.accuracyFor(units.twist))} ${units.twist.symbol}';
+              return '1:${tw.toStringAsFixed(FC.twist.accuracyFor(units.twist))} ${units.twist.symbol}';
             }()
           : null,
       dragModel: cfg.spoilerShowDragModel
@@ -308,23 +296,13 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
       zeroMv: cfg.spoilerShowZeroMv ? fmtV(zeroMvMps) : null,
       currentMv: cfg.spoilerShowCurrMv ? fmtV(currentMvMps) : null,
       zeroDist: cfg.spoilerShowZeroDist
-          ? fmtWithAcc(
-              profile.zeroDistance,
-              Unit.meter,
-              units.distance,
-              FC.zeroDistance,
-            )
+          ? fmtWithAcc(profile.zeroDistance, units.distance, FC.zeroDistance)
           : null,
       bulletLen: cfg.spoilerShowBulletLen && lenInch > 0
-          ? fmtWithAcc(dm.length, Unit.inch, units.length, FC.bulletLength)
+          ? fmtWithAcc(dm.length, units.length, FC.bulletLength)
           : null,
       bulletDiam: cfg.spoilerShowBulletDiam && diamInch > 0
-          ? fmtWithAcc(
-              dm.diameter,
-              Unit.inch,
-              units.diameter,
-              FC.bulletDiameter,
-            )
+          ? fmtWithAcc(dm.diameter, units.diameter, FC.bulletDiameter)
           : null,
       bulletWeight: cfg.spoilerShowBulletWeight && weightGr > 0
           ? () {

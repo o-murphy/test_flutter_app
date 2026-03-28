@@ -59,7 +59,9 @@ class Sight {
     name: json['name'] as String,
     manufacturer: json['manufacturer'] as String?,
     sightHeight: distanceFromJson(json['sightHeight'] as Map<String, dynamic>),
-    zeroElevation: angularFromJson(json['zeroElevation'] as Map<String, dynamic>),
+    zeroElevation: angularFromJson(
+      json['zeroElevation'] as Map<String, dynamic>,
+    ),
     notes: json['notes'] as String?,
     createdAt: DateTime.parse(json['createdAt'] as String),
     updatedAt: DateTime.parse(json['updatedAt'] as String),

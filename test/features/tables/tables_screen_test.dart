@@ -49,12 +49,12 @@ const _kMainTable = FormattedTableData(
 );
 
 Widget _scoped(TablesUiState state) => ProviderScope(
-      overrides: [tablesVmProvider.overrideWith(() => _FakeTablesVM(state))],
-      // TablesScreen lives inside a shell Scaffold in the real app;
-      // wrap with Scaffold here so Material-dependent widgets (ListTile in
-      // _DetailsSpoiler) have a valid Material ancestor.
-      child: MaterialApp(home: Scaffold(body: TablesScreen())),
-    );
+  overrides: [tablesVmProvider.overrideWith(() => _FakeTablesVM(state))],
+  // TablesScreen lives inside a shell Scaffold in the real app;
+  // wrap with Scaffold here so Material-dependent widgets (ListTile in
+  // _DetailsSpoiler) have a valid Material ancestor.
+  child: MaterialApp(home: Scaffold(body: TablesScreen())),
+);
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
@@ -68,7 +68,9 @@ void main() {
       expect(find.byType(TrajectoryTable), findsNothing);
     });
 
-    testWidgets('shows spinner when vm state is null (AsyncLoading)', (tester) async {
+    testWidgets('shows spinner when vm state is null (AsyncLoading)', (
+      tester,
+    ) async {
       // Before build() resolves the provider emits AsyncLoading — vmState == null
       await tester.pumpWidget(_scoped(const TablesUiLoading()));
       // Don't pump — still in AsyncLoading
@@ -89,21 +91,25 @@ void main() {
 
   group('TablesScreen — ready state', () {
     testWidgets('shows TrajectoryTable for TablesUiReady', (tester) async {
-      await tester.pumpWidget(_scoped(const TablesUiReady(
-        spoiler: _kSpoiler,
-        mainTable: _kMainTable,
-      )));
+      await tester.pumpWidget(
+        _scoped(
+          const TablesUiReady(spoiler: _kSpoiler, mainTable: _kMainTable),
+        ),
+      );
       await tester.pump();
 
       expect(find.byType(TrajectoryTable), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
     });
 
-    testWidgets('TrajectoryTable receives correct mainTable data', (tester) async {
-      await tester.pumpWidget(_scoped(const TablesUiReady(
-        spoiler: _kSpoiler,
-        mainTable: _kMainTable,
-      )));
+    testWidgets('TrajectoryTable receives correct mainTable data', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _scoped(
+          const TablesUiReady(spoiler: _kSpoiler, mainTable: _kMainTable),
+        ),
+      );
       await tester.pump();
 
       // Table header '100' and row label 'V' are rendered inside TrajectoryTable
@@ -112,10 +118,11 @@ void main() {
     });
 
     testWidgets('shows header title Tables', (tester) async {
-      await tester.pumpWidget(_scoped(const TablesUiReady(
-        spoiler: _kSpoiler,
-        mainTable: _kMainTable,
-      )));
+      await tester.pumpWidget(
+        _scoped(
+          const TablesUiReady(spoiler: _kSpoiler, mainTable: _kMainTable),
+        ),
+      );
       await tester.pump();
 
       expect(find.text('Tables'), findsOneWidget);
@@ -130,7 +137,9 @@ void main() {
       expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     });
 
-    testWidgets('configure and export icon buttons are present', (tester) async {
+    testWidgets('configure and export icon buttons are present', (
+      tester,
+    ) async {
       await tester.pumpWidget(_scoped(const TablesUiLoading()));
       await tester.pump();
 

@@ -86,10 +86,7 @@ class UnitSettings {
     Unit u(String key, Unit fallback) {
       final name = json[key] as String?;
       if (name == null) return fallback;
-      return Unit.values.firstWhere(
-        (u) => u.name == name,
-        orElse: () => fallback,
-      );
+      return .fromName(name) ?? fallback;
     }
 
     return UnitSettings(

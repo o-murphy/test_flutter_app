@@ -112,7 +112,9 @@ ProviderContainer _createContainer({
 /// .value is null and the VM returns the empty state. We must ensure
 /// the dependencies have resolved BEFORE reading the VM so that it
 /// builds with real data.
-Future<ConditionsUiState> _waitForConditions(ProviderContainer container) async {
+Future<ConditionsUiState> _waitForConditions(
+  ProviderContainer container,
+) async {
   // 1. Resolve async dependencies
   await container.read(shotProfileProvider.future);
   await container.read(settingsProvider.future);
@@ -121,7 +123,6 @@ Future<ConditionsUiState> _waitForConditions(ProviderContainer container) async 
   // 3. Now the VM rebuilds with real data
   return container.read(conditionsVmProvider.future);
 }
-
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
@@ -210,11 +211,7 @@ void main() {
         pressure: Unit.mmHg,
       );
       container = _createContainer(
-        profile: _makeProfile(
-          tempC: 20.0,
-          altM: 150.0,
-          pressHPa: 1013.25,
-        ),
+        profile: _makeProfile(tempC: 20.0, altM: 150.0, pressHPa: 1013.25),
         settings: const AppSettings(units: imperial),
       );
       state = await _waitForConditions(container);
@@ -320,7 +317,9 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           shotProfileProvider.overrideWith(() => _PendingProfileNotifier()),
-          settingsProvider.overrideWith(() => _FakeSettingsNotifier(const AppSettings())),
+          settingsProvider.overrideWith(
+            () => _FakeSettingsNotifier(const AppSettings()),
+          ),
         ],
       );
       addTearDown(container.dispose);

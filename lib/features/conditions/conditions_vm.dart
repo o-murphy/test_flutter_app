@@ -298,16 +298,12 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
   }
 
   double _convertFcBound(double rawVal, Unit rawUnit, Unit dispUnit) {
-    if (rawUnit == dispUnit) return rawVal;
-    if (rawUnit == Unit.second) return rawVal; // sentinel (humidity, BC)
-    return rawUnit(rawVal).in_(dispUnit);
+    return rawVal.convert(rawUnit, dispUnit);
   }
 
   double _convertFcStep(double rawStep, Unit rawUnit, Unit dispUnit) {
-    if (rawUnit == dispUnit) return rawStep;
-    if (rawUnit == Unit.second) return rawStep;
-    final lo = rawUnit(0.0).in_(dispUnit);
-    final hi = rawUnit(rawStep).in_(dispUnit);
+    final lo = (0.0).convert(rawUnit, dispUnit);
+    final hi = rawStep.convert(rawUnit, dispUnit);
     return (hi - lo).abs();
   }
 
