@@ -59,7 +59,7 @@ enum Unit {
 }
 
 extension UnitCallable on Unit {
-  dynamic call(Object value) {
+  Dimension<dynamic> call(Object value) {
     if (value is Dimension) {
       return value.to(this);
     }
@@ -80,7 +80,7 @@ extension UnitCallable on Unit {
 }
 
 extension UnitParser on Unit {
-  static Dimension parse(String input, [Unit? preferred]) {
+  static Dimension<dynamic> parse(String input, [Unit? preferred]) {
     final cleanInput = input.trim().toLowerCase().replaceAll(' ', '');
 
     final match = RegExp(r"^(-?\d+\.?\d*)(.*)$").firstMatch(cleanInput);

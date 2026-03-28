@@ -30,8 +30,8 @@ class FieldConstraints {
   int accuracyFor(Unit displayUnit) {
     if (rawUnit == displayUnit) return accuracy;
     if (rawUnit == Unit.second) return accuracy; // sentinel (dimensionless)
-    final lo = (rawUnit(minRaw) as Dimension).in_(displayUnit);
-    final hi = (rawUnit(minRaw + stepRaw) as Dimension).in_(displayUnit);
+    final lo = rawUnit(minRaw).in_(displayUnit);
+    final hi = rawUnit(minRaw + stepRaw).in_(displayUnit);
     final step = (hi - lo).abs();
     if (step <= 0) return accuracy;
     final d = (-log(step) / ln10).ceil();

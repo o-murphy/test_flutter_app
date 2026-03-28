@@ -275,7 +275,7 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
       FieldConstraints fc,
     ) {
       final v = dim.in_(rawUnit);
-      final d = (rawUnit(v) as Dimension).in_(dispUnit);
+      final d = rawUnit(v).in_(dispUnit);
       return '${d.toStringAsFixed(fc.accuracyFor(dispUnit))} ${dispUnit.symbol}';
     }
 
