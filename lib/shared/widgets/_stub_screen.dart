@@ -1,5 +1,5 @@
+import 'package:eballistica/shared/widgets/base_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 /// Reusable stub for screens that are not yet implemented.
 /// All screens except Home have a back button + centered title header.
@@ -9,15 +9,9 @@ class StubScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(title),
-        centerTitle: true,
-      ),
+    return BaseScreen(
+      title: title,
+      isSubscreen: true,
       body: Center(
         child: Text(
           title,

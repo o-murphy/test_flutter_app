@@ -1,6 +1,6 @@
+import 'package:eballistica/shared/widgets/base_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:eballistica/router.dart';
 
 // ─── Convertor tile data ──────────────────────────────────────────────────────
@@ -31,58 +31,27 @@ class ConvertorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _Header(),
-        Expanded(
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
-              child: GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 160,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1,
-                ),
-                itemCount: _convertors.length,
-                itemBuilder: (context, i) => _ConvertorTile(
-                  type: _convertors[i].type,
-                  label: _convertors[i].label,
-                  icon: _convertors[i].icon,
-                ),
-              ),
+    return BaseScreen(
+      title: 'Convertors',
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 160,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1,
+            ),
+            itemCount: _convertors.length,
+            itemBuilder: (context, i) => _ConvertorTile(
+              type: _convertors[i].type,
+              label: _convertors[i].label,
+              icon: _convertors[i].icon,
             ),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Header ──────────────────────────────────────────────────────────────────
-
-class _Header extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => context.go(Routes.home),
-              ),
-            ),
-            Text('Convertors', style: Theme.of(context).textTheme.titleLarge),
-          ],
         ),
       ),
     );

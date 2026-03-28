@@ -6,12 +6,12 @@ import 'package:eballistica/features/tables/tables_vm.dart';
 
 // ─── Trajectory Table ─────────────────────────────────────────────────────────
 
-class TrajectoryTable extends StatefulWidget {
+class TrajectoryTable2 extends StatefulWidget {
   final FormattedTableData mainTable;
   final FormattedTableData? zeroCrossings;
   final TablesSpoilerData spoiler;
 
-  const TrajectoryTable({
+  const TrajectoryTable2({
     super.key,
     required this.mainTable,
     this.zeroCrossings,
@@ -19,10 +19,10 @@ class TrajectoryTable extends StatefulWidget {
   });
 
   @override
-  State<TrajectoryTable> createState() => _TrajectoryTableState();
+  State<TrajectoryTable2> createState() => _TrajectoryTable2State();
 }
 
-class _TrajectoryTableState extends State<TrajectoryTable> {
+class _TrajectoryTable2State extends State<TrajectoryTable2> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -364,24 +364,30 @@ class _DetailsSpoiler extends StatelessWidget {
 
     // Projectile
     items.add(section('Projectile'));
-    if (spoiler.dragModel != null)
+    if (spoiler.dragModel != null) {
       items.add(row('Drag model', spoiler.dragModel!));
+    }
     if (spoiler.bc != null) items.add(row('BC', spoiler.bc!));
     if (spoiler.zeroMv != null) items.add(row('Zero MV', spoiler.zeroMv!));
-    if (spoiler.currentMv != null)
+    if (spoiler.currentMv != null) {
       items.add(row('Current MV', spoiler.currentMv!));
-    if (spoiler.zeroDist != null)
+    }
+    if (spoiler.zeroDist != null) {
       items.add(row('Zero distance', spoiler.zeroDist!));
+    }
 
     // Atmosphere
     if (spoiler.temperature != null || spoiler.pressure != null) {
       items.add(section('Atmosphere'));
-      if (spoiler.temperature != null)
+      if (spoiler.temperature != null) {
         items.add(row('Temperature', spoiler.temperature!));
-      if (spoiler.pressure != null)
+      }
+      if (spoiler.pressure != null) {
         items.add(row('Pressure', spoiler.pressure!));
-      if (spoiler.windSpeed != null)
+      }
+      if (spoiler.windSpeed != null) {
         items.add(row('Wind speed', spoiler.windSpeed!));
+      }
     }
 
     return Theme(

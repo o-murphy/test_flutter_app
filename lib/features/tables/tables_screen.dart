@@ -1,3 +1,4 @@
+import 'package:eballistica/shared/widgets/screen_headers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,21 @@ import 'package:eballistica/features/tables/widgets/trajectory_table.dart';
 
 class TablesScreen extends ConsumerWidget {
   const TablesScreen({super.key});
+
+  List<Widget> _buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.tune_outlined),
+        onPressed: () => context.push(Routes.tableConfig),
+        tooltip: 'Configure',
+      ),
+      IconButton(
+        icon: const Icon(Icons.share_outlined),
+        onPressed: () {}, // Логіка експорту
+        tooltip: 'Export',
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,57 +58,46 @@ class TablesScreen extends ConsumerWidget {
       body = const Center(child: Text('No data'));
     }
 
-    return Column(
-      children: [
-        const _Header(),
-        Expanded(child: body),
-      ],
+    return DefaultTabController(
+      initialIndex: 0,
+      length: 2,
+      child: Scaffold(
+        appBar: TableScreenAppBar(
+          title: 'Tables',
+          actions: _buildActions(context),
+        ),
+        body: TabBarView(
+          children: [
+            body,
+            const Center(child: Text("Details Tab")),
+          ],
+        ),
+      ),
     );
   }
 }
 
-// ─── Header ──────────────────────────────────────────────────────────────────
+class TableScreenAppBar extends ScreenAppBar {
+  const TableScreenAppBar({required super.title, super.actions, super.key});
 
-class _Header extends StatelessWidget {
-  const _Header();
+  @override
+  Size get preferredSize =>
+      const Size.fromHeight(kToolbarHeight + kTextTabBarHeight);
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => context.go(Routes.home),
-              ),
-            ),
-            Text('Tables', style: Theme.of(context).textTheme.titleLarge),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.tune_outlined),
-                    onPressed: () => context.push(Routes.tableConfig),
-                    tooltip: 'Configure',
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.share_outlined),
-                    onPressed: () {},
-                    tooltip: 'Export',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+    final appBar = super.build(context) as AppBar;
+
+    return AppBar(
+      leading: appBar.leading,
+      title: appBar.title,
+      centerTitle: appBar.centerTitle,
+      actions: appBar.actions,
+      bottom: const TabBar(
+        tabs: [
+          Tab(text: "Table"),
+          Tab(text: "Details"),
+        ],
       ),
     );
   }

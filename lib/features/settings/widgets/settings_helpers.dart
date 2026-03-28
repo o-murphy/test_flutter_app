@@ -4,34 +4,6 @@ import 'package:eballistica/core/solver/unit.dart';
 
 // ─── Shared widgets for settings sub-screens ─────────────────────────────────
 
-class SettingsHeader extends StatelessWidget {
-  const SettingsHeader({super.key, required this.title});
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class SettingsSectionLabel extends StatelessWidget {
   const SettingsSectionLabel(this.text, {super.key});
   final String text;

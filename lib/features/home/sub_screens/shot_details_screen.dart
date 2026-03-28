@@ -1,3 +1,4 @@
+import 'package:eballistica/shared/widgets/base_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,17 +12,14 @@ class ShotDetailsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(shotDetailsVmProvider);
 
-    return Column(
-      children: [
-        const _Header(),
-        Expanded(
-          child: state.when(
-            data: (uiState) => _buildContent(context, uiState),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, st) => Center(child: Text(e.toString())),
-          ),
-        ),
-      ],
+    return BaseScreen(
+      title: 'Shot Info',
+      isSubscreen: true,
+      body: state.when(
+        data: (uiState) => _buildContent(context, uiState),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, st) => Center(child: Text(e.toString())),
+      ),
     );
   }
 
@@ -102,35 +100,6 @@ class ShotDetailsScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
       ],
-    );
-  }
-}
-
-// ─── Header ──────────────────────────────────────────────────────────────────
-
-class _Header extends StatelessWidget {
-  const _Header();
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-            Text('Shot Info', style: Theme.of(context).textTheme.titleLarge),
-          ],
-        ),
-      ),
     );
   }
 }

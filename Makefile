@@ -1,4 +1,4 @@
-.PHONY: native ffigen test clean
+.PHONY: native ffigen test format clean
 
 # Build the native shared library via CMake
 native:
@@ -12,6 +12,9 @@ ffigen:
 # Run all tests (native must be built first)
 test: native
 	flutter analyze && flutter test 2>&1
+
+format:
+	dart format lib/ && dart format test/
 
 # Run only unit tests (no native dependency)
 unit:

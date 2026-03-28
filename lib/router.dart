@@ -8,11 +8,11 @@ import 'features/home/home_screen.dart';
 import 'features/home/sub_screens/home_sub_screens.dart';
 import 'features/conditions/conditions_screen.dart';
 import 'features/tables/tables_screen.dart';
-import 'features/tables/tables_config_screen.dart';
+import 'features/tables/sub_screens/tables_config_screen.dart';
 import 'features/convertors/convertor_screen.dart';
 import 'features/settings/settings_screen.dart';
-import 'features/settings/settings_units_screen.dart';
-import 'features/settings/settings_adjustment_screen.dart';
+import 'features/settings/sub_screens/settings_units_screen.dart';
+import 'features/settings/sub_screens/settings_adjustment_screen.dart';
 
 // ─── Route paths ─────────────────────────────────────────────────────────────
 
