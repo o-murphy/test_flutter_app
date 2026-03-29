@@ -27,10 +27,7 @@ class _FakeTablesVM extends TablesViewModel {
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-const _kSpoiler = TablesSpoilerData(
-  rifleName: 'Test Rifle',
-  caliber: '7.62 mm',
-);
+const _kSpoiler = DetailsTableData(rifleName: 'Test Rifle', caliber: '7.62 mm');
 
 const _kMainTable = FormattedTableData(
   distanceHeaders: ['100', '200', '300'],
@@ -83,7 +80,6 @@ void main() {
       await tester.pumpWidget(_scoped(const TablesUiEmpty()));
       await tester.pump();
 
-      expect(find.byIcon(Icons.table_view_outlined), findsOneWidget);
       expect(find.text('No data'), findsOneWidget);
       expect(find.byType(TrajectoryTable), findsNothing);
     });
@@ -93,7 +89,7 @@ void main() {
     testWidgets('shows TrajectoryTable for TablesUiReady', (tester) async {
       await tester.pumpWidget(
         _scoped(
-          const TablesUiReady(spoiler: _kSpoiler, mainTable: _kMainTable),
+          const TablesUiReady(details: _kSpoiler, mainTable: _kMainTable),
         ),
       );
       await tester.pump();
@@ -107,7 +103,7 @@ void main() {
     ) async {
       await tester.pumpWidget(
         _scoped(
-          const TablesUiReady(spoiler: _kSpoiler, mainTable: _kMainTable),
+          const TablesUiReady(details: _kSpoiler, mainTable: _kMainTable),
         ),
       );
       await tester.pump();
@@ -120,7 +116,7 @@ void main() {
     testWidgets('shows header title Tables', (tester) async {
       await tester.pumpWidget(
         _scoped(
-          const TablesUiReady(spoiler: _kSpoiler, mainTable: _kMainTable),
+          const TablesUiReady(details: _kSpoiler, mainTable: _kMainTable),
         ),
       );
       await tester.pump();

@@ -1,4 +1,4 @@
-import 'package:eballistica/shared/widgets/screen_headers.dart';
+import 'package:eballistica/shared/widgets/screen_top_bar.dart';
 import 'package:flutter/material.dart';
 
 class BaseScreen extends StatelessWidget {
@@ -8,6 +8,7 @@ class BaseScreen extends StatelessWidget {
     this.actions,
     this.isSubscreen = false,
     this.floatingActionButton,
+    this.withTabs,
     super.key,
   });
 
@@ -16,14 +17,16 @@ class BaseScreen extends StatelessWidget {
   final List<Widget>? actions;
   final bool isSubscreen;
   final Widget? floatingActionButton;
+  final List<Tab>? withTabs; // нове поле
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: ScreenAppBar(
+      appBar: ScreenTopBar(
         title: title,
         actions: actions,
         isSubscreen: isSubscreen,
+        withTabs: withTabs, // прокидаємо таби
       ),
       body: SafeArea(child: body),
       floatingActionButton: floatingActionButton,

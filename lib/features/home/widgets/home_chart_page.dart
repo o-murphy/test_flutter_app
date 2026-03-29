@@ -1,3 +1,4 @@
+import 'package:eballistica/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,7 +21,7 @@ class HomeChartPage extends ConsumerWidget {
 
     final chart = vmState.chartData;
     if (chart.points.isEmpty) {
-      return const Center(child: Text('No data'));
+      return const EmptyStatePlaceholder();
     }
 
     return Column(

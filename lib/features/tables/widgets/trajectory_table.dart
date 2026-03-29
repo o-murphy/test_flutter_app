@@ -1,51 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:sticky_headers/sticky_headers.dart';
+import 'package:data_table_2/data_table_2.dart';
 
 import 'package:eballistica/shared/models/formatted_row.dart';
-import 'package:eballistica/features/tables/tables_vm.dart';
-
-// ─── Scroll Synchronization Helper ──────────────────────────────────────────
-
-class _ScrollSyncGroup {
-  final List<ScrollController> _controllers = [];
-  bool _isSyncing = false;
-
-  /// Створює та реєструє новий контролер у групі
-  ScrollController add() {
-    final controller = ScrollController();
-    controller.addListener(() {
-      if (_isSyncing || !controller.hasClients) return;
-      _isSyncing = true;
-      for (final c in _controllers) {
-        if (c != controller && c.hasClients) {
-          c.jumpTo(controller.offset);
-        }
-      }
-      _isSyncing = false;
-    });
-    _controllers.add(controller);
-    return controller;
-  }
-
-  void dispose() {
-    for (final c in _controllers) {
-      c.dispose();
-    }
-  }
-}
 
 // ─── Trajectory Table ─────────────────────────────────────────────────────────
 
 class TrajectoryTable extends StatefulWidget {
   final FormattedTableData mainTable;
   final FormattedTableData? zeroCrossings;
-  final TablesSpoilerData spoiler;
 
   const TrajectoryTable({
     super.key,
     required this.mainTable,
     this.zeroCrossings,
-    required this.spoiler,
   });
 
   @override
@@ -53,104 +20,23 @@ class TrajectoryTable extends StatefulWidget {
 }
 
 class _TrajectoryTableState extends State<TrajectoryTable> {
-  final _trajSync = _ScrollSyncGroup();
-  final _zeroSync = _ScrollSyncGroup();
-
-  late final ScrollController _trajHdrCtrl;
-  late final ScrollController _trajDataCtrl;
-  late final ScrollController _zeroHdrCtrl;
-  late final ScrollController _zeroDataCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _trajHdrCtrl = _trajSync.add();
-    _trajDataCtrl = _trajSync.add();
-    _zeroHdrCtrl = _zeroSync.add();
-    _zeroDataCtrl = _zeroSync.add();
-  }
-
-  @override
-  void dispose() {
-    _trajSync.dispose();
-    _zeroSync.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final table = widget.mainTable;
 
-    const colPad = EdgeInsets.symmetric(horizontal: 6, vertical: 4);
-    const colW = 72.0;
-
-    final hdrStyle = theme.textTheme.bodySmall?.copyWith(
+    // Стилі тексту
+    final hdrStyle = theme.textTheme.labelSmall?.copyWith(
       fontWeight: FontWeight.bold,
       color: cs.onSurface,
     );
     final subStyle = theme.textTheme.labelSmall?.copyWith(
       color: cs.onSurfaceVariant,
+      fontSize: 10,
     );
     final cellStyle = theme.textTheme.bodySmall?.copyWith(
       fontFamily: 'monospace',
-    );
-    final zeroCellStyle = cellStyle?.copyWith(
-      color: cs.error,
-      fontWeight: FontWeight.bold,
-    );
-    final subsCellStyle = cellStyle?.copyWith(
-      color: cs.tertiary,
-      fontWeight: FontWeight.bold,
-    );
-    final zeroBannerStyle = theme.textTheme.bodySmall?.copyWith(
-      color: cs.primary,
-      fontWeight: FontWeight.bold,
-      fontFamily: 'monospace',
-    );
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
-    Widget hCell(String text, TextStyle? style, {double width = colW}) =>
-        SizedBox(
-          width: width,
-          child: Padding(
-            padding: colPad,
-            child: Text(text, style: style, textAlign: TextAlign.right),
-          ),
-        );
-
-    Widget dCell(
-      String text,
-      TextStyle? style, {
-      Color? bg,
-      VoidCallback? onTap,
-    }) => GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: colW,
-        color: bg,
-        padding: colPad,
-        child: Text(text, style: style, textAlign: TextAlign.right),
-      ),
-    );
-
-    Widget rowDivider() =>
-        Divider(height: 1, color: cs.outlineVariant, thickness: 0.5);
-
-    // ── Section title ─────────────────────────────────────────────────────────
-
-    Widget sectionTitle(String text) => Container(
-      color: cs.surfaceContainerHigh,
-      padding: const EdgeInsets.fromLTRB(10, 6, 10, 4),
-      child: Text(
-        text,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: cs.onSurface.withAlpha(160),
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.6,
-        ),
-      ),
+      fontSize: 13,
     );
 
     // ── Detail dialog ─────────────────────────────────────────────────────────
@@ -189,366 +75,240 @@ class _TrajectoryTableState extends State<TrajectoryTable> {
       ),
     );
 
-    // ── Main table renderer (rows = distance points, cols = metrics) ────────
+    // ── Trajectory Table Renderer ────────────────────────────────────────────
 
-    Widget buildTable(FormattedTableData t) {
+    Widget buildMainTable() {
+      final t = widget.mainTable;
       final nMetrics = t.rows.length;
       final nPoints = t.distanceHeaders.length;
-      final totalW = colW * (1 + nMetrics);
-
-      // Metric label header row
-      Widget labelRow() => Container(
-        color: cs.surfaceContainerHighest,
-        child: Row(
-          children: [
-            hCell('Range', hdrStyle),
-            ...List.generate(nMetrics, (i) => hCell(t.rows[i].label, hdrStyle)),
-          ],
-        ),
-      );
-
-      // Metric unit sub-header
-      Widget unitRow() => Container(
-        color: cs.surfaceContainerHigh,
-        child: Row(
-          children: [
-            hCell(t.distanceUnit, subStyle),
-            ...List.generate(
-              nMetrics,
-              (i) => hCell(t.rows[i].unitSymbol, subStyle),
-            ),
-          ],
-        ),
-      );
-
-      // Data rows: one per distance point
-      Widget dataRows() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (var pi = 0; pi < nPoints; pi++) ...[
-            if (pi > 0) rowDivider(),
-            Builder(
-              builder: (_) {
-                final firstCell = nMetrics > 0 && pi < t.rows[0].cells.length
-                    ? t.rows[0].cells[pi]
-                    : null;
-                final isZ = firstCell?.isZeroCrossing ?? false;
-                final isS = firstCell?.isSubsonic ?? false;
-                final isTarget = firstCell?.isTargetColumn ?? false;
-                final bg = isTarget
-                    ? cs.primaryContainer.withAlpha(60)
-                    : isZ
-                    ? cs.errorContainer.withAlpha(80)
-                    : isS
-                    ? cs.tertiaryContainer.withAlpha(80)
-                    : (pi.isEven ? null : cs.surfaceContainerLowest);
-                final style = isTarget
-                    ? cellStyle?.copyWith(
-                        color: cs.primary,
-                        fontWeight: FontWeight.w700,
-                      )
-                    : isZ
-                    ? zeroCellStyle
-                    : isS
-                    ? subsCellStyle
-                    : cellStyle;
-                final distStyle = isTarget
-                    ? hdrStyle?.copyWith(color: cs.primary)
-                    : hdrStyle;
-                return Row(
-                  children: [
-                    dCell(
-                      t.distanceHeaders[pi],
-                      distStyle,
-                      bg: bg,
-                      onTap: () => showDetail(t, pi),
-                    ),
-                    ...List.generate(nMetrics, (mi) {
-                      final cell = pi < t.rows[mi].cells.length
-                          ? t.rows[mi].cells[pi]
-                          : null;
-                      return dCell(
-                        cell?.value ?? '—',
-                        style,
-                        bg: bg,
-                        onTap: () => showDetail(t, pi),
-                      );
-                    }),
-                  ],
-                );
-              },
-            ),
-          ],
-        ],
-      );
-
-      Widget hScroll(Widget child, {ScrollController? ctrl}) =>
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            controller: ctrl,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: totalW),
-              child: child,
-            ),
-          );
-
-      return StickyHeader(
-        header: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            sectionTitle('Trajectory'),
-            hScroll(
-              Column(children: [labelRow(), unitRow()]),
-              ctrl: _trajHdrCtrl,
-            ),
-            Divider(height: 1, color: cs.outlineVariant, thickness: 0.5),
-          ],
-        ),
-        content: hScroll(dataRows(), ctrl: _trajDataCtrl),
-      );
-    }
-
-    // ── Zero crossings table (transposed: rows = points, cols = metrics) ─────
-
-    Widget buildZeroTable(FormattedTableData t) {
-      // Columns: Range + each metric
-      final nMetrics = t.rows.length;
-      final nPoints = t.distanceHeaders.length;
-      final totalW = colW * (1 + nMetrics);
-
-      // Header row: Range, Time, V, Height, ...
-      Widget headerRow() => Container(
-        color: cs.surfaceContainerHighest,
-        child: Row(
-          children: [
-            hCell('Range', hdrStyle),
-            ...List.generate(nMetrics, (i) => hCell(t.rows[i].label, hdrStyle)),
-          ],
-        ),
-      );
-
-      // Unit sub-header
-      Widget unitRow() => Container(
-        color: cs.surfaceContainerHighest,
-        child: Row(
-          children: [
-            hCell(t.distanceUnit, subStyle),
-            ...List.generate(
-              nMetrics,
-              (i) => hCell(t.rows[i].unitSymbol, subStyle),
-            ),
-          ],
-        ),
-      );
-
-      // Data rows: one per zero crossing point
-      Widget dataArea() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (var pi = 0; pi < nPoints; pi++) ...[
-            if (pi > 0) rowDivider(),
-            Container(
-              color: cs.primaryContainer.withAlpha(60),
-              child: Row(
-                children: [
-                  dCell(t.distanceHeaders[pi], zeroBannerStyle),
-                  ...List.generate(nMetrics, (mi) {
-                    final cell = pi < t.rows[mi].cells.length
-                        ? t.rows[mi].cells[pi]
-                        : null;
-                    return dCell(cell?.value ?? '—', zeroBannerStyle);
-                  }),
-                ],
-              ),
-            ),
-          ],
-        ],
-      );
-
-      Widget zHScroll(Widget child, {ScrollController? ctrl}) =>
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            controller: ctrl,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: totalW),
-              child: child,
-            ),
-          );
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          zHScroll(
-            Column(children: [headerRow(), unitRow()]),
-            ctrl: _zeroHdrCtrl,
+          _SectionTitle(text: 'Trajectory'),
+          Expanded(
+            child: DataTable2(
+              columnSpacing: 12,
+              horizontalMargin: 12,
+              minWidth: 80 + (nMetrics * 75),
+              fixedLeftColumns: 1, // ФІКСОВАНА КОЛОНКА RANGE
+              headingRowHeight: 52,
+              dataRowHeight: 40,
+              headingRowColor: WidgetStateProperty.all(
+                cs.surfaceContainerHighest,
+              ),
+              dividerThickness: 0.5,
+              border: TableBorder(
+                horizontalInside: BorderSide(
+                  color: cs.outlineVariant.withAlpha(80),
+                  width: 0.5,
+                ),
+                verticalInside: BorderSide(
+                  color: cs.outlineVariant.withAlpha(80),
+                  width: 0.5,
+                ),
+              ),
+              columns: [
+                DataColumn2(
+                  label: Center(
+                    child: Text("Range, ${t.distanceUnit}", style: hdrStyle),
+                  ),
+                  fixedWidth: 70,
+                ),
+                ...List.generate(
+                  nMetrics,
+                  (mi) => DataColumn2(
+                    label: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          t.rows[mi].label,
+                          style: hdrStyle,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(t.rows[mi].unitSymbol, style: subStyle),
+                      ],
+                    ),
+                    numeric: true,
+                    size: ColumnSize.S,
+                  ),
+                ),
+              ],
+              rows: List.generate(nPoints, (pi) {
+                final firstCell = nMetrics > 0 ? t.rows[0].cells[pi] : null;
+                final isZ = firstCell?.isZeroCrossing ?? false;
+                final isS = firstCell?.isSubsonic ?? false;
+                final isT = firstCell?.isTargetColumn ?? false;
+
+                final rowColor = isT
+                    ? cs.primaryContainer.withAlpha(50)
+                    : isZ
+                    ? cs.errorContainer.withAlpha(50)
+                    : isS
+                    ? cs.tertiaryContainer.withAlpha(50)
+                    : (pi.isEven ? null : cs.surfaceContainerLowest);
+
+                final style = isT
+                    ? cellStyle?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.bold,
+                      )
+                    : isZ
+                    ? cellStyle?.copyWith(
+                        color: cs.error,
+                        fontWeight: FontWeight.bold,
+                      )
+                    : cellStyle;
+
+                return DataRow2(
+                  color: WidgetStateProperty.all(rowColor),
+                  onTap: () => showDetail(t, pi),
+                  cells: [
+                    DataCell(
+                      Center(
+                        child: Text(
+                          t.distanceHeaders[pi],
+                          style: hdrStyle?.copyWith(
+                            color: isT ? cs.primary : null,
+                          ),
+                        ),
+                      ),
+                    ),
+                    ...List.generate(
+                      nMetrics,
+                      (mi) => DataCell(
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(t.rows[mi].cells[pi].value, style: style),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ),
           ),
-          Divider(height: 1, color: cs.outlineVariant, thickness: 0.5),
-          zHScroll(dataArea(), ctrl: _zeroDataCtrl),
         ],
       );
     }
 
-    // ── Layout ────────────────────────────────────────────────────────────────
+    // ── Zero Crossings Renderer ──────────────────────────────────────────────
 
-    return ListView(
-      children: [
-        // 1. Details spoiler
-        _DetailsSpoiler(spoiler: widget.spoiler),
+    Widget buildZeroTable() {
+      final t = widget.zeroCrossings!;
+      final nMetrics = t.rows.length;
+      final nPoints = t.distanceHeaders.length;
 
-        // 2. Zero crossings (row-per-point layout)
-        if (widget.zeroCrossings != null &&
-            widget.zeroCrossings!.distanceHeaders.isNotEmpty) ...[
-          sectionTitle('Zero Crossings'),
-          buildZeroTable(widget.zeroCrossings!),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _SectionTitle(text: 'Zero Crossings'),
+          SizedBox(
+            height:
+                52 + (nPoints * 40.0) + 2, // Динамічна висота для списку нулів
+            child: DataTable2(
+              columnSpacing: 12,
+              horizontalMargin: 12,
+              minWidth: 80 + (nMetrics * 75),
+              fixedLeftColumns: 1,
+              headingRowHeight: 52,
+              dataRowHeight: 40,
+              headingRowColor: WidgetStateProperty.all(
+                cs.surfaceContainerHighest,
+              ),
+              columns: [
+                DataColumn2(
+                  label: Center(
+                    child: Text("Range, ${t.distanceUnit}", style: hdrStyle),
+                  ),
+                  fixedWidth: 70,
+                ),
+                ...List.generate(
+                  nMetrics,
+                  (mi) => DataColumn2(
+                    label: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(t.rows[mi].label, style: hdrStyle),
+                        Text(t.rows[mi].unitSymbol, style: subStyle),
+                      ],
+                    ),
+                    numeric: true,
+                  ),
+                ),
+              ],
+              rows: List.generate(nPoints, (pi) {
+                return DataRow2(
+                  color: WidgetStateProperty.all(
+                    cs.primaryContainer.withAlpha(40),
+                  ),
+                  onTap: () => showDetail(t, pi),
+                  cells: [
+                    DataCell(
+                      Center(
+                        child: Text(
+                          t.distanceHeaders[pi],
+                          style: hdrStyle?.copyWith(color: cs.primary),
+                        ),
+                      ),
+                    ),
+                    ...List.generate(
+                      nMetrics,
+                      (mi) => DataCell(
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            t.rows[mi].cells[pi].value,
+                            style: cellStyle?.copyWith(color: cs.primary),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ),
+          ),
         ],
+      );
+    }
 
-        // 3. Main trajectory table (StickyHeader — must be direct ListView child)
-        buildTable(table),
+    // ── Main Layout ──────────────────────────────────────────────────────────
+
+    return Column(
+      children: [
+        if (widget.zeroCrossings != null &&
+            widget.zeroCrossings!.distanceHeaders.isNotEmpty)
+          buildZeroTable(),
+        Expanded(child: buildMainTable()),
       ],
     );
   }
 }
 
-// ─── Details spoiler ──────────────────────────────────────────────────────────
+// ─── Section Title ────────────────────────────────────────────────────────────
 
-class _DetailsSpoiler extends StatelessWidget {
-  const _DetailsSpoiler({required this.spoiler});
-
-  final TablesSpoilerData spoiler;
+class _SectionTitle extends StatelessWidget {
+  final String text;
+  const _SectionTitle({required this.text});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-
-    final labelStyle = theme.textTheme.bodySmall?.copyWith(
-      color: cs.onSurfaceVariant,
-    );
-    final valueStyle = theme.textTheme.bodySmall?.copyWith(
-      fontFamily: 'monospace',
-      color: cs.onSurface,
-    );
-    final sectionStyle = theme.textTheme.labelSmall?.copyWith(
-      color: cs.primary,
-      fontWeight: FontWeight.w700,
-      letterSpacing: 0.6,
-    );
-
-    Widget row(String label, String value) => Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-      child: Row(
-        children: [
-          Expanded(child: Text(label, style: labelStyle)),
-          Text(value, style: valueStyle),
-        ],
-      ),
-    );
-
-    Widget section(String title) => Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
-      child: Text(title.toUpperCase(), style: sectionStyle),
-    );
-
-    final items = <Widget>[];
-
-    // Rifle
-    final hasRifle = spoiler.caliber != null || spoiler.twist != null;
-    if (hasRifle) {
-      items.add(section('Rifle'));
-      items.add(row('Name', spoiler.rifleName));
-      if (spoiler.caliber != null) items.add(row('Caliber', spoiler.caliber!));
-      if (spoiler.twist != null) items.add(row('Twist', spoiler.twist!));
-    }
-
-    // Projectile
-    final hasProj =
-        spoiler.dragModel != null ||
-        spoiler.bc != null ||
-        spoiler.zeroMv != null ||
-        spoiler.currentMv != null ||
-        spoiler.zeroDist != null ||
-        spoiler.bulletLen != null ||
-        spoiler.bulletDiam != null ||
-        spoiler.bulletWeight != null ||
-        spoiler.formFactor != null ||
-        spoiler.sectionalDensity != null ||
-        spoiler.gyroStability != null;
-    if (hasProj) {
-      items.add(section('Projectile'));
-      if (spoiler.dragModel != null) {
-        items.add(row('Drag model', spoiler.dragModel!));
-      }
-      if (spoiler.bc != null) items.add(row('BC', spoiler.bc!));
-      if (spoiler.zeroMv != null) items.add(row('Zero MV', spoiler.zeroMv!));
-      if (spoiler.currentMv != null) {
-        items.add(row('Current MV', spoiler.currentMv!));
-      }
-      if (spoiler.zeroDist != null) {
-        items.add(row('Zero distance', spoiler.zeroDist!));
-      }
-      if (spoiler.bulletLen != null) {
-        items.add(row('Length', spoiler.bulletLen!));
-      }
-      if (spoiler.bulletDiam != null) {
-        items.add(row('Diameter', spoiler.bulletDiam!));
-      }
-      if (spoiler.bulletWeight != null) {
-        items.add(row('Weight', spoiler.bulletWeight!));
-      }
-      if (spoiler.formFactor != null) {
-        items.add(row('Form factor', spoiler.formFactor!));
-      }
-      if (spoiler.sectionalDensity != null) {
-        items.add(row('Sectional density', spoiler.sectionalDensity!));
-      }
-      if (spoiler.gyroStability != null) {
-        items.add(row('Gyrostability (Sg)', spoiler.gyroStability!));
-      }
-    }
-
-    // Atmosphere
-    final hasAtmo =
-        spoiler.temperature != null ||
-        spoiler.humidity != null ||
-        spoiler.pressure != null ||
-        spoiler.windSpeed != null ||
-        spoiler.windDir != null;
-    if (hasAtmo) {
-      items.add(section('Atmosphere'));
-      if (spoiler.temperature != null) {
-        items.add(row('Temperature', spoiler.temperature!));
-      }
-      if (spoiler.humidity != null) {
-        items.add(row('Humidity', spoiler.humidity!));
-      }
-      if (spoiler.pressure != null) {
-        items.add(row('Pressure', spoiler.pressure!));
-      }
-      if (spoiler.windSpeed != null) {
-        items.add(row('Wind speed', spoiler.windSpeed!));
-      }
-      if (spoiler.windDir != null) {
-        items.add(row('Wind direction', spoiler.windDir!));
-      }
-    }
-
-    if (items.isEmpty) return const SizedBox.shrink();
-
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        title: Text(
-          'Shot details',
-          style: theme.textTheme.bodySmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: cs.onSurfaceVariant,
-          ),
+    return Container(
+      width: double.infinity,
+      color: theme.colorScheme.surfaceContainerHigh,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Text(
+        text.toUpperCase(),
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.2,
         ),
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-        childrenPadding: const EdgeInsets.only(bottom: 8),
-        backgroundColor: cs.surfaceContainerLowest,
-        collapsedBackgroundColor: cs.surfaceContainerLowest,
-        children: items,
       ),
     );
   }

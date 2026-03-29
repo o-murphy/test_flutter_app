@@ -19,7 +19,7 @@ import 'package:eballistica/shared/models/formatted_row.dart';
 
 // ── Spoiler data ─────────────────────────────────────────────────────────────
 
-class TablesSpoilerData {
+class DetailsTableData {
   final String rifleName;
   final String? caliber;
   final String? twist;
@@ -40,7 +40,7 @@ class TablesSpoilerData {
   final String? windSpeed;
   final String? windDir;
 
-  const TablesSpoilerData({
+  const DetailsTableData({
     required this.rifleName,
     this.caliber,
     this.twist,
@@ -78,12 +78,12 @@ class TablesUiEmpty extends TablesUiState {
 }
 
 class TablesUiReady extends TablesUiState {
-  final TablesSpoilerData spoiler;
+  final DetailsTableData details;
   final FormattedTableData? zeroCrossings;
   final FormattedTableData mainTable;
 
   const TablesUiReady({
-    required this.spoiler,
+    required this.details,
     this.zeroCrossings,
     required this.mainTable,
   });
@@ -167,7 +167,7 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
     final units = settings.units;
     final hit = result.hitResult;
 
-    final spoiler = _buildSpoiler(profile, settings, formatter);
+    final details = _buildDetails(profile, settings, formatter);
 
     // Apply per-table unit overrides
     final effUnits = units.copyWith(
@@ -201,13 +201,13 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
     }
 
     return TablesUiReady(
-      spoiler: spoiler,
+      details: details,
       zeroCrossings: zeroCrossings,
       mainTable: mainTable,
     );
   }
 
-  TablesSpoilerData _buildSpoiler(
+  DetailsTableData _buildDetails(
     ShotProfile profile,
     AppSettings settings,
     UnitFormatter formatter,
@@ -272,7 +272,7 @@ class TablesViewModel extends AsyncNotifier<TablesUiState> {
       return '${dim.in_(dispUnit).toStringAsFixed(fc.accuracyFor(dispUnit))} ${dispUnit.symbol}';
     }
 
-    return TablesSpoilerData(
+    return DetailsTableData(
       rifleName: rifle.name,
       caliber: cfg.spoilerShowCaliber && diamInch > 0
           ? fmtWithAcc(dm.diameter, units.diameter, FC.bulletDiameter)

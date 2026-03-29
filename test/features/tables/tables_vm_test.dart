@@ -219,63 +219,63 @@ void main() {
     tearDown(() => container.dispose());
 
     test('spoiler has rifle name', () {
-      expect(state.spoiler.rifleName, 'Test Rifle');
+      expect(state.details.rifleName, 'Test Rifle');
     });
 
     test('spoiler shows caliber', () {
-      expect(state.spoiler.caliber, isNotNull);
+      expect(state.details.caliber, isNotNull);
     });
 
     test('spoiler shows twist', () {
-      expect(state.spoiler.twist, isNotNull);
-      expect(state.spoiler.twist!, contains('1:'));
+      expect(state.details.twist, isNotNull);
+      expect(state.details.twist!, contains('1:'));
     });
 
     test('spoiler shows drag model', () {
-      expect(state.spoiler.dragModel, 'G7');
+      expect(state.details.dragModel, 'G7');
     });
 
     test('spoiler shows BC', () {
-      expect(state.spoiler.bc, isNotNull);
-      expect(state.spoiler.bc!, contains('0.475'));
+      expect(state.details.bc, isNotNull);
+      expect(state.details.bc!, contains('0.475'));
     });
 
     test('spoiler shows zero MV', () {
-      expect(state.spoiler.zeroMv, isNotNull);
-      expect(state.spoiler.zeroMv!, contains('m/s'));
+      expect(state.details.zeroMv, isNotNull);
+      expect(state.details.zeroMv!, contains('m/s'));
     });
 
     test('spoiler shows current MV', () {
-      expect(state.spoiler.currentMv, isNotNull);
+      expect(state.details.currentMv, isNotNull);
     });
 
     test('spoiler shows zero distance', () {
-      expect(state.spoiler.zeroDist, isNotNull);
-      expect(state.spoiler.zeroDist!, contains('m'));
+      expect(state.details.zeroDist, isNotNull);
+      expect(state.details.zeroDist!, contains('m'));
     });
 
     test('spoiler shows temperature', () {
-      expect(state.spoiler.temperature, isNotNull);
-      expect(state.spoiler.temperature!, contains('°C'));
+      expect(state.details.temperature, isNotNull);
+      expect(state.details.temperature!, contains('°C'));
     });
 
     test('spoiler shows humidity', () {
-      expect(state.spoiler.humidity, isNotNull);
-      expect(state.spoiler.humidity!, contains('%'));
+      expect(state.details.humidity, isNotNull);
+      expect(state.details.humidity!, contains('%'));
     });
 
     test('spoiler shows pressure', () {
-      expect(state.spoiler.pressure, isNotNull);
-      expect(state.spoiler.pressure!, contains('hPa'));
+      expect(state.details.pressure, isNotNull);
+      expect(state.details.pressure!, contains('hPa'));
     });
 
     test('spoiler shows wind speed', () {
-      expect(state.spoiler.windSpeed, isNotNull);
+      expect(state.details.windSpeed, isNotNull);
     });
 
     test('spoiler shows wind direction', () {
-      expect(state.spoiler.windDir, isNotNull);
-      expect(state.spoiler.windDir!, contains('90'));
+      expect(state.details.windDir, isNotNull);
+      expect(state.details.windDir!, contains('90'));
     });
 
     test('main table has distance headers', () {
@@ -380,13 +380,13 @@ void main() {
     tearDown(() => container.dispose());
 
     test('spoiler shows imperial temperature', () {
-      expect(state.spoiler.temperature, isNotNull);
-      expect(state.spoiler.temperature!, contains('°F'));
+      expect(state.details.temperature, isNotNull);
+      expect(state.details.temperature!, contains('°F'));
     });
 
     test('spoiler shows imperial pressure', () {
-      expect(state.spoiler.pressure, isNotNull);
-      expect(state.spoiler.pressure!, contains('mmHg'));
+      expect(state.details.pressure, isNotNull);
+      expect(state.details.pressure!, contains('mmHg'));
     });
 
     test('main table distance unit is yd', () {
@@ -420,19 +420,19 @@ void main() {
       addTearDown(container.dispose);
       final state = await _recalculate(container);
 
-      expect(state.spoiler.rifleName, 'Test Rifle');
-      expect(state.spoiler.caliber, isNull);
-      expect(state.spoiler.twist, isNull);
-      expect(state.spoiler.dragModel, isNull);
-      expect(state.spoiler.bc, isNull);
-      expect(state.spoiler.zeroMv, isNull);
-      expect(state.spoiler.currentMv, isNull);
-      expect(state.spoiler.zeroDist, isNull);
-      expect(state.spoiler.temperature, isNull);
-      expect(state.spoiler.humidity, isNull);
-      expect(state.spoiler.pressure, isNull);
-      expect(state.spoiler.windSpeed, isNull);
-      expect(state.spoiler.windDir, isNull);
+      expect(state.details.rifleName, 'Test Rifle');
+      expect(state.details.caliber, isNull);
+      expect(state.details.twist, isNull);
+      expect(state.details.dragModel, isNull);
+      expect(state.details.bc, isNull);
+      expect(state.details.zeroMv, isNull);
+      expect(state.details.currentMv, isNull);
+      expect(state.details.zeroDist, isNull);
+      expect(state.details.temperature, isNull);
+      expect(state.details.humidity, isNull);
+      expect(state.details.pressure, isNull);
+      expect(state.details.windSpeed, isNull);
+      expect(state.details.windDir, isNull);
     });
   });
 
