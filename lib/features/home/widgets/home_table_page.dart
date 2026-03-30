@@ -44,13 +44,16 @@ class HomeTablePage extends ConsumerWidget {
       color: cs.onSurfaceVariant,
     );
 
-    Widget cell(String text, TextStyle? style, {Color? bg}) => Container(
-      color: bg,
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.centerRight,
-        child: Text(text, style: style, textAlign: TextAlign.right),
+    Widget cell(String text, TextStyle? style, {Color? bg}) => TableCell(
+      verticalAlignment: TableCellVerticalAlignment.fill,
+      child: Container(
+        color: bg,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerRight,
+          child: Text(text, style: style, textAlign: TextAlign.right),
+        ),
       ),
     );
 

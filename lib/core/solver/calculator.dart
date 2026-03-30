@@ -46,8 +46,7 @@ const BcConfig defaultConfig = BcConfig(
 // ---------------------------------------------------------------------------
 
 class Calculator {
-  /// Integration method: BCIntegrationMethod.BC_INTEGRATION_RK4 or _EULER
-  final int method;
+  final BCIntegrationMethod method;
   final BcConfig config;
 
   late final BcLibC _engine;
@@ -92,7 +91,7 @@ class Calculator {
     required Distance trajectoryRange,
     Distance? trajectoryStep,
     double timeStep = 0.0,
-    int filterFlags = BCTrajFlag.BC_TRAJ_FLAG_RANGE,
+    int filterFlags = 8, // BCTrajFlag.BC_TRAJ_FLAG_RANGE
     bool raiseRangeError = true,
   }) {
     final rangeFt = _toFeet(trajectoryRange);

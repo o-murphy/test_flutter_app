@@ -83,7 +83,7 @@ const _coriolis = BcCoriolis(); // no coriolis
 
 BcShotProps _makeShotProps({
   double barrelElevationRad = 0.0,
-  int method = BCIntegrationMethod.BC_INTEGRATION_RK4,
+  BCIntegrationMethod method = BCIntegrationMethod.BC_INTEGRATION_RK4,
 }) => BcShotProps(
   bc: 0.279, // G7 BC
   lookAngleRad: 0.0,
@@ -184,13 +184,13 @@ void main() {
       final request = BcTrajectoryRequest(
         rangeLimitFt: 1000.0 * 3.28084, // 1 km
         rangeStepFt: 100.0 * 3.28084, // every 100 m
-        filterFlags: BCTrajFlag.BC_TRAJ_FLAG_RANGE,
+        filterFlags: BCTrajFlag.BC_TRAJ_FLAG_RANGE.value,
       );
       final result = bc.integrate(props, request);
       expect(result.trajectory, isNotEmpty);
       // All records should carry the RANGE flag
       for (final p in result.trajectory) {
-        expect(p.flag & BCTrajFlag.BC_TRAJ_FLAG_RANGE, isNot(0));
+        expect(p.flag & BCTrajFlag.BC_TRAJ_FLAG_RANGE.value, isNot(0));
       }
     });
 
@@ -199,7 +199,7 @@ void main() {
       final request = BcTrajectoryRequest(
         rangeLimitFt: 1000.0 * 3.28084,
         rangeStepFt: 50.0 * 3.28084,
-        filterFlags: BCTrajFlag.BC_TRAJ_FLAG_RANGE,
+        filterFlags: BCTrajFlag.BC_TRAJ_FLAG_RANGE.value,
       );
       final result = bc.integrate(props, request);
       expect(result.trajectory.length, greaterThan(1));
@@ -217,7 +217,7 @@ void main() {
       final request = BcTrajectoryRequest(
         rangeLimitFt: 500.0 * 3.28084,
         rangeStepFt: 50.0 * 3.28084,
-        filterFlags: BCTrajFlag.BC_TRAJ_FLAG_RANGE,
+        filterFlags: BCTrajFlag.BC_TRAJ_FLAG_RANGE.value,
       );
       final result = bc.integrate(props, request);
 
@@ -236,7 +236,7 @@ void main() {
       final request = BcTrajectoryRequest(
         rangeLimitFt: 500.0 * 3.28084,
         rangeStepFt: 100.0 * 3.28084,
-        filterFlags: BCTrajFlag.BC_TRAJ_FLAG_RANGE,
+        filterFlags: BCTrajFlag.BC_TRAJ_FLAG_RANGE.value,
       );
       final result = bc.integrate(props, request);
       expect(result.trajectory, isNotEmpty);

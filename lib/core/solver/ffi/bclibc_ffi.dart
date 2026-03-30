@@ -138,8 +138,7 @@ class BcShotProps {
   final BcCoriolis coriolis;
   final BcConfig config;
 
-  /// BCIntegrationMethod.BC_INTEGRATION_RK4 or BC_INTEGRATION_EULER
-  final int method;
+  final BCIntegrationMethod method;
   final List<BcDragPoint> dragTable;
   final List<BcWind> winds;
 
@@ -170,14 +169,14 @@ class BcTrajectoryRequest {
   final double rangeStepFt;
   final double timeStep;
 
-  /// BCTrajFlag bitmask
+  /// BCTrajFlag bitmask (may combine multiple flags via bitwise OR)
   final int filterFlags;
 
   const BcTrajectoryRequest({
     required this.rangeLimitFt,
     required this.rangeStepFt,
     this.timeStep = 0.0,
-    this.filterFlags = BCTrajFlag.BC_TRAJ_FLAG_RANGE,
+    this.filterFlags = 8, // BCTrajFlag.BC_TRAJ_FLAG_RANGE
   });
 }
 
@@ -266,7 +265,7 @@ class BcMaxRangeResult {
 
 class BcHitResult {
   final List<BcTrajectoryData> trajectory;
-  final int reason; // BCTerminationReason
+  final BCTerminationReason reason;
   const BcHitResult(this.trajectory, this.reason);
 }
 
@@ -317,7 +316,7 @@ String _charArrayToString(ffi.Array<ffi.Char> arr, int maxLen) {
 
 Never _throwFromError(BCLIBCFFIError err) {
   final msg = _charArrayToString(err.message, 512);
-  if (err.code == BCLIBCFFIStatus.BCLIBCFFI_ERR_OUT_OF_RANGE) {
+  if (err.code == BCLIBCFFIStatus.BCLIBCFFI_ERR_OUT_OF_RANGE.value) {
     throw BcException(
       code: err.code,
       message: msg,
@@ -326,7 +325,7 @@ Never _throwFromError(BCLIBCFFIError err) {
       lookAngleRad: err.f64_2,
     );
   }
-  if (err.code == BCLIBCFFIStatus.BCLIBCFFI_ERR_ZERO_FINDING) {
+  if (err.code == BCLIBCFFIStatus.BCLIBCFFI_ERR_ZERO_FINDING.value) {
     throw BcException(
       code: err.code,
       message: msg,
@@ -356,7 +355,7 @@ extension _FillNative on BcShotProps {
     p.cant_angle_rad = cantAngleRad;
     p.alt0_ft = alt0Ft;
     p.muzzle_velocity_fps = muzzleVelocityFps;
-    p.method = method;
+    p.methodAsInt = method.value;
 
     p.atmo.t0 = atmo.t0;
     p.atmo.a0 = atmo.a0;
@@ -487,17 +486,16 @@ class BcLibC {
         );
         if (count > 0) _b.BCLIBCFFI_free_trajectory(rawPtr);
 
-        return BcHitResult(records, pReason.value);
+        return BcHitResult(records, BCTerminationReason.fromValue(pReason.value));
       });
 
-  /// [key] — BCBaseTrajInterpKey constant
-  BcInterception integrateAt(BcShotProps props, int key, double targetValue) =>
+  BcInterception integrateAt(BcShotProps props, BCBaseTrajInterpKey key, double targetValue) =>
       using((arena) {
         final p = arena<BCShotProps>();
         final out = arena<BCInterception>();
         final err = arena<BCLIBCFFIError>();
         props._fill(p.ref, arena);
-        final st = _b.BCLIBCFFI_integrate_at(p, key, targetValue, out, err);
+        final st = _b.BCLIBCFFI_integrate_at(p, key.value, targetValue, out, err);
         if (st != 0) _throwFromError(err.ref);
         return BcInterception(
           BcBaseTrajData._fromNative(out.ref.raw_data),

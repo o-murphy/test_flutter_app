@@ -1,6 +1,6 @@
 name: BcLibCFFIBindings
 description: 'Auto-generated Dart FFI bindings for the bclibc ballistics engine C API.'
-output: 'lib/src/solver/ffi/bclibc_bindings.g.dart'
+output: 'lib/core/solver/ffi/bclibc_bindings.g.dart'
 
 headers:
   entry-points:
@@ -19,6 +19,8 @@ structs:
 enums:
   include:
     - 'BC.*'
+
+silence-enum-warning: true
 
 preamble: |
   // AUTO-GENERATED – do not edit.

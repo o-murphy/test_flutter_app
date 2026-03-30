@@ -518,8 +518,8 @@ Phase   Task                                        Depends on   Risk
 ─────   ──────────────────────────────────────────   ──────────   ────
   1     Feature-first directory restructure          —            Low (pure moves)        ✅ DONE
   2     ShotDetailsViewModel                         1 (paths)    Low
-  3     FFI enum wrappers (bc_enums.dart)            —            Low
-  4     ffigen update to ^20                         3            Medium (enum issue)
+  3     FFI enum wrappers (bc_enums.dart)            —            Low          ✅ DONE
+  4     ffigen update to ^20                         3            Medium (enum issue) ✅ DONE
   5     Strict dimension typing (§3.5)               1            High (blast radius)
   6     Safe JSON parsing loading                    —            not analyzed
   7     Bug in tables screen, the tables are not     —            not analyzed
@@ -537,17 +537,21 @@ Phase   Task                                        Depends on   Risk
 **Verification:** `flutter test` + `flutter analyze`
 **Risk:** Low — follows established pattern from REFACTORING_PLAN phases 2-4
 
-### Phase 3 — FFI enum wrappers
+### Phase 4 — ffigen update ✅ DONE
 
-**Estimated scope:** 1 new file + edit 1 file
-**Verification:** `dart test test/ffi_test.dart` + `flutter analyze`
-**Risk:** Low — internal to FFI layer, no external API changes
+**Result:** Updated `ffigen: ^12.0.0` → `^20.0.0` (installed 20.1.1). Fixed `ffigen.yaml` output
+path (`lib/src/` → `lib/core/`). Added `silence-enum-warning: true` for `BCIntegrationMethod`.
+Bindings regenerated — ffigen ^20 now generates proper Dart `enum` types (with `.value` /
+`fromValue()`) instead of `abstract class { static const int }`. Fixed downstream breakage in
+`bclibc_ffi.dart`, `calculator.dart`, `ballistics_service_impl.dart`, `ffi_test.dart`.
 
-### Phase 4 — ffigen update
+### Phase 3 — FFI enum wrappers ✅ DONE (resolved by Phase 4)
 
-**Estimated scope:** 1 config change + regenerate 1 file
-**Verification:** Full test suite
-**Risk:** Medium — may require workaround or rollback
+**Result:** ffigen ^20 generates proper Dart enums directly — `BCLIBCFFIStatus`, `BCTrajFlag`,
+`BCTerminationReason`, `BCBaseTrajInterpKey`, `BCIntegrationMethod` — each with `.value` and
+`fromValue()`. No separate `bc_enums.dart` needed. Updated public API in `bclibc_ffi.dart`:
+`BcHitResult.reason` → `BCTerminationReason`, `BcLibC.integrateAt` key → `BCBaseTrajInterpKey`,
+`BcShotProps.method` → `BCIntegrationMethod`.
 
 ### Phase 5 — Strict dimension typing (§3.5) 
 > [!NOTE] IT IS MAYBE NOT REALLY NEEDED
