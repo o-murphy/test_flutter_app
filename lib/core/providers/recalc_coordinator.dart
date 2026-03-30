@@ -1,4 +1,3 @@
-import 'package:eballistica/features/tables/details_table_mv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/core/providers/settings_provider.dart';

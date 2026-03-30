@@ -1,4 +1,3 @@
-import 'package:eballistica/features/tables/details_table_mv.dart';
 import 'package:eballistica/features/tables/widgets/details_table.dart';
 import 'package:eballistica/shared/widgets/base_screen.dart';
 import 'package:eballistica/shared/widgets/empty_state.dart';
@@ -31,7 +30,6 @@ class TablesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vmTrajectoryAsync = ref.watch(trajectoryTablesVmProvider);
-    final vmDetailsState = ref.watch(detailsTableMvProvider);
     final vmTrajectoryState = vmTrajectoryAsync.value;
 
     Widget tablesTab;
@@ -49,13 +47,6 @@ class TablesScreen extends ConsumerWidget {
       tablesTab = const EmptyStatePlaceholder();
     }
 
-    Widget detailsTab;
-    if (vmDetailsState == null) {
-      detailsTab = const EmptyStatePlaceholder();
-    } else {
-      detailsTab = DetailsTable(details: vmDetailsState);
-    }
-
     return DefaultTabController(
       initialIndex: 0,
       length: 2,
@@ -68,7 +59,7 @@ class TablesScreen extends ConsumerWidget {
         ],
         body: TabBarView(
           physics: const NeverScrollableScrollPhysics(),
-          children: [tablesTab, detailsTab],
+          children: [tablesTab, const DetailsTable()],
         ),
       ),
     );

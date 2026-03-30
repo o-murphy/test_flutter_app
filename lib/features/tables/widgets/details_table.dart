@@ -1,29 +1,21 @@
 import 'package:eballistica/features/tables/details_table_mv.dart';
+import 'package:eballistica/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DetailsTable extends StatefulWidget {
-  final DetailsTableData details;
-
-  const DetailsTable({super.key, required this.details});
-
-  @override
-  State<DetailsTable> createState() => _DetailsTableState();
-}
-
-class _DetailsTableState extends State<DetailsTable> {
-  @override
-  void initState() {
-    super.initState();
-  }
+class DetailsTable extends ConsumerWidget {
+  const DetailsTable({super.key}); // ← прибрали required this.details
 
   @override
-  void dispose() {
-    super.dispose();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final details = ref.watch(detailsTableMvProvider);
 
-  @override
-  Widget build(BuildContext context) {
-    return _DetailsTable(details: widget.details);
+    // Якщо даних немає - показуємо empty state
+    if (details == null) {
+      return const EmptyStatePlaceholder();
+    }
+
+    return _DetailsTable(details: details);
   }
 }
 
