@@ -1,13 +1,8 @@
 export 'shot_details_screen.dart';
+export 'rifle_select_screen.dart';
 
 import 'package:eballistica/shared/widgets/_stub_screen.dart';
 import 'package:flutter/material.dart';
-
-class RifleSelectScreen extends StatelessWidget {
-  const RifleSelectScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const StubScreen(title: 'Select Rifle');
-}
 
 class RifleEditScreen extends StatelessWidget {
   const RifleEditScreen({super.key});
