@@ -48,10 +48,9 @@ jobs:
           flutter --version
           flutter doctor -v
 
-      - name: Update bclibc submodule to latest
+      - name: Get bclibc hash for cache key
         shell: pwsh
         run: |
-          git submodule update --remote external/bclibc
           $hash = git -C external/bclibc rev-parse HEAD
           Write-Host "bclibc at: $hash" -ForegroundColor Green
           echo "BCLIBC_HASH=$hash" >> $env:GITHUB_ENV
