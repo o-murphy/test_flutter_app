@@ -1,8 +1,6 @@
 // ЧИСТИЙ DART
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:eballistica/core/formatting/unit_formatter.dart';
-import 'package:eballistica/core/providers/formatter_provider.dart';
 import 'package:eballistica/core/providers/settings_provider.dart';
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';

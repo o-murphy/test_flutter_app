@@ -15,12 +15,12 @@ class DetailsTable extends ConsumerWidget {
       return const EmptyStatePlaceholder();
     }
 
-    return _DetailsTable(details: details);
+    return DetailsTableContent(details: details);
   }
 }
 
-class _DetailsTable extends StatelessWidget {
-  const _DetailsTable({required this.details});
+class DetailsTableContent extends StatelessWidget {
+  const DetailsTableContent({required this.details, super.key});
 
   final DetailsTableData details;
 

@@ -1,25 +1,63 @@
+import 'package:eballistica/features/tables/trajectory_tables_vm.dart';
+import 'package:eballistica/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
 import 'package:eballistica/shared/models/formatted_row.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // ─── Trajectory Table ─────────────────────────────────────────────────────────
 
-class TrajectoryTable extends StatefulWidget {
+class TrajectoryTable extends ConsumerWidget {
+  const TrajectoryTable({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vmAsync = ref.watch(trajectoryTablesVmProvider);
+    final vmState = vmAsync.value;
+
+    // Показуємо завантаження
+    if (vmState is TrajectoryTablesUiLoading || vmState == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // Показуємо пустий стан
+    if (vmState is TrajectoryTablesUiEmpty) {
+      return const EmptyStatePlaceholder();
+    }
+
+    // Показуємо помилку
+    if (vmState is TrajectoryTablesUiError) {
+      return Center(child: Text('Error: ${vmState.message}'));
+    }
+
+    // Готові дані - показуємо таблицю
+    if (vmState is TrajectoryTablesUiReady) {
+      return TrajectoryTableContent(
+        mainTable: vmState.mainTable,
+        zeroCrossings: vmState.zeroCrossings,
+      );
+    }
+
+    return const EmptyStatePlaceholder();
+  }
+}
+
+class TrajectoryTableContent extends StatefulWidget {
   final FormattedTableData mainTable;
   final FormattedTableData? zeroCrossings;
 
-  const TrajectoryTable({
-    super.key,
+  const TrajectoryTableContent({
     required this.mainTable,
     this.zeroCrossings,
+    super.key,
   });
 
   @override
-  State<TrajectoryTable> createState() => _TrajectoryTableState();
+  State<TrajectoryTableContent> createState() => _TrajectoryTableContentState();
 }
 
-class _TrajectoryTableState extends State<TrajectoryTable> {
+class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

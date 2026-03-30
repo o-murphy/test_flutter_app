@@ -1,157 +1,453 @@
-// Widget tests for TablesScreen (Phase 4).
+// Widget tests for TrajectoryTable (Phase 4).
 //
-// Uses tablesVmProvider override — no FFI, no real ballistics.
-//   flutter test test/tables_screen_test.dart
+// TrajectoryTable is now a ConsumerWidget that uses Riverpod.
+// Use ProviderContainer to provide mocked data.
+//   flutter test test/trajectory_table_test.dart
 
+import 'package:eballistica/features/tables/details_table_mv.dart';
+import 'package:eballistica/features/tables/widgets/details_table.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:eballistica/shared/models/formatted_row.dart';
 import 'package:eballistica/features/tables/trajectory_tables_vm.dart';
-import 'package:eballistica/features/tables/tables_screen.dart';
 import 'package:eballistica/features/tables/widgets/trajectory_table.dart';
 
-// ── Fake ViewModel ────────────────────────────────────────────────────────────
+// ── Fixtures ─────────────────────────────────────────────────────────────────
 
-class _FakeTablesVM extends TrajectoryTablesViewModel {
-  final TrajectoryTablesUiState _initialState;
-  _FakeTablesVM(this._initialState);
-
-  @override
-  Future<TrajectoryTablesUiState> build() async => _initialState;
-
-  @override
-  Future<void> recalculate() async {}
+FormattedTableData _makeTable({
+  List<String>? headers,
+  bool includeZeroCrossing = false,
+  bool includeSubsonic = false,
+  bool includeTargetColumn = true,
+}) {
+  final h = headers ?? ['100', '200', '300'];
+  return FormattedTableData(
+    distanceHeaders: h,
+    distanceUnit: 'm',
+    rows: [
+      FormattedRow(
+        label: 'V',
+        unitSymbol: 'm/s',
+        cells: [
+          FormattedCell(value: '790'),
+          FormattedCell(value: '760', isZeroCrossing: includeZeroCrossing),
+          FormattedCell(
+            value: '730',
+            isTargetColumn: includeTargetColumn,
+            isSubsonic: includeSubsonic,
+          ),
+        ],
+      ),
+      FormattedRow(
+        label: 'Drop',
+        unitSymbol: 'cm',
+        cells: [
+          const FormattedCell(value: '-2.1'),
+          const FormattedCell(value: '-8.5'),
+          const FormattedCell(value: '-19.2'),
+        ],
+      ),
+    ],
+  );
 }
 
-// ── Fixtures ──────────────────────────────────────────────────────────────────
-
-const _kSpoiler = DetailsTableData(rifleName: 'Test Rifle', caliber: '7.62 mm');
-
-const _kMainTable = FormattedTableData(
-  distanceHeaders: ['100', '200', '300'],
-  distanceUnit: 'm',
-  rows: [
-    FormattedRow(
-      label: 'V',
-      unitSymbol: 'm/s',
-      cells: [
-        FormattedCell(value: '790'),
-        FormattedCell(value: '760'),
-        FormattedCell(value: '730'),
-      ],
-    ),
-  ],
+DetailsTableData _makeFullSpoiler() => const DetailsTableData(
+  rifleName: 'Test Rifle',
+  caliber: '7.62 mm',
+  twist: '1:11"',
+  dragModel: 'G7',
+  bc: '0.475 G7',
+  temperature: '20 °C',
+  humidity: '50 %',
+  pressure: '1013 hPa',
+  windSpeed: '3 m/s',
+  windDir: '90°',
 );
 
-Widget _scoped(TrajectoryTablesUiState state) => ProviderScope(
-  overrides: [
-    trajectoryTablesVmProvider.overrideWith(() => _FakeTablesVM(state)),
-  ],
-  // TablesScreen lives inside a shell Scaffold in the real app;
-  // wrap with Scaffold here so Material-dependent widgets (ListTile in
-  // _DetailsSpoiler) have a valid Material ancestor.
-  child: MaterialApp(home: Scaffold(body: TablesScreen())),
-);
+/// Mock ViewModel that extends TrajectoryTablesViewModel
+class _MockTrajectoryTablesViewModel extends TrajectoryTablesViewModel {
+  final TrajectoryTablesUiState _state;
+
+  _MockTrajectoryTablesViewModel(this._state);
+
+  @override
+  Future<TrajectoryTablesUiState> build() async => _state;
+
+  @override
+  Future<void> recalculate() async {
+    // Do nothing in tests
+  }
+}
+
+/// Wraps a widget with Riverpod ProviderScope and mocked providers
+Widget _wrapWithRiverpod(
+  Widget child, {
+  TrajectoryTablesUiState? trajectoryState,
+  DetailsTableData? detailsData,
+}) {
+  final container = ProviderContainer(
+    overrides: [
+      trajectoryTablesVmProvider.overrideWith(
+        () => _MockTrajectoryTablesViewModel(
+          trajectoryState ?? const TrajectoryTablesUiLoading(),
+        ),
+      ),
+      detailsTableMvProvider.overrideWithValue(detailsData),
+    ],
+  );
+
+  return UncontrolledProviderScope(
+    container: container,
+    child: MaterialApp(home: Scaffold(body: child)),
+  );
+}
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 void main() {
-  group('TablesScreen — loading state', () {
-    testWidgets('shows spinner for TablesUiLoading', (tester) async {
-      await tester.pumpWidget(_scoped(const TrajectoryTablesUiLoading()));
+  group('TrajectoryTable — main table rendering', () {
+    testWidgets('renders distance headers', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: TrajectoryTablesUiReady(
+            mainTable: _makeTable(),
+            zeroCrossings: null,
+          ),
+        ),
+      );
       await tester.pump();
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.byType(TrajectoryTable), findsNothing);
+      expect(find.text('100'), findsWidgets);
+      expect(find.text('200'), findsWidgets);
+      expect(find.text('300'), findsWidgets);
     });
 
-    testWidgets('shows spinner when vm state is null (AsyncLoading)', (
-      tester,
-    ) async {
-      // Before build() resolves the provider emits AsyncLoading — vmState == null
-      await tester.pumpWidget(_scoped(const TrajectoryTablesUiLoading()));
-      // Don't pump — still in AsyncLoading
+    testWidgets('renders distance unit label', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: TrajectoryTablesUiReady(
+            mainTable: _makeTable(),
+            zeroCrossings: null,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.textContaining('Range, m'), findsWidgets);
+    });
+
+    testWidgets('renders row labels', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: TrajectoryTablesUiReady(
+            mainTable: _makeTable(),
+            zeroCrossings: null,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('V'), findsOneWidget);
+      expect(find.text('Drop'), findsOneWidget);
+    });
+
+    testWidgets('renders row unit symbols', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: TrajectoryTablesUiReady(
+            mainTable: _makeTable(),
+            zeroCrossings: null,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('m/s'), findsOneWidget);
+      expect(find.text('cm'), findsOneWidget);
+    });
+
+    testWidgets('renders cell values', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: TrajectoryTablesUiReady(
+            mainTable: _makeTable(),
+            zeroCrossings: null,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('790'), findsOneWidget);
+      expect(find.text('-2.1'), findsOneWidget);
+      expect(find.text('-8.5'), findsOneWidget);
+    });
+
+    testWidgets('always shows Trajectory section title', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: TrajectoryTablesUiReady(
+            mainTable: _makeTable(),
+            zeroCrossings: null,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.textContaining('TRAJECTORY'), findsOneWidget);
+    });
+  });
+
+  group('TrajectoryTable — loading state', () {
+    testWidgets('shows loading indicator when loading', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: const TrajectoryTablesUiLoading(),
+        ),
+      );
+      await tester.pump();
+
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
   });
 
-  group('TablesScreen — empty state', () {
-    testWidgets('shows table_view icon for TablesUiEmpty', (tester) async {
-      await tester.pumpWidget(_scoped(const TrajectoryTablesUiEmpty()));
+  group('TrajectoryTable — empty state', () {
+    testWidgets('shows empty state when no data', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: const TrajectoryTablesUiEmpty(),
+        ),
+      );
       await tester.pump();
 
       expect(find.text('No data'), findsOneWidget);
-      expect(find.byType(TrajectoryTable), findsNothing);
     });
   });
 
-  group('TablesScreen — ready state', () {
-    testWidgets('shows TrajectoryTable for TablesUiReady', (tester) async {
+  group('TrajectoryTable — error state', () {
+    testWidgets('shows error message on error', (tester) async {
       await tester.pumpWidget(
-        _scoped(
-          const TrajectoryTablesUiReady(
-            details: _kSpoiler,
-            mainTable: _kMainTable,
-          ),
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: const TrajectoryTablesUiError('Test error'),
         ),
       );
       await tester.pump();
 
-      expect(find.byType(TrajectoryTable), findsOneWidget);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
-    });
-
-    testWidgets('TrajectoryTable receives correct mainTable data', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _scoped(
-          const TrajectoryTablesUiReady(
-            details: _kSpoiler,
-            mainTable: _kMainTable,
-          ),
-        ),
-      );
-      await tester.pump();
-
-      // Table header '100' and row label 'V' are rendered inside TrajectoryTable
-      expect(find.text('100'), findsWidgets);
-      expect(find.text('V'), findsOneWidget);
-    });
-
-    testWidgets('shows header title Tables', (tester) async {
-      await tester.pumpWidget(
-        _scoped(
-          const TrajectoryTablesUiReady(
-            details: _kSpoiler,
-            mainTable: _kMainTable,
-          ),
-        ),
-      );
-      await tester.pump();
-
-      expect(find.text('Tables'), findsOneWidget);
+      expect(find.textContaining('Test error'), findsOneWidget);
     });
   });
 
-  group('TablesScreen — header', () {
-    testWidgets('back button is present', (tester) async {
-      await tester.pumpWidget(_scoped(const TrajectoryTablesUiLoading()));
-      await tester.pump();
+  group('TrajectoryTable — zero crossings section', () {
+    testWidgets('shows Zero Crossings title when provided', (tester) async {
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 1.0;
 
-      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: TrajectoryTablesUiReady(
+            mainTable: _makeTable(),
+            zeroCrossings: _makeTable(),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('ZERO CROSSINGS'), findsOneWidget);
+
+      addTearDown(tester.view.resetPhysicalSize);
     });
 
-    testWidgets('configure and export icon buttons are present', (
-      tester,
-    ) async {
-      await tester.pumpWidget(_scoped(const TrajectoryTablesUiLoading()));
+    testWidgets('Zero Crossings absent when null', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: TrajectoryTablesUiReady(
+            mainTable: _makeTable(),
+            zeroCrossings: null,
+          ),
+        ),
+      );
       await tester.pump();
 
-      expect(find.byIcon(Icons.tune_outlined), findsOneWidget);
-      expect(find.byIcon(Icons.share_outlined), findsOneWidget);
+      expect(find.text('ZERO CROSSINGS'), findsNothing);
+    });
+
+    testWidgets('Zero Crossings absent when empty headers', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: TrajectoryTablesUiReady(
+            mainTable: _makeTable(),
+            zeroCrossings: const FormattedTableData(
+              distanceHeaders: [],
+              rows: [],
+              distanceUnit: 'm',
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('ZERO CROSSINGS'), findsNothing);
+    });
+  });
+
+  group('DetailsTable — rendering', () {
+    testWidgets('renders all sections immediately', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const DetailsTable(),
+          detailsData: _makeFullSpoiler(),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('RIFLE'), findsOneWidget);
+      expect(find.text('PROJECTILE'), findsOneWidget);
+      expect(find.text('ATMOSPHERE'), findsOneWidget);
+    });
+
+    testWidgets('renders rifle details correctly', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const DetailsTable(),
+          detailsData: _makeFullSpoiler(),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Test Rifle'), findsOneWidget);
+      expect(find.text('7.62 mm'), findsOneWidget);
+      expect(find.text('1:11"'), findsOneWidget);
+    });
+
+    testWidgets('renders projectile details correctly', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const DetailsTable(),
+          detailsData: _makeFullSpoiler(),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('G7'), findsOneWidget);
+      expect(find.text('0.475 G7'), findsOneWidget);
+    });
+
+    testWidgets('renders atmosphere details correctly', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const DetailsTable(),
+          detailsData: _makeFullSpoiler(),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('20 °C'), findsOneWidget);
+      expect(find.text('1013 hPa'), findsOneWidget);
+      expect(find.text('3 m/s'), findsOneWidget);
+      expect(find.text('90°'), findsOneWidget);
+    });
+
+    testWidgets('returns empty space if no data provided', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(const DetailsTable(), detailsData: null),
+      );
+      await tester.pump();
+
+      expect(find.text('RIFLE'), findsNothing);
+      expect(find.text('ATMOSPHERE'), findsNothing);
+    });
+  });
+
+  group('TrajectoryTable — cell detail dialog', () {
+    testWidgets('tapping a cell opens detail dialog', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: TrajectoryTablesUiReady(
+            mainTable: _makeTable(),
+            zeroCrossings: null,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('790').first);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+    });
+
+    testWidgets('dialog title contains the distance header', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: TrajectoryTablesUiReady(
+            mainTable: _makeTable(),
+            zeroCrossings: null,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('790').first);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('100'), findsWidgets);
+    });
+
+    testWidgets('dialog lists all row labels with values', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: TrajectoryTablesUiReady(
+            mainTable: _makeTable(),
+            zeroCrossings: null,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('790').first);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('V'), findsWidgets);
+      expect(find.textContaining('Drop'), findsWidgets);
+      expect(find.text('790'), findsWidgets);
+    });
+
+    testWidgets('Close button dismisses dialog', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithRiverpod(
+          const TrajectoryTable(),
+          trajectoryState: TrajectoryTablesUiReady(
+            mainTable: _makeTable(),
+            zeroCrossings: null,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('790').first);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
     });
   });
 }

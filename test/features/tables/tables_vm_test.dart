@@ -26,6 +26,7 @@ import 'package:eballistica/core/solver/munition.dart';
 import 'package:eballistica/core/solver/trajectory_data.dart';
 import 'package:eballistica/core/solver/unit.dart';
 import 'package:eballistica/features/tables/trajectory_tables_vm.dart';
+import 'package:eballistica/features/tables/details_table_mv.dart';
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -204,6 +205,12 @@ Future<TrajectoryTablesUiReady> _recalculate(
   return state as TrajectoryTablesUiReady;
 }
 
+// ── Helper to get details from provider ─────────────────────────────────────
+
+DetailsTableData? _getDetails(ProviderContainer container) {
+  return container.read(detailsTableMvProvider);
+}
+
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 void main() {
@@ -211,73 +218,75 @@ void main() {
     late ProviderContainer container;
     late _FakeBallisticsService service;
     late TrajectoryTablesUiReady state;
+    late DetailsTableData? details;
 
     setUp(() async {
       service = _FakeBallisticsService(_makeResult());
       container = _createContainer(profile: _makeProfile(), service: service);
       state = await _recalculate(container);
+      details = _getDetails(container);
     });
 
     tearDown(() => container.dispose());
 
     test('spoiler has rifle name', () {
-      expect(state.details.rifleName, 'Test Rifle');
+      expect(details?.rifleName, 'Test Rifle');
     });
 
     test('spoiler shows caliber', () {
-      expect(state.details.caliber, isNotNull);
+      expect(details?.caliber, isNotNull);
     });
 
     test('spoiler shows twist', () {
-      expect(state.details.twist, isNotNull);
-      expect(state.details.twist!, contains('1:'));
+      expect(details?.twist, isNotNull);
+      expect(details?.twist, contains('1:'));
     });
 
     test('spoiler shows drag model', () {
-      expect(state.details.dragModel, 'G7');
+      expect(details?.dragModel, 'G7');
     });
 
     test('spoiler shows BC', () {
-      expect(state.details.bc, isNotNull);
-      expect(state.details.bc!, contains('0.475'));
+      expect(details?.bc, isNotNull);
+      expect(details?.bc, contains('0.475'));
     });
 
     test('spoiler shows zero MV', () {
-      expect(state.details.zeroMv, isNotNull);
-      expect(state.details.zeroMv!, contains('m/s'));
+      expect(details?.zeroMv, isNotNull);
+      expect(details?.zeroMv, contains('m/s'));
     });
 
     test('spoiler shows current MV', () {
-      expect(state.details.currentMv, isNotNull);
+      expect(details?.currentMv, isNotNull);
     });
 
     test('spoiler shows zero distance', () {
-      expect(state.details.zeroDist, isNotNull);
-      expect(state.details.zeroDist!, contains('m'));
+      expect(details?.zeroDist, isNotNull);
+      expect(details?.zeroDist, contains('m'));
     });
 
     test('spoiler shows temperature', () {
-      expect(state.details.temperature, isNotNull);
-      expect(state.details.temperature!, contains('°C'));
+      expect(details?.temperature, isNotNull);
+      expect(details?.temperature, contains('°C'));
     });
 
     test('spoiler shows humidity', () {
-      expect(state.details.humidity, isNotNull);
-      expect(state.details.humidity!, contains('%'));
+      expect(details?.humidity, isNotNull);
+      expect(details?.humidity, contains('%'));
     });
 
     test('spoiler shows pressure', () {
-      expect(state.details.pressure, isNotNull);
-      expect(state.details.pressure!, contains('hPa'));
+      expect(details?.pressure, isNotNull);
+      expect(details?.pressure, contains('hPa'));
     });
 
     test('spoiler shows wind speed', () {
-      expect(state.details.windSpeed, isNotNull);
+      expect(details?.windSpeed, isNotNull);
     });
 
     test('spoiler shows wind direction', () {
-      expect(state.details.windDir, isNotNull);
-      expect(state.details.windDir!, contains('90'));
+      expect(details?.windDir, isNotNull);
+      expect(details?.windDir, contains('90'));
     });
 
     test('main table has distance headers', () {
@@ -357,6 +366,7 @@ void main() {
   group('TablesViewModel — imperial units', () {
     late ProviderContainer container;
     late TrajectoryTablesUiReady state;
+    late DetailsTableData? details;
 
     setUp(() async {
       const imperial = AppSettings(
@@ -377,18 +387,19 @@ void main() {
         settings: imperial,
       );
       state = await _recalculate(container);
+      details = _getDetails(container);
     });
 
     tearDown(() => container.dispose());
 
     test('spoiler shows imperial temperature', () {
-      expect(state.details.temperature, isNotNull);
-      expect(state.details.temperature!, contains('°F'));
+      expect(details?.temperature, isNotNull);
+      expect(details?.temperature, contains('°F'));
     });
 
     test('spoiler shows imperial pressure', () {
-      expect(state.details.pressure, isNotNull);
-      expect(state.details.pressure!, contains('mmHg'));
+      expect(details?.pressure, isNotNull);
+      expect(details?.pressure, contains('mmHg'));
     });
 
     test('main table distance unit is yd', () {
@@ -399,15 +410,6 @@ void main() {
   group('TablesViewModel — empty state', () {
     test('returns empty when profile is null', () async {
       final service = _FakeBallisticsService(_makeResult());
-      // Use a real profile/settings but override profile to return null via
-      // a notifier whose .value is null at the time recalculate runs.
-      // Simplest: use a normal container, read the notifier before deps
-      // resolve, and call recalculate. Since TablesVM uses ref.read (not
-      // ref.watch), we can control timing by calling recalculate before
-      // the profile provider has settled.
-      //
-      // Alternative approach: override shotProfileProvider with an
-      // AsyncLoading state.
       final container = ProviderContainer(
         overrides: [
           shotProfileProvider.overrideWith(() => _PendingProfileNotifier()),
@@ -419,9 +421,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      // Let the tablesVmProvider build complete (returns Loading)
       await container.read(trajectoryTablesVmProvider.future);
-      // Settings is ready, but profile is pending → .value == null
       await container.read(settingsProvider.future);
       await Future<void>.delayed(Duration.zero);
       final notifier = container.read(trajectoryTablesVmProvider.notifier);

@@ -3,12 +3,12 @@
 // TrajectoryTable is a plain StatefulWidget — no Riverpod needed.
 //   flutter test test/trajectory_table_test.dart
 
+import 'package:eballistica/features/tables/details_table_mv.dart';
 import 'package:eballistica/features/tables/widgets/details_table.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:eballistica/shared/models/formatted_row.dart';
-import 'package:eballistica/features/tables/trajectory_tables_vm.dart';
 import 'package:eballistica/features/tables/widgets/trajectory_table.dart';
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
@@ -70,7 +70,9 @@ Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 void main() {
   group('TrajectoryTable — main table rendering', () {
     testWidgets('renders distance headers', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(mainTable: _makeTable())));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTableContent(mainTable: _makeTable())),
+      );
       await tester.pump();
 
       expect(find.text('100'), findsWidgets);
@@ -79,7 +81,9 @@ void main() {
     });
 
     testWidgets('renders distance unit label', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(mainTable: _makeTable())));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTableContent(mainTable: _makeTable())),
+      );
       await tester.pump();
 
       // 'm' appears in the header row and potentially in cells
@@ -87,7 +91,9 @@ void main() {
     });
 
     testWidgets('renders row labels', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(mainTable: _makeTable())));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTableContent(mainTable: _makeTable())),
+      );
       await tester.pump();
 
       expect(find.text('V'), findsOneWidget);
@@ -95,7 +101,9 @@ void main() {
     });
 
     testWidgets('renders row unit symbols', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(mainTable: _makeTable())));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTableContent(mainTable: _makeTable())),
+      );
       await tester.pump();
 
       expect(find.text('m/s'), findsOneWidget);
@@ -103,7 +111,9 @@ void main() {
     });
 
     testWidgets('renders cell values', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(mainTable: _makeTable())));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTableContent(mainTable: _makeTable())),
+      );
       await tester.pump();
 
       expect(find.text('790'), findsOneWidget);
@@ -112,7 +122,9 @@ void main() {
     });
 
     testWidgets('always shows Trajectory section title', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(mainTable: _makeTable())));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTableContent(mainTable: _makeTable())),
+      );
       await tester.pump();
 
       expect(find.textContaining('TRAJECTORY'), findsOneWidget);
@@ -128,7 +140,10 @@ void main() {
       await tester.pumpWidget(
         _wrap(
           // Переконайтеся, що ви викликаєте TrajectoryTable2, якщо перейменували його
-          TrajectoryTable(mainTable: _makeTable(), zeroCrossings: _makeTable()),
+          TrajectoryTableContent(
+            mainTable: _makeTable(),
+            zeroCrossings: _makeTable(),
+          ),
         ),
       );
 
@@ -144,7 +159,9 @@ void main() {
     });
 
     testWidgets('Zero Crossings absent when null', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(mainTable: _makeTable())));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTableContent(mainTable: _makeTable())),
+      );
       await tester.pump();
 
       expect(find.text('Zero Crossings'), findsNothing);
@@ -153,7 +170,7 @@ void main() {
     testWidgets('Zero Crossings absent when empty headers', (tester) async {
       await tester.pumpWidget(
         _wrap(
-          TrajectoryTable(
+          TrajectoryTableContent(
             mainTable: _makeTable(),
             zeroCrossings: const FormattedTableData(
               distanceHeaders: [],
@@ -173,7 +190,9 @@ void main() {
     testWidgets('renders all sections immediately (no spoiler)', (
       tester,
     ) async {
-      await tester.pumpWidget(_wrap(DetailsTable(details: _makeFullSpoiler())));
+      await tester.pumpWidget(
+        _wrap(DetailsTableContent(details: _makeFullSpoiler())),
+      );
       await tester.pump();
 
       // Тепер ці заголовки мають бути знайдені відразу, без тапів
@@ -183,7 +202,9 @@ void main() {
     });
 
     testWidgets('renders rifle details correctly', (tester) async {
-      await tester.pumpWidget(_wrap(DetailsTable(details: _makeFullSpoiler())));
+      await tester.pumpWidget(
+        _wrap(DetailsTableContent(details: _makeFullSpoiler())),
+      );
       await tester.pump();
 
       expect(find.text('Test Rifle'), findsOneWidget);
@@ -192,7 +213,9 @@ void main() {
     });
 
     testWidgets('renders projectile details correctly', (tester) async {
-      await tester.pumpWidget(_wrap(DetailsTable(details: _makeFullSpoiler())));
+      await tester.pumpWidget(
+        _wrap(DetailsTableContent(details: _makeFullSpoiler())),
+      );
       await tester.pump();
 
       expect(find.text('G7'), findsOneWidget);
@@ -200,7 +223,9 @@ void main() {
     });
 
     testWidgets('renders atmosphere details correctly', (tester) async {
-      await tester.pumpWidget(_wrap(DetailsTable(details: _makeFullSpoiler())));
+      await tester.pumpWidget(
+        _wrap(DetailsTableContent(details: _makeFullSpoiler())),
+      );
       await tester.pump();
 
       expect(find.text('20 °C'), findsOneWidget);
@@ -213,7 +238,9 @@ void main() {
       // Створюємо порожній об'єкт деталей, якщо це дозволяє ваша модель
       const emptyDetails = DetailsTableData(rifleName: '');
 
-      await tester.pumpWidget(_wrap(const DetailsTable(details: emptyDetails)));
+      await tester.pumpWidget(
+        _wrap(const DetailsTableContent(details: emptyDetails)),
+      );
       await tester.pump();
 
       // Якщо у вашому коді є перевірка на items.isEmpty -> SizedBox.shrink()
@@ -224,7 +251,9 @@ void main() {
 
   group('TrajectoryTable — cell detail dialog', () {
     testWidgets('tapping a cell opens detail dialog', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(mainTable: _makeTable())));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTableContent(mainTable: _makeTable())),
+      );
       await tester.pump();
 
       await tester.tap(find.text('790').first);
@@ -234,7 +263,9 @@ void main() {
     });
 
     testWidgets('dialog title contains the distance header', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(mainTable: _makeTable())));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTableContent(mainTable: _makeTable())),
+      );
       await tester.pump();
 
       // Tap first cell (column 0 → header '100')
@@ -245,7 +276,9 @@ void main() {
     });
 
     testWidgets('dialog lists all row labels with values', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(mainTable: _makeTable())));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTableContent(mainTable: _makeTable())),
+      );
       await tester.pump();
 
       await tester.tap(find.text('790').first);
@@ -259,7 +292,9 @@ void main() {
     });
 
     testWidgets('Close button dismisses dialog', (tester) async {
-      await tester.pumpWidget(_wrap(TrajectoryTable(mainTable: _makeTable())));
+      await tester.pumpWidget(
+        _wrap(TrajectoryTableContent(mainTable: _makeTable())),
+      );
       await tester.pump();
 
       await tester.tap(find.text('790').first);
