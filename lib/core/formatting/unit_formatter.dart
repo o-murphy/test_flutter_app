@@ -17,10 +17,10 @@ abstract interface class UnitFormatter {
   String weight(Weight dim); // "250 gr"
   String sightHeight(Distance dim); // "8.5 mm"
   String twist(Distance dim); // "1:10 inch"
-  String humidity(Ratio fraction); // "50 %"
+  String humidity(Ratio dim); // "50 %"
   String mach(double mach); // "0.85 M"
   String time(double seconds); // "1.234 s"
-  String powderSensitivity(Ratio fraction); // "2.00 %"
+  String powderSensitivity(Ratio dim); // "2.00 %"
 
   // --- Сирі числа (без одиниці, для слайдерів/полів вводу) ---
   double rawVelocity(Velocity dim);

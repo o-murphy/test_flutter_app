@@ -53,7 +53,6 @@ class UnitFormatterImpl implements UnitFormatter {
 
   @override
   String humidity(Ratio dim) => _fmt(dim, FC.humidity, Unit.percent);
-  // '${fraction.in_(Unit.percent).toStringAsFixed(FC.humidity.accuracy)} %';
 
   @override
   String mach(double m) => '${m.toStringAsFixed(2)} M';
@@ -62,8 +61,8 @@ class UnitFormatterImpl implements UnitFormatter {
   String time(double seconds) => '${seconds.toStringAsFixed(3)} s';
 
   @override
-  String powderSensitivity(Ratio fraction) =>
-      '${fraction.in_(Unit.percent).toStringAsFixed(FC.powderSensitivity.accuracy)} %';
+  String powderSensitivity(Ratio dim) =>
+      _fmt(dim, FC.powderSensitivity, Unit.percent);
 
   // --- Raw numbers ---
 
