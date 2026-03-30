@@ -81,7 +81,7 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
   final refPowderTempC = cart.powderTemp.in_(Unit.celsius);
 
   double mvAtTempC(double tCurC) =>
-      velocityForPowderTemp(refMvMps, refPowderTempC, tCurC, cart.tempModifier / 100);
+      velocityForPowderTemp(refMvMps, refPowderTempC, tCurC, cart.tempModifier);
 
   // Zero MV
   final zeroAtmo = profile.zeroConditions ?? conds;

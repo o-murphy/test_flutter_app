@@ -1,4 +1,5 @@
 // ЧИСТИЙ DART
+import 'package:eballistica/core/solver/munition.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/core/formatting/unit_formatter.dart';
@@ -201,17 +202,14 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
     final refPowderTempC = cartridge.powderTemp.in_(Unit.celsius);
     final tempModifier = cartridge.tempModifier;
 
-    double mvAtTemp(double tC) {
-      if (refMvMps <= 0 || tempModifier == 0) return refMvMps;
-      return (tempModifier / 100.0 / (15 / refMvMps)) * (tC - refPowderTempC) +
-          refMvMps;
-    }
+    double mvAtTempC(double tCurC) =>
+        velocityForPowderTemp(refMvMps, refPowderTempC, tCurC, tempModifier);
 
-    final currentMvMps = mvAtTemp(powderTempRaw);
+    final currentMvMps = mvAtTempC(powderTempRaw);
     final currentMvDisp = Velocity(currentMvMps, Unit.mps).in_(units.velocity);
     final mvStr =
         '${currentMvDisp.toStringAsFixed(FC.velocity.accuracyFor(units.velocity))} ${units.velocity.symbol}';
-    final sensStr = '${tempModifier.toStringAsFixed(2)} %/15°C';
+    final sensStr = '${(tempModifier * 100.0).toStringAsFixed(2)} %/15°C';
 
     return ConditionsUiState(
       temperature: _field(

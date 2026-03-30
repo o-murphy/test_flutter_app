@@ -129,7 +129,7 @@ final seedCartridgeHornady250 = Cartridge(
   projectile: _projHornady250,
   mv: Velocity(885.0, Unit.mps),
   powderTemp: Temperature(15.0, Unit.celsius),
-  tempModifier: 0.5,
+  tempModifier: 0.02,
   usePowderSensitivity: true,
 );
 
@@ -139,7 +139,7 @@ final seedCartridgeLapua300 = Cartridge(
   projectile: _projLapua300,
   mv: Velocity(825.0, Unit.mps),
   powderTemp: Temperature(15.0, Unit.celsius),
-  tempModifier: 0.5,
+  tempModifier: 0.123,
   usePowderSensitivity: true,
 );
 
@@ -149,7 +149,7 @@ final seedCartridgeSts285EldM = Cartridge(
   projectile: _projSts285EldM,
   mv: Velocity(810.0, Unit.mps),
   powderTemp: Temperature(15.0, Unit.celsius),
-  tempModifier: 0.5,
+  tempModifier: 0.02,
   usePowderSensitivity: true,
 );
 
@@ -168,7 +168,7 @@ final _seedZeroConditions = Atmo(
   altitude: Distance(0.0, Unit.meter),
   temperature: Temperature(15.0, Unit.celsius),
   pressure: Pressure(1000.0, Unit.hPa),
-  humidity: 0.50,
+  humidity: 0.02,
 );
 
 final seedShotProfile = ShotProfile(

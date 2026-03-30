@@ -63,7 +63,7 @@ class Ammo {
       mv.in_(Unit.mps),
       powderTemp.in_(Unit.celsius),
       currentTemp.in_(Unit.celsius),
-      tempModifier / 100,
+      tempModifier,
     );
 
     return Velocity(adjustedMv, Unit.mps);
