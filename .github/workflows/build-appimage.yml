@@ -114,25 +114,17 @@ jobs:
 
           # AppDir structure
           APPDIR="AppDir"
-          mkdir -p "$APPDIR/usr/bin"
-          mkdir -p "$APPDIR/usr/lib"
+          mkdir -p "$APPDIR/usr/share/eballistica"
           mkdir -p "$APPDIR/usr/share/applications"
           mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
 
-          # Copy binary and bundle
-          cp "$BUNDLE_DIR/eballistica" "$APPDIR/usr/bin/"
-          cp -r "$BUNDLE_DIR/data" "$APPDIR/usr/bin/"
-          cp -r "$BUNDLE_DIR/lib/"* "$APPDIR/usr/lib/"
+          # Copy entire bundle preserving relative structure Flutter expects:
+          # eballistica, lib/libapp.so, lib/libflutter_linux_gtk.so, data/
+          cp -r "$BUNDLE_DIR/"* "$APPDIR/usr/share/eballistica/"
 
           # Desktop entry
-          cat > "$APPDIR/usr/share/applications/eballistica.desktop" << 'EOF'
-          [Desktop Entry]
-          Name=eBallistica
-          Exec=eballistica
-          Icon=eballistica
-          Type=Application
-          Categories=Utility;
-          EOF
+          printf '[Desktop Entry]\nName=eBallistica\nExec=eballistica\nIcon=eballistica\nType=Application\nCategories=Utility;\n' \
+            > "$APPDIR/usr/share/applications/eballistica.desktop"
 
           # Placeholder icon (replace with real icon if available)
           if [ -f "assets/icon.png" ]; then
@@ -147,12 +139,8 @@ jobs:
           ln -sf usr/share/applications/eballistica.desktop "$APPDIR/eballistica.desktop"
           ln -sf usr/share/icons/hicolor/256x256/apps/eballistica.png "$APPDIR/eballistica.png"
 
-          cat > "$APPDIR/AppRun" << 'EOF'
-          #!/bin/sh
-          HERE="$(dirname "$(readlink -f "$0")")"
-          export LD_LIBRARY_PATH="$HERE/usr/lib:$LD_LIBRARY_PATH"
-          exec "$HERE/usr/bin/eballistica" "$@"
-          EOF
+          printf '#!/bin/sh\nHERE="$(dirname "$(readlink -f "$0")")"\nAPP_DIR="$HERE/usr/share/eballistica"\nexport LD_LIBRARY_PATH="$APP_DIR/lib:$LD_LIBRARY_PATH"\nexec "$APP_DIR/eballistica" "$@"\n' \
+            > "$APPDIR/AppRun"
           chmod +x "$APPDIR/AppRun"
 
           # Build AppImage
