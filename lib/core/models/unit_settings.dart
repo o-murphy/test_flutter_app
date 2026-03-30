@@ -83,27 +83,27 @@ class UnitSettings {
   };
 
   factory UnitSettings.fromJson(Map<String, dynamic> json) {
-    Unit u(String key, Unit fallback) {
+    Unit u(String key, Unit fallback, bool Function(Unit) accepts) {
       final name = json[key] as String?;
-      if (name == null) return fallback;
-      return .fromName(name) ?? fallback;
+      final unit = name != null ? Unit.fromName(name) : null;
+      return (unit != null && accepts(unit)) ? unit : fallback;
     }
 
     return UnitSettings(
-      angular: u('angular', Unit.degree),
-      distance: u('distance', Unit.meter),
-      velocity: u('velocity', Unit.mps),
-      pressure: u('pressure', Unit.hPa),
-      temperature: u('temperature', Unit.celsius),
-      diameter: u('diameter', Unit.inch),
-      length: u('length', Unit.inch),
-      weight: u('weight', Unit.grain),
-      adjustment: u('adjustment', Unit.mil),
-      drop: u('drop', Unit.centimeter),
-      energy: u('energy', Unit.joule),
-      sightHeight: u('sightHeight', Unit.millimeter),
-      twist: u('twist', Unit.inch),
-      time: u('time', Unit.second),
+      angular:     u('angular',     Angular.fallback,     Angular.accepts),
+      distance:    u('distance',    Distance.fallback,    Distance.accepts),
+      velocity:    u('velocity',    Velocity.fallback,    Velocity.accepts),
+      pressure:    u('pressure',    Pressure.fallback,    Pressure.accepts),
+      temperature: u('temperature', Temperature.fallback, Temperature.accepts),
+      diameter:    u('diameter',    Distance.fallback,    Distance.accepts),
+      length:      u('length',      Distance.fallback,    Distance.accepts),
+      weight:      u('weight',      Weight.fallback,      Weight.accepts),
+      adjustment:  u('adjustment',  Angular.fallback,     Angular.accepts),
+      drop:        u('drop',        Distance.fallback,    Distance.accepts),
+      energy:      u('energy',      Energy.fallback,      Energy.accepts),
+      sightHeight: u('sightHeight', Distance.fallback,    Distance.accepts),
+      twist:       u('twist',       Distance.fallback,    Distance.accepts),
+      time:        u('time',        Time.fallback,        Time.accepts),
     );
   }
 }

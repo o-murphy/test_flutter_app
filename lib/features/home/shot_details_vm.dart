@@ -133,7 +133,7 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
       refMvMps,
       refPowderTempC,
       tCurC,
-      cartridge.tempModifier,
+      cartridge.tempModifier / 100,
     );
 
     final conditions = profile.conditions;

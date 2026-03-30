@@ -132,6 +132,9 @@ abstract class Dimension<T extends Dimension<T>> {
 class Angular extends Dimension<Angular> {
   Angular(super.value, super.unit);
 
+  static const fallback = Unit.degree;
+  static bool accepts(Unit u) => u.id >= 0 && u.id < 10;
+
   static final _conversionFactors = <Unit, double>{
     Unit.radian: 1.0,
     Unit.degree: pi / 180,
@@ -163,6 +166,9 @@ class Angular extends Dimension<Angular> {
 class Energy extends Dimension<Energy> {
   Energy(super.value, super.unit);
 
+  static const fallback = Unit.joule;
+  static bool accepts(Unit u) => u.id >= 30 && u.id < 40;
+
   static final _conversionFactors = <Unit, double>{
     Unit.footPound: 1.0,
     Unit.joule: 1 / 1.3558179483314,
@@ -177,6 +183,9 @@ class Energy extends Dimension<Energy> {
 
 class Distance extends Dimension<Distance> {
   Distance(super.value, super.unit);
+
+  static const fallback = Unit.meter;
+  static bool accepts(Unit u) => u.id >= 10 && u.id < 20;
 
   static final _conversionFactors = <Unit, double>{
     Unit.inch: 1.0,
@@ -201,6 +210,9 @@ class Distance extends Dimension<Distance> {
 class Pressure extends Dimension<Pressure> {
   Pressure(super.value, super.unit);
 
+  static const fallback = Unit.hPa;
+  static bool accepts(Unit u) => u.id >= 40 && u.id < 50;
+
   static final _conversionFactors = <Unit, double>{
     Unit.mmHg: 1.0,
     Unit.inHg: 25.4,
@@ -218,6 +230,9 @@ class Pressure extends Dimension<Pressure> {
 
 class Temperature extends Dimension<Temperature> {
   Temperature(super.value, super.unit);
+
+  static const fallback = Unit.celsius;
+  static bool accepts(Unit u) => u.id >= 50 && u.id < 60;
 
   @override
   Map<Unit, double> get conversionFactors => const {};
@@ -251,6 +266,9 @@ class Temperature extends Dimension<Temperature> {
 class Time extends Dimension<Time> {
   Time(super.value, super.unit);
 
+  static const fallback = Unit.second;
+  static bool accepts(Unit u) => u.id >= 80 && u.id < 90;
+
   static final _conversionFactors = <Unit, double>{
     Unit.second: 1.0,
     Unit.minute: 60.0,
@@ -270,6 +288,9 @@ class Time extends Dimension<Time> {
 class Velocity extends Dimension<Velocity> {
   Velocity(super.value, super.unit);
 
+  static const fallback = Unit.mps;
+  static bool accepts(Unit u) => u.id >= 60 && u.id < 70;
+
   static final _conversionFactors = <Unit, double>{
     Unit.mps: 1.0,
     Unit.kmh: 1.0 / 3.6,
@@ -287,6 +308,9 @@ class Velocity extends Dimension<Velocity> {
 
 class Weight extends Dimension<Weight> {
   Weight(super.value, super.unit);
+
+  static const fallback = Unit.grain;
+  static bool accepts(Unit u) => u.id >= 70 && u.id < 80;
 
   static final _conversionFactors = <Unit, double>{
     Unit.grain: 1.0,
