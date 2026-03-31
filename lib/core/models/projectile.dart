@@ -1,7 +1,8 @@
+import 'package:eballistica/core/solver/unit.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:eballistica/core/solver/drag_model.dart';
-import '_dim.dart';
+import '_storage.dart';
 
 enum DragModelType { g1, g7, custom }
 
@@ -52,9 +53,9 @@ class Projectile {
     'dragType': dragType.name,
     'dm': {
       'bc': dm.bc,
-      'weight': dimToJson(dm.weight),
-      'diameter': dimToJson(dm.diameter),
-      'length': dimToJson(dm.length),
+      'weight': dm.weight.in_(StorageUnits.projectileWeight),
+      'diameter': dm.diameter.in_(StorageUnits.projectileDiameter),
+      'length': dm.length.in_(StorageUnits.projectileLength),
       'dragTable': dm.dragTable
           .map((p) => {'mach': p.mach, 'cd': p.cd})
           .toList(),
@@ -79,9 +80,9 @@ class Projectile {
         dragTable: (d['dragTable'] as List)
             .map((p) => {'mach': p['mach'], 'cd': p['cd']})
             .toList(),
-        weight: weightFromJson(d['weight'] as Map<String, dynamic>),
-        diameter: distanceFromJson(d['diameter'] as Map<String, dynamic>),
-        length: distanceFromJson(d['length'] as Map<String, dynamic>),
+        weight: Weight(d['weight'].asDouble(), StorageUnits.projectileWeight),
+        diameter: Distance(d['diameter'].asDouble(), StorageUnits.projectileDiameter),
+        length: Distance(d['length'].asDouble(), StorageUnits.projectileLength),
       ),
       notes: json['notes'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),

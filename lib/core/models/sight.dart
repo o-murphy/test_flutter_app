@@ -1,14 +1,14 @@
 import 'package:eballistica/core/solver/unit.dart';
 import 'package:uuid/uuid.dart';
 
-import '_dim.dart';
+import '_storage.dart';
 
 class Sight {
   final String id;
   final String name;
   final String? manufacturer;
-  final Distance sightHeight; // Distance
-  final Angular zeroElevation; // Angular
+  final Distance sightHeight;
+  final Angular zeroElevation;
   final String? notes;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -47,8 +47,8 @@ class Sight {
     'id': id,
     'name': name,
     if (manufacturer != null) 'manufacturer': manufacturer,
-    'sightHeight': dimToJson(sightHeight),
-    'zeroElevation': dimToJson(zeroElevation),
+    'sightHeight': sightHeight.in_(StorageUnits.sightSightHeight),
+    'zeroElevation': zeroElevation.in_(StorageUnits.sightZeroElevation),
     if (notes != null) 'notes': notes,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
@@ -58,10 +58,8 @@ class Sight {
     id: json['id'] as String,
     name: json['name'] as String,
     manufacturer: json['manufacturer'] as String?,
-    sightHeight: distanceFromJson(json['sightHeight'] as Map<String, dynamic>),
-    zeroElevation: angularFromJson(
-      json['zeroElevation'] as Map<String, dynamic>,
-    ),
+    sightHeight: Distance(json['sightHeight'].asDouble(), StorageUnits.sightSightHeight),
+    zeroElevation: Angular(json['zeroElevation'].asDouble(), StorageUnits.sightZeroElevation),
     notes: json['notes'] as String?,
     createdAt: DateTime.parse(json['createdAt'] as String),
     updatedAt: DateTime.parse(json['updatedAt'] as String),

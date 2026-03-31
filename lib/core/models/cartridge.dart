@@ -2,7 +2,7 @@ import 'package:eballistica/core/solver/unit.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:eballistica/core/solver/munition.dart';
-import '_dim.dart';
+import '_storage.dart';
 import 'projectile.dart';
 
 class Cartridge {
@@ -36,7 +36,7 @@ class Cartridge {
     dm: projectile.dm,
     mv: mv,
     powderTemp: powderTemp,
-    tempModifier: powderSensitivity.in_(Unit.fraction), // fix: / 100.0,
+    tempModifier: powderSensitivity.in_(Unit.fraction),
     usePowderSensitivity: usePowderSensitivity,
   );
 
@@ -65,9 +65,9 @@ class Cartridge {
     'id': id,
     'name': name,
     'projectile': projectile.toJson(),
-    'mv': dimToJson(mv),
-    'powderTemp': dimToJson(powderTemp),
-    'powderSensitivity': dimToJson(powderSensitivity),
+    'mv': mv.in_(StorageUnits.cartridgeMv),
+    'powderTemp': powderTemp.in_(StorageUnits.cartridgePowderTemp),
+    'powderSensitivity': powderSensitivity.in_(StorageUnits.cartridgePowderSensitivity),
     'usePowderSensitivity': usePowderSensitivity,
     if (notes != null) 'notes': notes,
     'createdAt': createdAt.toIso8601String(),
@@ -78,11 +78,9 @@ class Cartridge {
     id: json['id'] as String,
     name: json['name'] as String,
     projectile: Projectile.fromJson(json['projectile'] as Map<String, dynamic>),
-    mv: velocityFromJson(json['mv'] as Map<String, dynamic>),
-    powderTemp: temperatureFromJson(json['powderTemp'] as Map<String, dynamic>),
-    powderSensitivity: ratioFromJson(
-      json['powderSensitivity'] as Map<String, dynamic>,
-    ),
+    mv: Velocity(json['mv'].asDouble(), StorageUnits.cartridgeMv),
+    powderTemp: Temperature(json['powderTemp'].asDouble(), StorageUnits.cartridgePowderTemp),
+    powderSensitivity: Ratio(json['powderSensitivity'].asDouble(), StorageUnits.cartridgePowderSensitivity),
     usePowderSensitivity: json['usePowderSensitivity'] as bool,
     notes: json['notes'] as String?,
     createdAt: DateTime.parse(json['createdAt'] as String),

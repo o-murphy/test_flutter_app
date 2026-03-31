@@ -1,7 +1,8 @@
+import 'package:eballistica/core/solver/unit.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:eballistica/core/solver/munition.dart';
-import '_dim.dart';
+import '_storage.dart';
 
 class Rifle {
   final String id;
@@ -44,9 +45,9 @@ class Rifle {
     'name': name,
     if (description != null) 'description': description,
     'weapon': {
-      'sightHeight': dimToJson(weapon.sightHeight),
-      'twist': dimToJson(weapon.twist),
-      'zeroElevation': dimToJson(weapon.zeroElevation),
+      'sightHeight': weapon.sightHeight.in_(StorageUnits.weaponSightHeight),
+      'twist': weapon.twist.in_(StorageUnits.weaponTwist),
+      'zeroElevation': weapon.zeroElevation.in_(StorageUnits.weaponZeroElevation),
     },
     if (notes != null) 'notes': notes,
     'createdAt': createdAt.toIso8601String(),
@@ -60,11 +61,9 @@ class Rifle {
       name: json['name'] as String,
       description: json['description'] as String?,
       weapon: Weapon(
-        sightHeight: distanceFromJson(w['sightHeight'] as Map<String, dynamic>),
-        twist: distanceFromJson(w['twist'] as Map<String, dynamic>),
-        zeroElevation: angularFromJson(
-          w['zeroElevation'] as Map<String, dynamic>,
-        ),
+        sightHeight: Distance(w['sightHeight'].asDouble(), StorageUnits.weaponSightHeight),
+        twist: Distance(w['twist'].asDouble(), StorageUnits.weaponTwist),
+        zeroElevation: Angular(w['zeroElevation'].asDouble(), StorageUnits.weaponZeroElevation),
       ),
       notes: json['notes'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
