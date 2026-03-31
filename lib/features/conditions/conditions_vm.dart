@@ -1,8 +1,8 @@
 // ЧИСТИЙ DART
-import 'package:eballistica/core/solver/munition.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/core/formatting/unit_formatter.dart';
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/providers/formatter_provider.dart';
 import 'package:eballistica/core/providers/settings_provider.dart';
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
@@ -10,7 +10,8 @@ import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
 import 'package:eballistica/core/models/unit_settings.dart';
-import 'package:eballistica/core/solver/conditions.dart' as solver;
+import 'package:eballistica/core/solver/munition.dart'
+    show velocityForPowderTemp;
 import 'package:eballistica/core/solver/unit.dart';
 
 // ── Data classes ─────────────────────────────────────────────────────────────
@@ -158,12 +159,12 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
     ref
         .read(shotProfileProvider.notifier)
         .updateConditions(
-          solver.Atmo(
+          AtmoData(
             temperature: Temperature(newTempC, Unit.celsius),
             altitude: Distance(altM ?? currentAltM, Unit.meter),
             pressure: Pressure(pressHPa ?? currentPressHPa, Unit.hPa),
             humidity: humFrac ?? currentHumFrac,
-            powderTemperature: Temperature(
+            powderTemp: Temperature(
               useDiffTemp ? (powderTempC ?? currentPowderTempC) : newTempC,
               Unit.celsius,
             ),

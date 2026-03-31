@@ -16,12 +16,9 @@ import 'package:eballistica/core/models/cartridge.dart';
 import 'package:eballistica/core/models/projectile.dart';
 import 'package:eballistica/core/models/rifle.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/models/sight.dart';
 import 'package:eballistica/core/models/unit_settings.dart';
-import 'package:eballistica/core/solver/conditions.dart';
-import 'package:eballistica/core/solver/drag_model.dart';
-import 'package:eballistica/core/solver/drag_tables.dart';
-import 'package:eballistica/core/solver/munition.dart';
 import 'package:eballistica/core/solver/unit.dart';
 import 'package:eballistica/features/conditions/conditions_vm.dart';
 
@@ -36,14 +33,14 @@ ShotProfile _makeProfile({
   bool usePowderSensitivity = false,
   bool useDiffPowderTemp = false,
 }) {
-  final dm = DragModel(
-    bc: 0.475,
-    dragTable: tableG7,
+  final projectile = Projectile(
+    name: 'Test 175gr',
+    dragType: DragModelType.g7,
     weight: Weight(175, Unit.grain),
     diameter: Distance(7.62, Unit.millimeter),
     length: Distance(31.0, Unit.millimeter),
+    coefRows: [CoeficientRow(bcCd: 0.475, mv: 0.0)],
   );
-  final projectile = Projectile(name: 'Test 175gr', dm: dm);
   final cartridge = Cartridge(
     name: 'Test .308',
     projectile: projectile,
@@ -52,11 +49,11 @@ ShotProfile _makeProfile({
     powderSensitivity: Ratio(1.0, Unit.fraction),
     usePowderSensitivity: true,
   );
-  final weapon = Weapon(
+  final rifle = Rifle(
+    name: 'Test Rifle',
     sightHeight: Distance(38.0, Unit.millimeter),
     twist: Distance(11.0, Unit.inch),
   );
-  final rifle = Rifle(name: 'Test Rifle', weapon: weapon);
   final sight = Sight(
     name: 'Test Scope',
     sightHeight: Distance(38.0, Unit.millimeter),
@@ -67,12 +64,12 @@ ShotProfile _makeProfile({
     rifle: rifle,
     sight: sight,
     cartridge: cartridge,
-    conditions: Atmo(
+    conditions: AtmoData(
       temperature: Temperature(tempC, Unit.celsius),
       altitude: Distance(altM, Unit.meter),
       pressure: Pressure(pressHPa, Unit.hPa),
       humidity: humidity,
-      powderTemperature: Temperature(powderTempC, Unit.celsius),
+      powderTemp: Temperature(powderTempC, Unit.celsius),
     ),
     lookAngle: Angular(0, Unit.degree),
     usePowderSensitivity: usePowderSensitivity,

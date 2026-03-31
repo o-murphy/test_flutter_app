@@ -376,12 +376,3 @@ extension UnitConvertor on double {
     return Dimension.auto(this, from).in_(to);
   }
 }
-
-extension ParseDouble on dynamic {
-  double asDouble() {
-    if (this == null) return 0.0;
-    if (this is num) return (this as num).toDouble();
-    if (this is String) return double.tryParse(this) ?? 0.0;
-    return 0.0;
-  }
-}

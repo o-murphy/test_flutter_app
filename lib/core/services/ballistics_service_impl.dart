@@ -18,8 +18,7 @@ typedef _TableCalcArgs = (ShotProfile, double, double?);
 typedef _TableCalcResult = (HitResult?, double?);
 
 /// Builds an [Ammo] from [baseAmmo] with powder sensitivity enabled or not.
-Ammo _makeAmmo(Ammo baseAmmo, bool usePowderSens) =>
-    usePowderSens
+Ammo _makeAmmo(Ammo baseAmmo, bool usePowderSens) => usePowderSens
     ? baseAmmo
     : Ammo(
         dm: baseAmmo.dm,
@@ -46,7 +45,7 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
     final currentAmmo = _makeAmmo(baseAmmo, currentUsePowderSens);
     final zeroAmmo = _makeAmmo(baseAmmo, zeroUsePowderSens);
 
-    final weapon = profile.rifle.weapon;
+    final weapon = profile.rifle.toWeapon();
     double? freshZeroElevRad;
 
     if (cachedZeroElevRad != null) {
@@ -58,7 +57,7 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
           weapon: weapon,
           ammo: zeroAmmo,
           lookAngle: profile.lookAngle,
-          atmo: zeroAtmo,
+          atmo: zeroAtmo.toAtmo(),
           winds: const [],
         );
         calc.setWeaponZero(zeroShot, profile.zeroDistance);
@@ -67,7 +66,7 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
           weapon: weapon,
           ammo: zeroAmmo,
           lookAngle: Angular(0.0, Unit.radian),
-          atmo: zeroAtmo,
+          atmo: zeroAtmo.toAtmo(),
           winds: const [],
         );
         calc.setWeaponZero(zeroShot, profile.zeroDistance);
@@ -79,8 +78,8 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
       weapon: weapon,
       ammo: currentAmmo,
       lookAngle: profile.lookAngle,
-      atmo: profile.conditions,
-      winds: profile.winds,
+      atmo: profile.conditions.toAtmo(),
+      winds: profile.winds.map((w) => w.toWind()).toList(),
       latitudeDeg: profile.latitudeDeg,
       azimuthDeg: profile.azimuthDeg,
     );
@@ -121,7 +120,7 @@ _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
     final currentAmmo = _makeAmmo(baseAmmo, currentUsePowderSens);
     final zeroAmmo = _makeAmmo(baseAmmo, zeroUsePowderSens);
 
-    final weapon = profile.rifle.weapon;
+    final weapon = profile.rifle.toWeapon();
     double? freshZeroElevRad;
 
     if (cachedZeroElevRad != null) {
@@ -131,7 +130,7 @@ _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
         weapon: weapon,
         ammo: zeroAmmo,
         lookAngle: profile.lookAngle,
-        atmo: zeroAtmo,
+        atmo: zeroAtmo.toAtmo(),
         winds: const [],
       );
       calc.setWeaponZero(zeroShot, profile.zeroDistance);
@@ -142,8 +141,8 @@ _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
       weapon: weapon,
       ammo: currentAmmo,
       lookAngle: profile.lookAngle,
-      atmo: profile.conditions,
-      winds: profile.winds,
+      atmo: profile.conditions.toAtmo(),
+      winds: profile.winds.map((w) => w.toWind()).toList(),
       latitudeDeg: profile.latitudeDeg,
       azimuthDeg: profile.azimuthDeg,
     );

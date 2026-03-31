@@ -26,9 +26,7 @@ class ProfileLibraryNotifier extends AsyncNotifier<List<ShotProfile>> {
 
   Future<void> delete(String id) async {
     await ref.read(appStorageProvider).deleteProfile(id);
-    state = AsyncData(
-      (state.value ?? []).where((p) => p.id != id).toList(),
-    );
+    state = AsyncData((state.value ?? []).where((p) => p.id != id).toList());
   }
 }
 

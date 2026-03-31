@@ -58,8 +58,14 @@ class Sight {
     id: json['id'] as String,
     name: json['name'] as String,
     manufacturer: json['manufacturer'] as String?,
-    sightHeight: Distance(json['sightHeight'].asDouble(), StorageUnits.sightSightHeight),
-    zeroElevation: Angular(json['zeroElevation'].asDouble(), StorageUnits.sightZeroElevation),
+    sightHeight: Distance(
+      (json['sightHeight'] as num).toDouble(),
+      StorageUnits.sightSightHeight,
+    ),
+    zeroElevation: Angular(
+      (json['zeroElevation'] as num).toDouble(),
+      StorageUnits.sightZeroElevation,
+    ),
     notes: json['notes'] as String?,
     createdAt: DateTime.parse(json['createdAt'] as String),
     updatedAt: DateTime.parse(json['updatedAt'] as String),

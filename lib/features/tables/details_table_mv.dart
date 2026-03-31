@@ -7,7 +7,8 @@ import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/models/projectile.dart' show DragModelType;
 import 'package:eballistica/core/models/shot_profile.dart';
-import 'package:eballistica/core/solver/munition.dart';
+import 'package:eballistica/core/solver/munition.dart'
+    show velocityForPowderTemp;
 import 'package:eballistica/core/solver/unit.dart';
 
 // ── Spoiler data ─────────────────────────────────────────────────────────────
@@ -63,17 +64,17 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
   final rifle = profile.rifle;
   final cart = profile.cartridge;
   final proj = cart.projectile;
-  final dm = proj.dm;
   final conds = profile.conditions;
   final winds = profile.winds;
 
-  final twistInch = rifle.weapon.twist.in_(Unit.inch);
-  final weightGr = dm.weight.in_(Unit.grain);
-  final diamInch = dm.diameter.in_(Unit.inch);
-  final lenInch = dm.length.in_(Unit.inch);
+  final twistInch = rifle.twist.in_(Unit.inch);
+  final weightGr = proj.weight.in_(Unit.grain);
+  final diamInch = proj.diameter.in_(Unit.inch);
+  final lenInch = proj.length.in_(Unit.inch);
 
   // Powder sensitivity — separate flags for zero and current
-  final currentPowderSensOn = profile.usePowderSensitivity && cart.usePowderSensitivity;
+  final currentPowderSensOn =
+      profile.usePowderSensitivity && cart.usePowderSensitivity;
   final zeroPowderSensOn =
       (profile.zeroUsePowderSensitivity ?? profile.usePowderSensitivity) &&
       cart.usePowderSensitivity;
@@ -110,7 +111,10 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
   final sd = (weightGr > 0 && diamInch > 0)
       ? (weightGr / 7000.0) / (diamInch * diamInch)
       : null;
-  final ff = (sd != null && dm.bc > 0) ? sd / dm.bc : null;
+  final displayBc = (!proj.isMultiBC && proj.coefRows.isNotEmpty)
+      ? proj.coefRows.first.bcCd
+      : 0.0;
+  final ff = (sd != null && displayBc > 0) ? sd / displayBc : null;
 
   String fmtV(double mps) {
     final disp = Velocity(mps, Unit.mps).in_(units.velocity);
@@ -124,7 +128,7 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
   return DetailsTableData(
     rifleName: rifle.name,
     caliber: diamInch > 0
-        ? fmtWithAcc(dm.diameter, units.diameter, FC.bulletDiameter)
+        ? fmtWithAcc(proj.diameter, units.diameter, FC.bulletDiameter)
         : null,
     twist: twistInch > 0
         ? () {
@@ -137,17 +141,17 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
       DragModelType.g7 => 'G7',
       DragModelType.custom => 'Custom',
     },
-    bc: dm.bc > 0
-        ? dm.bc.toStringAsFixed(FC.ballisticCoefficient.accuracy)
+    bc: displayBc > 0
+        ? displayBc.toStringAsFixed(FC.ballisticCoefficient.accuracy)
         : null,
     zeroMv: fmtV(zeroMvMps),
     currentMv: fmtV(currentMvMps),
     zeroDist: fmtWithAcc(profile.zeroDistance, units.distance, FC.zeroDistance),
     bulletLen: lenInch > 0
-        ? fmtWithAcc(dm.length, units.length, FC.bulletLength)
+        ? fmtWithAcc(proj.length, units.length, FC.bulletLength)
         : null,
     bulletDiam: diamInch > 0
-        ? fmtWithAcc(dm.diameter, units.diameter, FC.bulletDiameter)
+        ? fmtWithAcc(proj.diameter, units.diameter, FC.bulletDiameter)
         : null,
     bulletWeight: weightGr > 0
         ? () {

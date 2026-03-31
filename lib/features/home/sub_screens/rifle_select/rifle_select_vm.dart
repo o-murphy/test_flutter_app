@@ -51,10 +51,7 @@ class RifleSelectViewModel extends AsyncNotifier<RifleSelectUiState> {
     await ref.read(profileLibraryProvider.notifier).save(profile);
   }
 
-  Future<void> importFromA7pBytes(
-    List<int> bytes, {
-    String? fileName,
-  }) async {
+  Future<void> importFromA7pBytes(List<int> bytes, {String? fileName}) async {
     // A7pParser works with a Payload parsed from bytes — this is handled
     // upstream (file picker → parse → call saveProfile).
     // This stub is intentionally empty; the screen invokes saveProfile directly

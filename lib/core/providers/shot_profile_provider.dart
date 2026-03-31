@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/core/models/cartridge.dart';
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/models/rifle.dart';
 import 'package:eballistica/core/models/seed_data.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
 import 'package:eballistica/core/models/sight.dart';
-import 'package:eballistica/core/solver/conditions.dart';
 import 'package:eballistica/core/solver/unit.dart';
 import 'storage_provider.dart';
 
@@ -31,10 +31,10 @@ class ShotProfileNotifier extends AsyncNotifier<ShotProfile> {
   Future<void> selectCartridge(Cartridge c) =>
       _update((p) => p.copyWith(cartridge: c));
 
-  Future<void> updateConditions(Atmo atmo) =>
+  Future<void> updateConditions(AtmoData atmo) =>
       _update((p) => p.copyWith(conditions: atmo));
 
-  Future<void> updateWinds(List<Wind> winds) =>
+  Future<void> updateWinds(List<WindData> winds) =>
       _update((p) => p.copyWith(winds: winds));
 
   Future<void> updateLookAngle(double degrees) =>
@@ -46,7 +46,7 @@ class ShotProfileNotifier extends AsyncNotifier<ShotProfile> {
   Future<void> updateZeroDistance(double meters) =>
       _update((p) => p.copyWith(zeroDistance: Distance(meters, Unit.meter)));
 
-  Future<void> updateZeroConditions(Atmo? atmo) => _update(
+  Future<void> updateZeroConditions(AtmoData? atmo) => _update(
     (p) => atmo != null
         ? p.copyWith(zeroConditions: atmo)
         : p.copyWith(clearZeroConditions: true),
@@ -77,7 +77,7 @@ class ShotProfileNotifier extends AsyncNotifier<ShotProfile> {
         : Distance(9999.0, Unit.meter);
     return p.copyWith(
       winds: [
-        Wind(
+        WindData(
           velocity: Velocity(mps, Unit.mps),
           directionFrom: dir,
           untilDistance: until,

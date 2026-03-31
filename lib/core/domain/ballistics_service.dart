@@ -7,21 +7,14 @@ class TableCalcOptions {
   final double endM;
   final double stepM;
 
-  const TableCalcOptions({
-    this.startM = 0,
-    this.endM = 2000,
-    this.stepM = 100,
-  });
+  const TableCalcOptions({this.startM = 0, this.endM = 2000, this.stepM = 100});
 }
 
 class TargetCalcOptions {
   final double targetDistM;
   final double chartStepM;
 
-  const TargetCalcOptions({
-    required this.targetDistM,
-    this.chartStepM = 10,
-  });
+  const TargetCalcOptions({required this.targetDistM, this.chartStepM = 10});
 }
 
 class BallisticsResult {

@@ -340,24 +340,24 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
 
   List<double> _buildZeroKey(ShotProfile profile) {
     final zeroAtmo = profile.zeroConditions ?? profile.conditions;
-    final w = profile.rifle.weapon;
+    final r = profile.rifle;
     final c = profile.cartridge;
-    final dm = c.projectile.dm;
+    final proj = c.projectile;
     final zeroUsePowderSens =
         (profile.zeroUsePowderSensitivity ?? profile.usePowderSensitivity) &&
         c.usePowderSensitivity;
     return [
-      w.sightHeight.in_(Unit.meter),
-      w.twist.in_(Unit.inch),
+      r.sightHeight.in_(Unit.meter),
+      r.twist.in_(Unit.inch),
       c.mv.in_(Unit.mps),
       c.powderTemp.in_(Unit.celsius),
       c.powderSensitivity.in_(Unit.fraction),
       c.usePowderSensitivity ? 1.0 : 0.0,
-      dm.bc,
-      dm.weight.in_(Unit.gram),
-      dm.diameter.in_(Unit.inch),
-      dm.length.in_(Unit.inch),
-      dm.dragTable.length.toDouble(),
+      proj.coefRows.isNotEmpty ? proj.coefRows.first.bcCd : 0.0,
+      proj.weight.in_(Unit.gram),
+      proj.diameter.in_(Unit.inch),
+      proj.length.in_(Unit.inch),
+      proj.coefRows.length.toDouble(),
       zeroAtmo.altitude.in_(Unit.meter),
       zeroAtmo.pressure.in_(Unit.hPa),
       zeroAtmo.temperature.in_(Unit.celsius),

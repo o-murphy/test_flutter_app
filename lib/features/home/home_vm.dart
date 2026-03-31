@@ -11,8 +11,8 @@ import 'package:eballistica/core/providers/shot_profile_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/models/projectile.dart' show DragModelType;
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
-import 'package:eballistica/core/solver/conditions.dart' show Wind;
 import 'package:eballistica/core/solver/trajectory_data.dart';
 import 'package:eballistica/core/solver/unit.dart';
 import 'package:eballistica/shared/models/adjustment_data.dart';
@@ -204,9 +204,10 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
 
   Future<void> updateWindDirection(double degrees) async {
     ref.read(shotProfileProvider.notifier).updateWinds([
-      Wind(
+      WindData(
         velocity: _currentWindVelocity(),
         directionFrom: Angular(degrees, Unit.degree),
+        untilDistance: Distance(9999.0, Unit.meter),
       ),
     ]);
   }
@@ -226,7 +227,8 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
   // ── Private builders ───────────────────────────────────────────────────────
 
   Velocity _currentWindVelocity() {
-    final winds = ref.read(shotProfileProvider).value?.winds ?? const <Wind>[];
+    final winds =
+        ref.read(shotProfileProvider).value?.winds ?? const <WindData>[];
     return winds.isNotEmpty ? winds.first.velocity : Velocity(0, Unit.mps);
   }
 
@@ -309,18 +311,21 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
     final proj = profile.cartridge.projectile;
     final mvStr = fmt.velocity(profile.cartridge.mv);
     final bcAcc = FC.ballisticCoefficient.accuracy;
+    final firstBc = proj.coefRows.isNotEmpty ? proj.coefRows.first.bcCd : 0.0;
     final dragStr = switch (proj.dragType) {
-      DragModelType.g1 => 'G1 ${proj.dm.bc.toStringAsFixed(bcAcc)}',
-      DragModelType.g7 => 'G7 ${proj.dm.bc.toStringAsFixed(bcAcc)}',
-      DragModelType.custom => 'Custom',
+      DragModelType.g1 =>
+        proj.isMultiBC ? 'G1 Multi' : 'G1 ${firstBc.toStringAsFixed(bcAcc)}',
+      DragModelType.g7 =>
+        proj.isMultiBC ? 'G7 Multi' : 'G7 ${firstBc.toStringAsFixed(bcAcc)}',
+      DragModelType.custom => 'CUSTOM',
     };
 
     // Gyroscopic stability factor Sg (Miller)
     String? sgStr;
-    final twistInch = profile.rifle.weapon.twist.in_(Unit.inch);
-    final weightGr = proj.dm.weight.in_(Unit.grain);
-    final diamInch = proj.dm.diameter.in_(Unit.inch);
-    final lenInch = proj.dm.length.in_(Unit.inch);
+    final twistInch = profile.rifle.twist.in_(Unit.inch);
+    final weightGr = proj.weight.in_(Unit.grain);
+    final diamInch = proj.diameter.in_(Unit.inch);
+    final lenInch = proj.length.in_(Unit.inch);
     if (weightGr > 0 && diamInch > 0 && lenInch > 0 && twistInch > 0) {
       final sg = profile.toShot().calculateStabilityCoefficient();
       sgStr = 'Sg ${sg.toStringAsFixed(2)}';
@@ -513,24 +518,24 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
 
   List<double> _buildZeroKey(ShotProfile profile) {
     final zeroAtmo = profile.zeroConditions ?? profile.conditions;
-    final w = profile.rifle.weapon;
+    final r = profile.rifle;
     final c = profile.cartridge;
-    final dm = c.projectile.dm;
+    final proj = c.projectile;
     final zeroUsePowderSens =
         (profile.zeroUsePowderSensitivity ?? profile.usePowderSensitivity) &&
         c.usePowderSensitivity;
     return [
-      w.sightHeight.in_(Unit.meter),
-      w.twist.in_(Unit.inch),
+      r.sightHeight.in_(Unit.meter),
+      r.twist.in_(Unit.inch),
       c.mv.in_(Unit.mps),
       c.powderTemp.in_(Unit.celsius),
       c.powderSensitivity.in_(Unit.fraction),
       c.usePowderSensitivity ? 1.0 : 0.0,
-      dm.bc,
-      dm.weight.in_(Unit.gram),
-      dm.diameter.in_(Unit.inch),
-      dm.length.in_(Unit.inch),
-      dm.dragTable.length.toDouble(),
+      proj.coefRows.isNotEmpty ? proj.coefRows.first.bcCd : 0.0,
+      proj.weight.in_(Unit.gram),
+      proj.diameter.in_(Unit.inch),
+      proj.length.in_(Unit.inch),
+      proj.coefRows.length.toDouble(),
       zeroAtmo.altitude.in_(Unit.meter),
       zeroAtmo.pressure.in_(Unit.hPa),
       zeroAtmo.temperature.in_(Unit.celsius),

@@ -85,11 +85,10 @@ class _RifleSelectScreenState extends ConsumerState<RifleSelectScreen> {
 
   Future<void> _onImport() async {
     // TODO: add file_picker to pubspec.yaml to enable .a7p import
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Import not yet available')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Import not yet available')));
   }
-
 
   Future<void> _onExport(ShotProfile? profile) async {
     if (profile == null) return;

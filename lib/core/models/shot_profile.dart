@@ -1,10 +1,10 @@
 import 'package:uuid/uuid.dart';
 
-import 'package:eballistica/core/solver/conditions.dart';
 import 'package:eballistica/core/solver/shot.dart';
 import 'package:eballistica/core/solver/unit.dart';
 import '_storage.dart';
 import 'cartridge.dart';
+import 'conditions_data.dart';
 import 'rifle.dart';
 import 'sight.dart';
 
@@ -14,8 +14,8 @@ class ShotProfile {
   final Rifle rifle;
   final Sight sight;
   final Cartridge cartridge;
-  final Atmo conditions;
-  final List<Wind> winds;
+  final AtmoData conditions;
+  final List<WindData> winds;
   final Angular lookAngle;
   final double? latitudeDeg;
   final double? azimuthDeg;
@@ -24,7 +24,7 @@ class ShotProfile {
   final Distance zeroDistance;
 
   /// Optional separate conditions for zeroing. Null → use [conditions].
-  final Atmo? zeroConditions;
+  final AtmoData? zeroConditions;
 
   /// Whether to apply powder sensitivity correction to the current shot.
   final bool usePowderSensitivity;
@@ -72,11 +72,11 @@ class ShotProfile {
        updatedAt = updatedAt ?? DateTime.now();
 
   Shot toShot() => Shot(
-    weapon: rifle.weapon,
+    weapon: rifle.toWeapon(),
     ammo: cartridge.toAmmo(),
     lookAngle: lookAngle,
-    atmo: conditions,
-    winds: winds,
+    atmo: conditions.toAtmo(),
+    winds: winds.map((w) => w.toWind()).toList(),
     latitudeDeg: latitudeDeg,
     azimuthDeg: azimuthDeg,
   );
@@ -86,13 +86,13 @@ class ShotProfile {
     Rifle? rifle,
     Sight? sight,
     Cartridge? cartridge,
-    Atmo? conditions,
-    List<Wind>? winds,
+    AtmoData? conditions,
+    List<WindData>? winds,
     Angular? lookAngle,
     double? latitudeDeg,
     double? azimuthDeg,
     Distance? zeroDistance,
-    Atmo? zeroConditions,
+    AtmoData? zeroConditions,
     bool clearZeroConditions = false,
     bool? usePowderSensitivity,
     bool? useDiffPowderTemp,
@@ -132,13 +132,13 @@ class ShotProfile {
     'rifle': rifle.toJson(),
     'sight': sight.toJson(),
     'cartridge': cartridge.toJson(),
-    'conditions': _atmoToJson(conditions),
-    'winds': winds.map(_windToJson).toList(),
+    'conditions': conditions.toJson(),
+    'winds': winds.map((w) => w.toJson()).toList(),
     'lookAngle': lookAngle.in_(StorageUnits.profileLookAngle),
     if (latitudeDeg != null) 'latitudeDeg': latitudeDeg,
     if (azimuthDeg != null) 'azimuthDeg': azimuthDeg,
     'zeroDistance': zeroDistance.in_(StorageUnits.profileZeroDistance),
-    if (zeroConditions != null) 'zeroConditions': _atmoToJson(zeroConditions!),
+    if (zeroConditions != null) 'zeroConditions': zeroConditions!.toJson(),
     'targetDistance': targetDistance.in_(StorageUnits.profileTargetDistance),
     'usePowderSensitivity': usePowderSensitivity,
     'useDiffPowderTemp': useDiffPowderTemp,
@@ -147,20 +147,6 @@ class ShotProfile {
     'zeroUseDiffPowderTemp': zeroUseDiffPowderTemp,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
-  };
-
-  static Map<String, dynamic> _atmoToJson(Atmo a) => {
-    'altitude': a.altitude.in_(StorageUnits.atmoAltitude),
-    'pressure': a.pressure.in_(StorageUnits.atmoPressure),
-    'temperature': a.temperature.in_(StorageUnits.atmoTemperature),
-    'humidity': a.humidity,
-    'powderTemp': a.powderTemp.in_(StorageUnits.atmoPowderTemp),
-  };
-
-  static Map<String, dynamic> _windToJson(Wind w) => {
-    'velocity': w.velocity.in_(StorageUnits.windVelocity),
-    'directionFrom': w.directionFrom.in_(StorageUnits.windDirectionFrom),
-    'untilDistance': w.untilDistance.in_(StorageUnits.windUntilDistance),
   };
 
   factory ShotProfile.fromJson(Map<String, dynamic> json) {
@@ -172,17 +158,28 @@ class ShotProfile {
       rifle: Rifle.fromJson(json['rifle'] as Map<String, dynamic>),
       sight: Sight.fromJson(json['sight'] as Map<String, dynamic>),
       cartridge: Cartridge.fromJson(json['cartridge'] as Map<String, dynamic>),
-      conditions: _atmoFromJson(c),
-      winds: (json['winds'] as List).map((w) => _windFromJson(w as Map)).toList(),
-      lookAngle: Angular(json['lookAngle'].asDouble(), StorageUnits.profileLookAngle),
+      conditions: AtmoData.fromJson(c),
+      winds: (json['winds'] as List)
+          .map((w) => WindData.fromJson(w as Map))
+          .toList(),
+      lookAngle: Angular(
+        (json['lookAngle'] as num).toDouble(),
+        StorageUnits.profileLookAngle,
+      ),
       latitudeDeg: (json['latitudeDeg'] as num?)?.toDouble(),
       azimuthDeg: (json['azimuthDeg'] as num?)?.toDouble(),
       zeroDistance: json['zeroDistance'] != null
-          ? Distance(json['zeroDistance'].asDouble(), StorageUnits.profileZeroDistance)
+          ? Distance(
+              (json['zeroDistance'] as num).toDouble(),
+              StorageUnits.profileZeroDistance,
+            )
           : null,
-      zeroConditions: _atmoFromJson(zc ?? c),
+      zeroConditions: AtmoData.fromJson(zc ?? c),
       targetDistance: json['targetDistance'] != null
-          ? Distance(json['targetDistance'].asDouble(), StorageUnits.profileTargetDistance)
+          ? Distance(
+              (json['targetDistance'] as num).toDouble(),
+              StorageUnits.profileTargetDistance,
+            )
           : null,
       usePowderSensitivity: json['usePowderSensitivity'] as bool? ?? false,
       useDiffPowderTemp: json['useDiffPowderTemp'] as bool? ?? false,
@@ -192,18 +189,4 @@ class ShotProfile {
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
   }
-
-  static Atmo _atmoFromJson(Map m) => Atmo(
-    altitude: Distance(m['altitude'].asDouble(), StorageUnits.atmoAltitude),
-    pressure: Pressure(m['pressure'].asDouble(), StorageUnits.atmoPressure),
-    temperature: Temperature(m['temperature'].asDouble(), StorageUnits.atmoTemperature),
-    humidity: m['humidity'].asDouble(),
-    powderTemperature: Temperature(m['powderTemp'].asDouble(), StorageUnits.atmoPowderTemp),
-  );
-
-  static Wind _windFromJson(Map w) => Wind(
-    velocity: Velocity(w['velocity'].asDouble(), StorageUnits.windVelocity),
-    directionFrom: Angular(w['directionFrom'].asDouble(), StorageUnits.windDirectionFrom),
-    untilDistance: Distance(w['untilDistance'].asDouble(), StorageUnits.windUntilDistance),
-  );
 }
