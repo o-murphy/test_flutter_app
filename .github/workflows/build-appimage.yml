@@ -1,23 +1,23 @@
-name: PR Build (Windows EXE)
+name: PR Build (Linux AppImage)
 
 on:
   pull_request:
     branches: [main, develop]
     paths:
       - 'lib/**'
-      - 'windows/**'
+      - 'linux/**'
       - 'external/**'
       - 'pubspec.yaml'
-      - '.github/workflows/build-exe.yml'
+      - '.github/workflows/build-appimage.yml'
       - '.github/workflows/build.yml'
   workflow_dispatch:
 
 jobs:
   build:
-    name: Windows amd64 (debug)
+    name: Linux amd64 (release)
     uses: ./.github/workflows/build.yml
     with:
-      platform: windows
+      platform: linux
       arch: amd64
       build_type: release
       retention_days: 7
@@ -41,12 +41,13 @@ jobs:
             const artifactName = '${{ needs.build.outputs.artifact_name }}';
             const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
 
-            let body = `## Windows EXE Build\n\n`;
+            let body = `## Linux AppImage Build\n\n`;
             if (success) {
-              body += `✅ **Build successful!** (debug)\n\n`;
-              body += `📦 **[Download EXE](${artifactUrl})**\n`;
+              body += `✅ **Build successful!**\n\n`;
+              body += `📦 **[Download AppImage](${artifactUrl})**\n`;
               body += `\`${artifactName}\` — available for 7 days\n\n`;
-              body += `**PR**: #${{ github.event.pull_request.number }} · **Commit**: \`${{ github.sha }}\`\n`;
+              body += `**PR**: #${{ github.event.pull_request.number }} · **Commit**: \`${{ github.sha }}\`\n\n`;
+              body += `\`\`\`bash\nchmod +x eballistica-x86_64.AppImage\n./eballistica-x86_64.AppImage\n\`\`\`\n`;
             } else {
               body += `❌ **Build failed!**\n\n[View logs](${runUrl})\n`;
             }
@@ -58,7 +59,7 @@ jobs:
             });
 
             const existing = comments.find(c =>
-              c.user.type === 'Bot' && c.body.includes('## Windows EXE Build')
+              c.user.type === 'Bot' && c.body.includes('## Linux AppImage Build')
             );
 
             if (existing) {

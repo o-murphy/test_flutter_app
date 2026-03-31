@@ -1,0 +1,221 @@
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      platform:
+        description: 'Target platform'
+        required: true
+        type: string  # linux | windows
+      arch:
+        description: 'Target architecture'
+        required: true
+        type: string  # amd64 | arm64
+      build_type:
+        description: 'Build type'
+        required: true
+        type: string  # release | debug
+      retention_days:
+        description: 'Artifact retention in days'
+        required: false
+        type: number
+        default: 30
+    outputs:
+      artifact_name:
+        description: 'Name of the uploaded artifact'
+        value: ${{ jobs.build.outputs.artifact_name }}
+      artifact_url:
+        description: 'URL to download the artifact'
+        value: ${{ jobs.build.outputs.artifact_url }}
+
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Target platform'
+        required: true
+        default: 'linux'
+        type: choice
+        options: [linux, windows]
+      arch:
+        description: 'Target architecture'
+        required: true
+        default: 'amd64'
+        type: choice
+        options: [amd64, arm64]
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'release'
+        type: choice
+        options: [release, debug]
+
+env:
+  FLUTTER_VERSION: '3.41.6'
+
+jobs:
+  build:
+    name: ${{ inputs.platform }}-${{ inputs.arch }} (${{ inputs.build_type }})
+    runs-on: ${{ fromJSON('{"linux-amd64":"ubuntu-latest","linux-arm64":"ubuntu-24.04-arm","windows-amd64":"windows-latest","windows-arm64":"windows-11-arm"}')[format('{0}-{1}', inputs.platform, inputs.arch)] }}
+
+    outputs:
+      artifact_name: ${{ steps.meta.outputs.artifact_name }}
+      artifact_url: ${{ steps.upload.outputs.artifact-url }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+          cache-key: flutter-${{ env.FLUTTER_VERSION }}-${{ inputs.platform }}-${{ inputs.arch }}
+
+      - name: Install Linux build dependencies
+        if: inputs.platform == 'linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y \
+            clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libstdc++-12-dev \
+            fuse libfuse2
+
+      - name: Set build metadata
+        id: meta
+        shell: bash
+        run: |
+          ARCH_SUFFIX=${{ inputs.arch == 'amd64' && 'x86_64' || 'aarch64' }}
+          FLUTTER_ARCH=${{ inputs.arch == 'amd64' && 'x64' || 'arm64' }}
+          echo "arch_suffix=$ARCH_SUFFIX" >> $GITHUB_OUTPUT
+          echo "flutter_arch=$FLUTTER_ARCH" >> $GITHUB_OUTPUT
+
+          BCLIBC_HASH=$(git -C external/bclibc rev-parse HEAD)
+          echo "bclibc_hash=$BCLIBC_HASH" >> $GITHUB_OUTPUT
+
+          if [ "${{ inputs.platform }}" = "linux" ]; then
+            echo "bundle_dir=build/linux/${FLUTTER_ARCH}/${{ inputs.build_type }}/bundle" >> $GITHUB_OUTPUT
+          else
+            BUILD_SUBDIR=${{ inputs.build_type == 'release' && 'Release' || 'Debug' }}
+            echo "bundle_dir=build/windows/x64/runner/${BUILD_SUBDIR}" >> $GITHUB_OUTPUT
+          fi
+
+          echo "artifact_name=eballistica-${{ inputs.platform }}-${ARCH_SUFFIX}-${{ inputs.build_type }}-${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Cache pub packages (Linux)
+        if: inputs.platform == 'linux'
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: pub-linux-${{ inputs.arch }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-linux-${{ inputs.arch }}-
+
+      - name: Cache pub packages (Windows)
+        if: inputs.platform == 'windows'
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\Pub\Cache
+          key: pub-windows-${{ inputs.arch }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-windows-${{ inputs.arch }}-
+
+      - name: Cache bclibc build
+        uses: actions/cache@v4
+        with:
+          path: build/${{ inputs.platform }}/${{ steps.meta.outputs.flutter_arch }}/bclibc_ffi_build
+          key: bclibc-${{ inputs.platform }}-${{ inputs.arch }}-${{ steps.meta.outputs.bclibc_hash }}
+
+      - name: Install Flutter dependencies
+        run: |
+          flutter clean
+          flutter pub get
+
+      - name: Build Linux bundle
+        if: inputs.platform == 'linux'
+        run: flutter build linux --${{ inputs.build_type }}
+
+      - name: Build Windows bundle
+        if: inputs.platform == 'windows'
+        run: flutter build windows --${{ inputs.build_type }}
+
+      - name: Package Linux AppImage
+        if: inputs.platform == 'linux'
+        shell: bash
+        run: |
+          BUNDLE_DIR="${{ steps.meta.outputs.bundle_dir }}"
+          ARCH_SUFFIX="${{ steps.meta.outputs.arch_suffix }}"
+
+          if [ ! -d "$BUNDLE_DIR" ]; then
+            echo "Bundle not found at: $BUNDLE_DIR"
+            find build/linux -name "eballistica" 2>/dev/null || true
+            exit 1
+          fi
+
+          wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${ARCH_SUFFIX}.AppImage" \
+            -O /usr/local/bin/appimagetool
+          chmod +x /usr/local/bin/appimagetool
+
+          APPDIR="AppDir"
+          mkdir -p "$APPDIR/usr/share/eballistica"
+          mkdir -p "$APPDIR/usr/share/applications"
+          mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
+
+          cp -r "$BUNDLE_DIR/"* "$APPDIR/usr/share/eballistica/"
+
+          printf '[Desktop Entry]\nName=eBallistica\nExec=eballistica\nIcon=eballistica\nType=Application\nCategories=Utility;\n' \
+            > "$APPDIR/usr/share/applications/eballistica.desktop"
+
+          if [ -f "assets/icon.png" ]; then
+            cp "assets/icon.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/eballistica.png"
+          else
+            printf '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82' \
+              > "$APPDIR/usr/share/icons/hicolor/256x256/apps/eballistica.png"
+          fi
+
+          ln -sf usr/share/applications/eballistica.desktop "$APPDIR/eballistica.desktop"
+          ln -sf usr/share/icons/hicolor/256x256/apps/eballistica.png "$APPDIR/eballistica.png"
+
+          printf '#!/bin/sh\nHERE="$(dirname "$(readlink -f "$0")")"\nAPP_DIR="$HERE/usr/share/eballistica"\nexport LD_LIBRARY_PATH="$APP_DIR/lib:$LD_LIBRARY_PATH"\nexec "$APP_DIR/eballistica" "$@"\n' \
+            > "$APPDIR/AppRun"
+          chmod +x "$APPDIR/AppRun"
+
+          APPIMAGE_NAME="eballistica-${ARCH_SUFFIX}.AppImage"
+          ARCH="${ARCH_SUFFIX}" appimagetool "$APPDIR" "$APPIMAGE_NAME"
+
+          mkdir -p artifacts
+          mv "$APPIMAGE_NAME" artifacts/
+
+      - name: Package Windows artifacts
+        if: inputs.platform == 'windows'
+        shell: pwsh
+        run: |
+          $bundleDir = "${{ steps.meta.outputs.bundle_dir }}"
+
+          if (-not (Test-Path $bundleDir)) {
+            Write-Host "Bundle not found at: $bundleDir"
+            Get-ChildItem -Path build -Recurse -Filter "eballistica.exe" | ForEach-Object { Write-Host $_.FullName }
+            exit 1
+          }
+
+          New-Item -ItemType Directory -Force -Path artifacts
+
+          Copy-Item "$bundleDir\eballistica.exe" "artifacts\"
+          Get-ChildItem -Path $bundleDir -Filter "*.dll" | Copy-Item -Destination "artifacts\"
+
+          if (Test-Path "$bundleDir\data") {
+            Copy-Item -Path "$bundleDir\data" -Destination "artifacts\data" -Recurse
+          }
+
+          if ("${{ inputs.build_type }}" -eq "debug" -and (Test-Path "$bundleDir\eballistica.pdb")) {
+            Copy-Item "$bundleDir\eballistica.pdb" "artifacts\"
+          }
+
+      - name: Upload artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.artifact_name }}
+          path: artifacts/
+          retention-days: ${{ inputs.retention_days || 30 }}
+          if-no-files-found: error

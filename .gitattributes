@@ -1,0 +1,52 @@
+# Force LF line endings for all text files on all platforms.
+# This overrides core.autocrlf and prevents CRLF from leaking into the repo.
+
+# Default: auto-detect text vs binary
+* text=auto
+
+# Build scripts — must be LF or make/cmake will break on Linux
+Makefile        text eol=lf
+*.mk            text eol=lf
+CMakeLists.txt  text eol=lf
+*.cmake         text eol=lf
+
+# Shell scripts — LF required; mark executable so git tracks +x
+*.sh            text eol=lf
+*.bash          text eol=lf
+
+# CI/CD
+*.yml           text eol=lf
+*.yaml          text eol=lf
+
+# Source code
+*.dart          text eol=lf
+*.cpp           text eol=lf
+*.cc            text eol=lf
+*.c             text eol=lf
+*.h             text eol=lf
+*.proto         text eol=lf
+
+# Config / data
+*.json          text eol=lf
+*.toml          text eol=lf
+*.md            text eol=lf
+*.txt           text eol=lf
+*.in            text eol=lf
+
+# Binary — never touch line endings
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.ico           binary
+*.gif           binary
+*.ttf           binary
+*.otf           binary
+*.woff          binary
+*.woff2         binary
+*.pb            binary
+*.dll           binary
+*.so            binary
+*.dylib         binary
+*.exe           binary
+*.a             binary
+*.lib           binary
