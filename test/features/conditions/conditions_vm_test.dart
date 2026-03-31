@@ -33,6 +33,8 @@ ShotProfile _makeProfile({
   double pressHPa = 1013.25,
   double humidity = 0.50,
   double powderTempC = 20.0,
+  bool usePowderSensitivity = false,
+  bool useDiffPowderTemp = false,
 }) {
   final dm = DragModel(
     bc: 0.475,
@@ -73,6 +75,8 @@ ShotProfile _makeProfile({
       powderTemperature: Temperature(powderTempC, Unit.celsius),
     ),
     lookAngle: Angular(0, Unit.degree),
+    usePowderSensitivity: usePowderSensitivity,
+    useDiffPowderTemp: useDiffPowderTemp,
   );
 }
 
@@ -250,10 +254,11 @@ void main() {
 
     setUp(() async {
       container = _createContainer(
-        profile: _makeProfile(tempC: 25.0, powderTempC: 25.0),
-        settings: const AppSettings(
-          enablePowderSensitivity: true,
-          useDifferentPowderTemperature: false,
+        profile: _makeProfile(
+          tempC: 25.0,
+          powderTempC: 25.0,
+          usePowderSensitivity: true,
+          useDiffPowderTemp: false,
         ),
       );
       state = await _waitForConditions(container);
@@ -287,10 +292,11 @@ void main() {
 
     setUp(() async {
       container = _createContainer(
-        profile: _makeProfile(tempC: 25.0, powderTempC: 30.0),
-        settings: const AppSettings(
-          enablePowderSensitivity: true,
-          useDifferentPowderTemperature: true,
+        profile: _makeProfile(
+          tempC: 25.0,
+          powderTempC: 30.0,
+          usePowderSensitivity: true,
+          useDiffPowderTemp: true,
         ),
       );
       state = await _waitForConditions(container);

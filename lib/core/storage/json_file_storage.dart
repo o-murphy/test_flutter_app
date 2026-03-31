@@ -222,6 +222,31 @@ class JsonFileStorage implements AppStorage {
     await _writeList('sights', list);
   }
 
+  // ── Profile library ────────────────────────────────────────────────────────
+
+  @override
+  Future<List<ShotProfile>> loadProfiles() async =>
+      (await _readList('profiles')).map(ShotProfile.fromJson).toList();
+
+  @override
+  Future<void> saveProfile(ShotProfile p) async {
+    final list = await _readList('profiles');
+    final idx = list.indexWhere((m) => m['id'] == p.id);
+    if (idx >= 0) {
+      list[idx] = p.toJson();
+    } else {
+      list.add(p.toJson());
+    }
+    await _writeList('profiles', list);
+  }
+
+  @override
+  Future<void> deleteProfile(String id) async {
+    final list = await _readList('profiles');
+    list.removeWhere((m) => m['id'] == id);
+    await _writeList('profiles', list);
+  }
+
   // ── Export / Import ────────────────────────────────────────────────────────
 
   @override
@@ -231,6 +256,7 @@ class JsonFileStorage implements AppStorage {
     'rifles': await _readList('rifles'),
     'cartridges': await _readList('cartridges'),
     'sights': await _readList('sights'),
+    'profiles': await _readList('profiles'),
   };
 
   @override
@@ -315,6 +341,26 @@ class JsonFileStorage implements AppStorage {
           sights.add(item);
         }
         await _writeList('sights', sights);
+      }
+
+      if (data.containsKey('profiles')) {
+        final p = data['profiles'];
+        if (p is! List) {
+          throw StorageException(
+            'Invalid profiles: expected List, got ${p.runtimeType}',
+          );
+        }
+        final profiles = <Map<String, dynamic>>[];
+        for (int i = 0; i < p.length; i++) {
+          final item = p[i];
+          if (item is! Map<String, dynamic>) {
+            throw StorageException(
+              'Invalid profile at index $i: expected Map, got ${item.runtimeType}',
+            );
+          }
+          profiles.add(item);
+        }
+        await _writeList('profiles', profiles);
       }
     } catch (e, st) {
       if (e is StorageException) rethrow;

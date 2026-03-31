@@ -45,10 +45,7 @@ class RecalcCoordinator extends Notifier<void> {
 
   bool _needsRecalc(AppSettings? prev, AppSettings next) {
     if (prev == null) return true;
-    return prev.enablePowderSensitivity != next.enablePowderSensitivity ||
-        prev.useDifferentPowderTemperature !=
-            next.useDifferentPowderTemperature ||
-        prev.chartDistanceStep != next.chartDistanceStep ||
+    return prev.chartDistanceStep != next.chartDistanceStep ||
         prev.homeTableStep != next.homeTableStep ||
         prev.units != next.units ||
         prev.showMrad != next.showMrad ||

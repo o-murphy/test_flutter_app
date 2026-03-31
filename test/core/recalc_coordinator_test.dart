@@ -285,10 +285,8 @@ void main() {
 
     tearDown(() => ctx.container.dispose());
 
-    test('enablePowderSensitivity change triggers recalc', () async {
-      ctx.settingsNotifier.push(
-        const AppSettings(enablePowderSensitivity: true),
-      );
+    test('profile usePowderSensitivity change triggers recalc', () async {
+      ctx.profileNotifier.push(_makeProfile().copyWith(usePowderSensitivity: true));
       await Future<void>.delayed(Duration.zero);
 
       expect(ctx.homeVM.recalcCount, 1);
@@ -296,10 +294,8 @@ void main() {
       expect(ctx.shotDetailsVM.recalcCount, 1);
     });
 
-    test('useDifferentPowderTemperature change triggers recalc', () async {
-      ctx.settingsNotifier.push(
-        const AppSettings(useDifferentPowderTemperature: true),
-      );
+    test('profile useDiffPowderTemp change triggers recalc', () async {
+      ctx.profileNotifier.push(_makeProfile().copyWith(useDiffPowderTemp: true));
       await Future<void>.delayed(Duration.zero);
 
       expect(ctx.homeVM.recalcCount, 1);
@@ -384,7 +380,6 @@ void main() {
       // Even though multiple fields differ, it's a single push → single trigger
       ctx.settingsNotifier.push(
         const AppSettings(
-          enablePowderSensitivity: true,
           chartDistanceStep: 50.0,
           tableConfig: TableConfig(stepM: 50.0),
         ),

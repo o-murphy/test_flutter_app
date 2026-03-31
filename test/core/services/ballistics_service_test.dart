@@ -382,12 +382,12 @@ void main() {
       );
 
       final withSens = await service.calculateTable(
-        profile,
-        const TableCalcOptions(stepM: 100, usePowderSensitivity: true),
+        profile.copyWith(usePowderSensitivity: true),
+        const TableCalcOptions(stepM: 100),
       );
       final withoutSens = await service.calculateTable(
-        profile,
-        const TableCalcOptions(stepM: 100, usePowderSensitivity: false),
+        profile.copyWith(usePowderSensitivity: false),
+        const TableCalcOptions(stepM: 100),
       );
 
       // With +20°C and powder sensitivity, MV is higher → different zero elev
@@ -418,14 +418,12 @@ void main() {
       expect(opts.startM, 0);
       expect(opts.endM, 2000);
       expect(opts.stepM, 100);
-      expect(opts.usePowderSensitivity, false);
     });
 
     test('TargetCalcOptions required targetDistM', () {
       const opts = TargetCalcOptions(targetDistM: 500.0);
       expect(opts.targetDistM, 500.0);
       expect(opts.chartStepM, 10.0);
-      expect(opts.usePowderSensitivity, false);
     });
   });
 }

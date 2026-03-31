@@ -6,25 +6,21 @@ class TableCalcOptions {
   final double startM;
   final double endM;
   final double stepM;
-  final bool usePowderSensitivity;
 
   const TableCalcOptions({
     this.startM = 0,
     this.endM = 2000,
     this.stepM = 100,
-    this.usePowderSensitivity = false,
   });
 }
 
 class TargetCalcOptions {
   final double targetDistM;
   final double chartStepM;
-  final bool usePowderSensitivity;
 
   const TargetCalcOptions({
     required this.targetDistM,
     this.chartStepM = 10,
-    this.usePowderSensitivity = false,
   });
 }
 

@@ -87,6 +87,12 @@ class A7pParser {
       lookAngle: Angular(0, Unit.radian),
       zeroDistance: zeroDist,
       zeroConditions: zeroConds,
+      // Enable powder sensitivity if a7p has a non-zero coefficient.
+      usePowderSensitivity: p.cTCoeff != 0,
+      useDiffPowderTemp: false,
+      // Zero had explicit powder temp if it differs from zero air temp.
+      zeroUseDiffPowderTemp: p.cZeroPTemperature != p.cZeroAirTemperature,
+      // zeroUsePowderSensitivity: null → inherit from usePowderSensitivity.
     );
   }
 

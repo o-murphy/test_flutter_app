@@ -1,78 +1,316 @@
+import 'package:eballistica/core/models/shot_profile.dart';
+import 'package:eballistica/core/solver/unit.dart' show Unit;
+import 'package:eballistica/features/home/sub_screens/rifle_select/rifle_select_vm.dart';
 import 'package:eballistica/shared/widgets/base_screen.dart';
 import 'package:eballistica/shared/widgets/pages_dots_indicator.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class RifleSelectScreen extends StatefulWidget {
+class RifleSelectScreen extends ConsumerStatefulWidget {
   const RifleSelectScreen({super.key});
 
   @override
-  State<RifleSelectScreen> createState() => _RifleSelectScreenState();
+  ConsumerState<RifleSelectScreen> createState() => _RifleSelectScreenState();
 }
 
-class CardRifleView extends StatelessWidget {
-  const CardRifleView({required this.body, super.key});
-
-  final Widget body;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-    child: Card(
-      child: body,
-      // child: ListView(children: [ListTile(title: Text("Text"))]),
-    ),
-  );
-}
-
-class _RifleSelectScreenState extends State<RifleSelectScreen> {
-  String _title = "Select Rifle";
-  final List<String> _titles = ["Rifle 1", "Rifle 2", "Rifle 3"];
+class _RifleSelectScreenState extends ConsumerState<RifleSelectScreen> {
   final _fabKey = GlobalKey<_ExpandableFabState>();
   late final _dimAnimation = _DeferredAnimation(_fabKey);
+  final _pageController = PageController();
+  int _currentPage = 0;
 
-  void _onPageChanged(int page) {
-    setState(() {
-      _title = _titles[page];
-    });
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged(int page) => setState(() => _currentPage = page);
+
+  String _titleFor(RifleSelectUiState state) {
+    if (state is! RifleSelectReady || state.profiles.isEmpty) {
+      return 'Select Profile';
+    }
+    final idx = _currentPage.clamp(0, state.profiles.length - 1);
+    return state.profiles[idx].name;
+  }
+
+  ShotProfile? _currentProfile(RifleSelectUiState state) {
+    if (state is! RifleSelectReady || state.profiles.isEmpty) return null;
+    final idx = _currentPage.clamp(0, state.profiles.length - 1);
+    return state.profiles[idx];
+  }
+
+  Future<void> _onAdd() async {
+    // TODO: navigate to profile wizard (Phase 5)
+  }
+
+  Future<void> _onEdit(ShotProfile? profile) async {
+    if (profile == null) return;
+    // TODO: navigate to profile wizard with existing profile (Phase 5)
+  }
+
+  Future<void> _onDelete(ShotProfile? profile) async {
+    if (profile == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete profile'),
+        content: Text('Delete "${profile.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(rifleSelectVmProvider.notifier).deleteProfile(profile.id);
+      if (_currentPage > 0) {
+        setState(() => _currentPage = _currentPage - 1);
+        _pageController.animateToPage(
+          _currentPage,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    }
+  }
+
+  Future<void> _onImport() async {
+    // TODO: add file_picker to pubspec.yaml to enable .a7p import
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Import not yet available')),
+    );
+  }
+
+
+  Future<void> _onExport(ShotProfile? profile) async {
+    if (profile == null) return;
+    // TODO: serialize profile and share (Phase 5+)
+  }
+
+  Future<void> _onSelect(ShotProfile profile) async {
+    await ref.read(rifleSelectVmProvider.notifier).selectProfile(profile.id);
+    if (mounted) Navigator.of(context).pop();
   }
 
   @override
-  Widget build(BuildContext context) => BaseScreen(
-    title: _title,
-    floatingActionButton: _ExpandableFab(
-      key: _fabKey,
-      onAdd: () {},
-      onEdit: () {},
-      onDelete: () {},
-      onImport: () {},
-      onExport: () {},
-    ),
-    body: Stack(
+  Widget build(BuildContext context) {
+    final vmState = ref.watch(rifleSelectVmProvider);
+
+    return vmState.when(
+      loading: () => BaseScreen(
+        title: 'Select Profile',
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, _) => BaseScreen(
+        title: 'Select Profile',
+        body: Center(child: Text('Error: $err')),
+      ),
+      data: (state) {
+        final profile = _currentProfile(state);
+        return BaseScreen(
+          title: _titleFor(state),
+          floatingActionButton: _ExpandableFab(
+            key: _fabKey,
+            onAdd: _onAdd,
+            onEdit: () => _onEdit(profile),
+            onDelete: () => _onDelete(profile),
+            onImport: _onImport,
+            onExport: () => _onExport(profile),
+          ),
+          body: state is RifleSelectReady && state.profiles.isNotEmpty
+              ? Stack(
+                  children: [
+                    _ProfilePageView(
+                      profiles: state.profiles,
+                      activeProfileId: state.activeProfileId,
+                      pageController: _pageController,
+                      currentPage: _currentPage,
+                      onPageChanged: _onPageChanged,
+                      onSelect: _onSelect,
+                    ),
+                    AnimatedBuilder(
+                      animation: _dimAnimation,
+                      builder: (context, child) {
+                        final value = _dimAnimation.value;
+                        if (value == 0.0) return const SizedBox.shrink();
+                        return GestureDetector(
+                          onTap: () => _fabKey.currentState?.close(),
+                          child: ColoredBox(
+                            color: Colors.black.withValues(alpha: value * 0.4),
+                            child: const SizedBox.expand(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                )
+              : const Center(child: Text('No profiles. Tap + to add one.')),
+        );
+      },
+    );
+  }
+}
+
+// ── Profile Page View ─────────────────────────────────────────────────────────
+
+class _ProfilePageView extends StatelessWidget {
+  const _ProfilePageView({
+    required this.profiles,
+    required this.activeProfileId,
+    required this.pageController,
+    required this.currentPage,
+    required this.onPageChanged,
+    required this.onSelect,
+  });
+
+  final List<ShotProfile> profiles;
+  final String? activeProfileId;
+  final PageController pageController;
+  final int currentPage;
+  final void Function(int) onPageChanged;
+  final void Function(ShotProfile) onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
       children: [
-        PageViewWithDots(
-          onPageChanged: _onPageChanged,
-          children: _titles
-              .map((item) => CardRifleView(body: Center(child: Text(item))))
-              .toList(),
+        Expanded(
+          child: PageView(
+            controller: pageController,
+            onPageChanged: onPageChanged,
+            children: profiles
+                .map(
+                  (p) => _ProfileCard(
+                    profile: p,
+                    isActive: p.id == activeProfileId,
+                    onSelect: () => onSelect(p),
+                  ),
+                )
+                .toList(),
+          ),
         ),
-        AnimatedBuilder(
-          animation: _dimAnimation,
-          builder: (context, child) {
-            final value = _dimAnimation.value;
-            if (value == 0.0) return const SizedBox.shrink();
-            return GestureDetector(
-              onTap: () => _fabKey.currentState?.close(),
-              child: ColoredBox(
-                color: Colors.black.withValues(alpha: value * 0.4),
-                child: const SizedBox.expand(),
-              ),
+        const SizedBox(height: 12),
+        PageDotsIndicator(
+          current: currentPage,
+          count: profiles.length,
+          onPageChanged: (page) {
+            pageController.animateToPage(
+              page,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
             );
           },
         ),
+        const SizedBox(height: 8),
       ],
-    ),
-  );
+    );
+  }
 }
+
+// ── Profile Card ──────────────────────────────────────────────────────────────
+
+class _ProfileCard extends StatelessWidget {
+  const _ProfileCard({
+    required this.profile,
+    required this.isActive,
+    required this.onSelect,
+  });
+
+  final ShotProfile profile;
+  final bool isActive;
+  final VoidCallback onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Card(
+        color: isActive ? colorScheme.primaryContainer : null,
+        child: InkWell(
+          onTap: onSelect,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        profile.name,
+                        style: theme.textTheme.titleLarge,
+                      ),
+                    ),
+                    if (isActive)
+                      Icon(Icons.check_circle, color: colorScheme.primary),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _InfoRow(
+                  icon: Icons.military_tech_outlined,
+                  label: profile.rifle.name,
+                ),
+                const SizedBox(height: 4),
+                _InfoRow(
+                  icon: Icons.grain_outlined,
+                  label: profile.cartridge.name,
+                ),
+                const SizedBox(height: 4),
+                _InfoRow(
+                  icon: Icons.my_location_outlined,
+                  label:
+                      '${profile.zeroDistance.in_(Unit.meter).toStringAsFixed(0)} m zero',
+                ),
+                const Spacer(),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton(
+                    onPressed: onSelect,
+                    child: const Text('Select'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Theme.of(context).colorScheme.outline),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+        ),
+      ],
+    );
+  }
+}
+
+// ── FAB ───────────────────────────────────────────────────────────────────────
 
 /// Проксі-анімація що делегує до FAB state після першого frame.
 class _DeferredAnimation extends Animation<double>
@@ -264,71 +502,6 @@ class _ActionButton extends StatelessWidget {
           backgroundColor: color,
           child: Icon(icon),
         ),
-      ],
-    );
-  }
-}
-
-// Оновлений PageViewWithDots з callback
-class PageViewWithDots extends StatefulWidget {
-  const PageViewWithDots({
-    super.key,
-    required this.children,
-    this.onPageChanged,
-  });
-
-  final List<Widget> children;
-  final void Function(int page)? onPageChanged;
-
-  @override
-  State<PageViewWithDots> createState() => _PageViewWithDotsState();
-}
-
-class _PageViewWithDotsState extends State<PageViewWithDots> {
-  late final PageController _pageController;
-  int _currentPage = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController();
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  void _handlePageChanged(int page) {
-    setState(() => _currentPage = page);
-    widget.onPageChanged?.call(page);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: PageView(
-            controller: _pageController,
-            onPageChanged: _handlePageChanged,
-            children: widget.children,
-          ),
-        ),
-        const SizedBox(height: 12),
-        PageDotsIndicator(
-          current: _currentPage,
-          count: widget.children.length,
-          onPageChanged: (page) {
-            _pageController.animateToPage(
-              page,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
-          },
-        ),
-        const SizedBox(height: 8),
       ],
     );
   }

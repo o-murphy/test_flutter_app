@@ -139,10 +139,9 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
       final opts = TargetCalcOptions(
         targetDistM: profile.targetDistance.in_(Unit.meter),
         chartStepM: settings.chartDistanceStep,
-        usePowderSensitivity: settings.enablePowderSensitivity,
       );
 
-      final zeroKey = _buildZeroKey(profile, settings.enablePowderSensitivity);
+      final zeroKey = _buildZeroKey(profile);
       final useCache = listEquals(zeroKey, _lastZeroKey);
 
       final result = await ref
@@ -512,11 +511,14 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
 
   // ── Zero key (logic for detecting zero-relevant changes) ───────────────────
 
-  List<double> _buildZeroKey(ShotProfile profile, bool usePowderSens) {
+  List<double> _buildZeroKey(ShotProfile profile) {
     final zeroAtmo = profile.zeroConditions ?? profile.conditions;
     final w = profile.rifle.weapon;
     final c = profile.cartridge;
     final dm = c.projectile.dm;
+    final zeroUsePowderSens =
+        (profile.zeroUsePowderSensitivity ?? profile.usePowderSensitivity) &&
+        c.usePowderSensitivity;
     return [
       w.sightHeight.in_(Unit.meter),
       w.twist.in_(Unit.inch),
@@ -536,7 +538,8 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
       zeroAtmo.powderTemp.in_(Unit.celsius),
       profile.zeroDistance.in_(Unit.meter),
       profile.lookAngle.in_(Unit.radian),
-      usePowderSens ? 1.0 : 0.0,
+      zeroUsePowderSens ? 1.0 : 0.0,
+      profile.zeroUseDiffPowderTemp ? 1.0 : 0.0,
     ];
   }
 }

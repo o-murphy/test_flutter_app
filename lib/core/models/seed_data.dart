@@ -119,7 +119,7 @@ final seedCartridgeUkrop250 = Cartridge(
   projectile: _projUkrop250,
   mv: Velocity(888.0, Unit.mps),
   powderTemp: Temperature(29.0, Unit.celsius),
-  powderSensitivity: 2.0,
+  powderSensitivity: 0.02,
   usePowderSensitivity: true,
 );
 
@@ -183,4 +183,8 @@ final seedShotProfile = ShotProfile(
       _seedZeroConditions, // current conditions start equal; user adjusts via Conditions screen
   winds: [],
   lookAngle: Angular(0.0, Unit.degree),
+  usePowderSensitivity: true,
+  useDiffPowderTemp: false,
+  zeroUseDiffPowderTemp: false,
+  // zeroUsePowderSensitivity: null — inherit from usePowderSensitivity
 );

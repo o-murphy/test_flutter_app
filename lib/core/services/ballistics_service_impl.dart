@@ -12,27 +12,39 @@ import 'package:eballistica/core/solver/unit.dart';
 
 // ── Isolate top-level functions ──────────────────────────────────────────────
 
-// (profile, stepM, usePowderSens, cachedZeroElevationRad?)
-typedef _TableCalcArgs = (ShotProfile, double, bool, double?);
+// (profile, stepM, cachedZeroElevationRad?)
+typedef _TableCalcArgs = (ShotProfile, double, double?);
 // (hitResult, freshZeroElevationRad?)
 typedef _TableCalcResult = (HitResult?, double?);
 
+/// Builds an [Ammo] from [baseAmmo] with powder sensitivity enabled or not.
+Ammo _makeAmmo(Ammo baseAmmo, bool usePowderSens) =>
+    usePowderSens
+    ? baseAmmo
+    : Ammo(
+        dm: baseAmmo.dm,
+        mv: baseAmmo.mv,
+        powderTemp: baseAmmo.powderTemp,
+        tempModifier: baseAmmo.tempModifier,
+        usePowderSensitivity: false,
+      );
+
 _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
-  final (profile, stepM, usePowderSens, cachedZeroElevRad) = args;
+  final (profile, stepM, cachedZeroElevRad) = args;
   try {
     final calc = Calculator();
     final baseAmmo = profile.cartridge.toAmmo();
     final zeroAtmo = profile.zeroConditions ?? profile.conditions;
 
-    final Ammo shotAmmo = (usePowderSens && baseAmmo.usePowderSensitivity)
-        ? baseAmmo
-        : Ammo(
-            dm: baseAmmo.dm,
-            mv: baseAmmo.mv,
-            powderTemp: baseAmmo.powderTemp,
-            tempModifier: baseAmmo.tempModifier,
-            usePowderSensitivity: false,
-          );
+    // Per-profile flags — zero and current may differ.
+    final currentUsePowderSens =
+        profile.usePowderSensitivity && baseAmmo.usePowderSensitivity;
+    final zeroUsePowderSens =
+        (profile.zeroUsePowderSensitivity ?? profile.usePowderSensitivity) &&
+        baseAmmo.usePowderSensitivity;
+
+    final currentAmmo = _makeAmmo(baseAmmo, currentUsePowderSens);
+    final zeroAmmo = _makeAmmo(baseAmmo, zeroUsePowderSens);
 
     final weapon = profile.rifle.weapon;
     double? freshZeroElevRad;
@@ -44,7 +56,7 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
       try {
         zeroShot = Shot(
           weapon: weapon,
-          ammo: shotAmmo,
+          ammo: zeroAmmo,
           lookAngle: profile.lookAngle,
           atmo: zeroAtmo,
           winds: const [],
@@ -53,7 +65,7 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
       } catch (_) {
         zeroShot = Shot(
           weapon: weapon,
-          ammo: shotAmmo,
+          ammo: zeroAmmo,
           lookAngle: Angular(0.0, Unit.radian),
           atmo: zeroAtmo,
           winds: const [],
@@ -65,7 +77,7 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
 
     final shot = Shot(
       weapon: weapon,
-      ammo: shotAmmo,
+      ammo: currentAmmo,
       lookAngle: profile.lookAngle,
       atmo: profile.conditions,
       winds: profile.winds,
@@ -87,29 +99,27 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
   }
 }
 
-// (profile, targetDistM, chartStepM, usePowderSens, cachedZeroElevationRad?)
-typedef _HomeCalcArgs = (ShotProfile, double, double, bool, double?);
+// (profile, targetDistM, chartStepM, cachedZeroElevationRad?)
+typedef _HomeCalcArgs = (ShotProfile, double, double, double?);
 // (hitResult, freshZeroElevationRad?)
 typedef _HomeCalcResult = (HitResult?, double?);
 
 _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
-  final (profile, targetDistM, chartStepM, usePowderSens, cachedZeroElevRad) =
-      args;
+  final (profile, targetDistM, chartStepM, cachedZeroElevRad) = args;
   final internalStepM = chartStepM < 1.0 ? chartStepM : 1.0;
   try {
     final calc = Calculator();
     final baseAmmo = profile.cartridge.toAmmo();
     final zeroAtmo = profile.zeroConditions ?? profile.conditions;
 
-    final Ammo shotAmmo = (usePowderSens && baseAmmo.usePowderSensitivity)
-        ? baseAmmo
-        : Ammo(
-            dm: baseAmmo.dm,
-            mv: baseAmmo.mv,
-            powderTemp: baseAmmo.powderTemp,
-            tempModifier: baseAmmo.tempModifier,
-            usePowderSensitivity: false,
-          );
+    final currentUsePowderSens =
+        profile.usePowderSensitivity && baseAmmo.usePowderSensitivity;
+    final zeroUsePowderSens =
+        (profile.zeroUsePowderSensitivity ?? profile.usePowderSensitivity) &&
+        baseAmmo.usePowderSensitivity;
+
+    final currentAmmo = _makeAmmo(baseAmmo, currentUsePowderSens);
+    final zeroAmmo = _makeAmmo(baseAmmo, zeroUsePowderSens);
 
     final weapon = profile.rifle.weapon;
     double? freshZeroElevRad;
@@ -119,7 +129,7 @@ _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
     } else {
       final zeroShot = Shot(
         weapon: weapon,
-        ammo: shotAmmo,
+        ammo: zeroAmmo,
         lookAngle: profile.lookAngle,
         atmo: zeroAtmo,
         winds: const [],
@@ -130,7 +140,7 @@ _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
 
     final newShot = Shot(
       weapon: weapon,
-      ammo: shotAmmo,
+      ammo: currentAmmo,
       lookAngle: profile.lookAngle,
       atmo: profile.conditions,
       winds: profile.winds,
@@ -187,7 +197,6 @@ class BallisticsServiceImpl implements BallisticsService {
     final (hit, freshZero) = await compute(_runTableCalculation, (
       profile,
       opts.stepM,
-      opts.usePowderSensitivity,
       cachedZeroElevRad,
     ));
     if (hit == null) throw StateError('Table calculation returned null');
@@ -207,7 +216,6 @@ class BallisticsServiceImpl implements BallisticsService {
       profile,
       opts.targetDistM,
       opts.chartStepM,
-      opts.usePowderSensitivity,
       cachedZeroElevRad,
     ));
     if (hit == null) throw StateError('Target calculation returned null');

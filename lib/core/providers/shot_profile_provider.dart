@@ -52,6 +52,21 @@ class ShotProfileNotifier extends AsyncNotifier<ShotProfile> {
         : p.copyWith(clearZeroConditions: true),
   );
 
+  Future<void> updateUsePowderSensitivity(bool value) =>
+      _update((p) => p.copyWith(usePowderSensitivity: value));
+
+  Future<void> updateUseDiffPowderTemp(bool value) =>
+      _update((p) => p.copyWith(useDiffPowderTemp: value));
+
+  Future<void> updateZeroUsePowderSensitivity(bool? value) => _update(
+    (p) => value != null
+        ? p.copyWith(zeroUsePowderSensitivity: value)
+        : p.copyWith(clearZeroUsePowderSensitivity: true),
+  );
+
+  Future<void> updateZeroUseDiffPowderTemp(bool value) =>
+      _update((p) => p.copyWith(zeroUseDiffPowderTemp: value));
+
   Future<void> updateWindSpeed(double mps) => _update((p) {
     final existing = p.winds;
     final dir = existing.isNotEmpty
@@ -69,6 +84,29 @@ class ShotProfileNotifier extends AsyncNotifier<ShotProfile> {
         ),
       ],
     );
+  });
+
+  /// Applies all ballistic-profile fields from [template] while keeping the
+  /// current runtime state (conditions, winds, lookAngle, targetDistance).
+  Future<void> selectProfile(ShotProfile template) => _update((current) {
+    ShotProfile next = current.copyWith(
+      name: template.name,
+      rifle: template.rifle,
+      sight: template.sight,
+      cartridge: template.cartridge,
+      zeroDistance: template.zeroDistance,
+      zeroConditions: template.zeroConditions,
+      usePowderSensitivity: template.usePowderSensitivity,
+      useDiffPowderTemp: template.useDiffPowderTemp,
+      zeroUseDiffPowderTemp: template.zeroUseDiffPowderTemp,
+    );
+    final zeroUsePowderSens = template.zeroUsePowderSensitivity;
+    if (zeroUsePowderSens != null) {
+      next = next.copyWith(zeroUsePowderSensitivity: zeroUsePowderSens);
+    } else {
+      next = next.copyWith(clearZeroUsePowderSensitivity: true);
+    }
+    return next;
   });
 
   Future<void> _update(ShotProfile Function(ShotProfile) fn) async {

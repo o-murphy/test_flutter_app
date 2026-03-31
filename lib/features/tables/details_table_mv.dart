@@ -72,10 +72,13 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
   final diamInch = dm.diameter.in_(Unit.inch);
   final lenInch = dm.length.in_(Unit.inch);
 
-  // Powder sensitivity
-  final powderSensOn =
-      settings.enablePowderSensitivity && cart.usePowderSensitivity;
-  final useDiffTemp = powderSensOn && settings.useDifferentPowderTemperature;
+  // Powder sensitivity — separate flags for zero and current
+  final currentPowderSensOn = profile.usePowderSensitivity && cart.usePowderSensitivity;
+  final zeroPowderSensOn =
+      (profile.zeroUsePowderSensitivity ?? profile.usePowderSensitivity) &&
+      cart.usePowderSensitivity;
+  final currentUseDiffTemp = currentPowderSensOn && profile.useDiffPowderTemp;
+  final zeroUseDiffTemp = zeroPowderSensOn && profile.zeroUseDiffPowderTemp;
 
   final refMvMps = cart.mv.in_(Unit.mps);
   final refPowderTempC = cart.powderTemp.in_(Unit.celsius);
@@ -89,16 +92,16 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
 
   // Zero MV
   final zeroAtmo = profile.zeroConditions ?? conds;
-  final zeroPowderTempC = useDiffTemp
+  final zeroPowderTempC = zeroUseDiffTemp
       ? zeroAtmo.powderTemp.in_(Unit.celsius)
       : zeroAtmo.temperature.in_(Unit.celsius);
-  final zeroMvMps = powderSensOn ? mvAtTempC(zeroPowderTempC) : refMvMps;
+  final zeroMvMps = zeroPowderSensOn ? mvAtTempC(zeroPowderTempC) : refMvMps;
 
   // Current MV
-  final currTempC = useDiffTemp
+  final currTempC = currentUseDiffTemp
       ? conds.powderTemp.in_(Unit.celsius)
       : conds.temperature.in_(Unit.celsius);
-  final currentMvMps = powderSensOn ? mvAtTempC(currTempC) : refMvMps;
+  final currentMvMps = currentPowderSensOn ? mvAtTempC(currTempC) : refMvMps;
 
   // Gyrostability (Miller)
   double sg = profile.toShot().calculateStabilityCoefficient();

@@ -111,14 +111,14 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
 
   Future<void> setPowderSensitivity(bool value) async {
     await ref
-        .read(settingsProvider.notifier)
-        .setSwitch('powderSensitivity', value);
+        .read(shotProfileProvider.notifier)
+        .updateUsePowderSensitivity(value);
   }
 
   Future<void> setDiffPowderTemp(bool value) async {
     await ref
-        .read(settingsProvider.notifier)
-        .setSwitch('diffPowderTemperature', value);
+        .read(shotProfileProvider.notifier)
+        .updateUseDiffPowderTemp(value);
   }
 
   Future<void> setCoriolis(bool value) async {
@@ -141,7 +141,6 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
     final profile = ref.read(shotProfileProvider).value;
     if (profile == null) return;
 
-    final settings = ref.read(settingsProvider).value;
     final atmo = profile.conditions;
 
     final currentTempC = atmo.temperature.in_(Unit.celsius);
@@ -149,9 +148,8 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
     final currentPressHPa = atmo.pressure.in_(Unit.hPa);
     final currentHumFrac = atmo.humidity;
 
-    final powderSensOn = settings?.enablePowderSensitivity ?? false;
-    final useDiffTemp =
-        powderSensOn && (settings?.useDifferentPowderTemperature ?? false);
+    final powderSensOn = profile.usePowderSensitivity;
+    final useDiffTemp = powderSensOn && profile.useDiffPowderTemp;
 
     final currentPowderTempC = useDiffTemp
         ? atmo.powderTemp.in_(Unit.celsius)
@@ -188,9 +186,8 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
     final pressRaw = atmo.pressure.in_(Unit.hPa);
     final humRaw = atmo.humidity;
 
-    final powderSensOn = settings.enablePowderSensitivity;
-    final useDiffPowderTemp =
-        powderSensOn && settings.useDifferentPowderTemperature;
+    final powderSensOn = profile.usePowderSensitivity;
+    final useDiffPowderTemp = powderSensOn && profile.useDiffPowderTemp;
 
     final powderTempRaw = useDiffPowderTemp
         ? atmo.powderTemp.in_(Unit.celsius)

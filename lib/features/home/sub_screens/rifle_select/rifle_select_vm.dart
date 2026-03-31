@@ -1,0 +1,68 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:eballistica/core/models/shot_profile.dart';
+import 'package:eballistica/core/providers/profile_library_provider.dart';
+import 'package:eballistica/core/providers/shot_profile_provider.dart';
+
+// ── State ─────────────────────────────────────────────────────────────────────
+
+sealed class RifleSelectUiState {
+  const RifleSelectUiState();
+}
+
+class RifleSelectLoading extends RifleSelectUiState {
+  const RifleSelectLoading();
+}
+
+class RifleSelectReady extends RifleSelectUiState {
+  final List<ShotProfile> profiles;
+  final String? activeProfileId;
+
+  const RifleSelectReady({required this.profiles, this.activeProfileId});
+}
+
+// ── ViewModel ─────────────────────────────────────────────────────────────────
+
+class RifleSelectViewModel extends AsyncNotifier<RifleSelectUiState> {
+  @override
+  Future<RifleSelectUiState> build() async {
+    final profiles = await ref.watch(profileLibraryProvider.future);
+    final activeProfile = ref.watch(shotProfileProvider).value;
+    return RifleSelectReady(
+      profiles: profiles,
+      activeProfileId: activeProfile?.id,
+    );
+  }
+
+  Future<void> selectProfile(String id) async {
+    final profiles = ref.read(profileLibraryProvider).value ?? [];
+    final profile = profiles.firstWhere(
+      (p) => p.id == id,
+      orElse: () => throw StateError('Profile $id not found'),
+    );
+    await ref.read(shotProfileProvider.notifier).selectProfile(profile);
+  }
+
+  Future<void> deleteProfile(String id) async {
+    await ref.read(profileLibraryProvider.notifier).delete(id);
+  }
+
+  Future<void> saveProfile(ShotProfile profile) async {
+    await ref.read(profileLibraryProvider.notifier).save(profile);
+  }
+
+  Future<void> importFromA7pBytes(
+    List<int> bytes, {
+    String? fileName,
+  }) async {
+    // A7pParser works with a Payload parsed from bytes — this is handled
+    // upstream (file picker → parse → call saveProfile).
+    // This stub is intentionally empty; the screen invokes saveProfile directly
+    // after parsing.
+  }
+}
+
+final rifleSelectVmProvider =
+    AsyncNotifierProvider<RifleSelectViewModel, RifleSelectUiState>(
+      RifleSelectViewModel.new,
+    );

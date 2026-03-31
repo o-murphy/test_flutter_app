@@ -26,6 +26,23 @@ class ShotProfile {
   /// Optional separate conditions for zeroing. Null → use [conditions].
   final Atmo? zeroConditions;
 
+  /// Whether to apply powder sensitivity correction to the current shot.
+  /// Moved here from AppSettings so it is per-profile, not global.
+  final bool usePowderSensitivity;
+
+  /// Whether the current shot uses a separately-entered powder temperature
+  /// (true) or syncs powder temp to air temperature (false).
+  /// Moved here from AppSettings so it is per-profile, not global.
+  final bool useDiffPowderTemp;
+
+  /// Whether to apply powder sensitivity correction to the zero calculation.
+  /// Null = inherit from [usePowderSensitivity].
+  final bool? zeroUsePowderSensitivity;
+
+  /// Whether the zero conditions use a separately-entered powder temperature
+  /// (true) or sync powder temp to zero air temperature (false).
+  final bool zeroUseDiffPowderTemp;
+
   /// Current target range for the quick-actions panel.
   final Distance targetDistance;
   final DateTime createdAt;
@@ -44,6 +61,10 @@ class ShotProfile {
     this.azimuthDeg,
     Distance? zeroDistance,
     this.zeroConditions,
+    this.usePowderSensitivity = false,
+    this.useDiffPowderTemp = false,
+    this.zeroUsePowderSensitivity,
+    this.zeroUseDiffPowderTemp = false,
     Distance? targetDistance,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -76,6 +97,11 @@ class ShotProfile {
     Distance? zeroDistance,
     Atmo? zeroConditions,
     bool clearZeroConditions = false,
+    bool? usePowderSensitivity,
+    bool? useDiffPowderTemp,
+    bool? zeroUsePowderSensitivity,
+    bool clearZeroUsePowderSensitivity = false,
+    bool? zeroUseDiffPowderTemp,
     Distance? targetDistance,
   }) => ShotProfile(
     id: id,
@@ -92,6 +118,12 @@ class ShotProfile {
     zeroConditions: clearZeroConditions
         ? null
         : (zeroConditions ?? this.zeroConditions),
+    usePowderSensitivity: usePowderSensitivity ?? this.usePowderSensitivity,
+    useDiffPowderTemp: useDiffPowderTemp ?? this.useDiffPowderTemp,
+    zeroUsePowderSensitivity: clearZeroUsePowderSensitivity
+        ? null
+        : (zeroUsePowderSensitivity ?? this.zeroUsePowderSensitivity),
+    zeroUseDiffPowderTemp: zeroUseDiffPowderTemp ?? this.zeroUseDiffPowderTemp,
     targetDistance: targetDistance ?? this.targetDistance,
     createdAt: createdAt,
     updatedAt: DateTime.now(),
@@ -132,6 +164,11 @@ class ShotProfile {
         'powderTemp': dimToJson(zeroConditions!.powderTemp),
       },
     'targetDistance': dimToJson(targetDistance),
+    'usePowderSensitivity': usePowderSensitivity,
+    'useDiffPowderTemp': useDiffPowderTemp,
+    if (zeroUsePowderSensitivity != null)
+      'zeroUsePowderSensitivity': zeroUsePowderSensitivity,
+    'zeroUseDiffPowderTemp': zeroUseDiffPowderTemp,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
   };
@@ -193,6 +230,11 @@ class ShotProfile {
       targetDistance: json['targetDistance'] != null
           ? distanceFromJson(json['targetDistance'] as Map<String, dynamic>)
           : null,
+      usePowderSensitivity: json['usePowderSensitivity'] as bool? ?? false,
+      useDiffPowderTemp: json['useDiffPowderTemp'] as bool? ?? false,
+      zeroUsePowderSensitivity: json['zeroUsePowderSensitivity'] as bool?,
+      // Default true for backward-compat: preserve stored powderTemp in existing profiles.
+      zeroUseDiffPowderTemp: json['zeroUseDiffPowderTemp'] as bool? ?? true,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );

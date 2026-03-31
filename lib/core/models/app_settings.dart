@@ -16,8 +16,6 @@ class AppSettings {
   final TableConfig tableConfig;
   final bool showSubsonicTransition;
   final bool enableCoriolis;
-  final bool enablePowderSensitivity;
-  final bool useDifferentPowderTemperature;
   final bool enableDerivation;
   final bool enableAerodynamicJump;
   final bool pressureDependsOnAltitude;
@@ -37,8 +35,6 @@ class AppSettings {
     this.tableConfig = const TableConfig(),
     this.showSubsonicTransition = false,
     this.enableCoriolis = false,
-    this.enablePowderSensitivity = false,
-    this.useDifferentPowderTemperature = false,
     this.enableDerivation = false,
     this.enableAerodynamicJump = false,
     this.pressureDependsOnAltitude = false,
@@ -59,8 +55,6 @@ class AppSettings {
     TableConfig? tableConfig,
     bool? showSubsonicTransition,
     bool? enableCoriolis,
-    bool? enablePowderSensitivity,
-    bool? useDifferentPowderTemperature,
     bool? enableDerivation,
     bool? enableAerodynamicJump,
     bool? pressureDependsOnAltitude,
@@ -80,10 +74,6 @@ class AppSettings {
     showSubsonicTransition:
         showSubsonicTransition ?? this.showSubsonicTransition,
     enableCoriolis: enableCoriolis ?? this.enableCoriolis,
-    enablePowderSensitivity:
-        enablePowderSensitivity ?? this.enablePowderSensitivity,
-    useDifferentPowderTemperature:
-        useDifferentPowderTemperature ?? this.useDifferentPowderTemperature,
     enableDerivation: enableDerivation ?? this.enableDerivation,
     enableAerodynamicJump: enableAerodynamicJump ?? this.enableAerodynamicJump,
     pressureDependsOnAltitude:
@@ -125,8 +115,6 @@ class AppSettings {
     'homeTableStep': homeTableStep,
     'showSubsonicTransition': showSubsonicTransition,
     'enableCoriolis': enableCoriolis,
-    'enablePowderSensitivity': enablePowderSensitivity,
-    'useDifferentPowderTemperature': useDifferentPowderTemperature,
     'enableDerivation': enableDerivation,
     'enableAerodynamicJump': enableAerodynamicJump,
     'pressureDependsOnAltitude': pressureDependsOnAltitude,
@@ -158,8 +146,6 @@ class AppSettings {
       homeTableStep: d('homeTableStep', 100),
       showSubsonicTransition: b('showSubsonicTransition', true),
       enableCoriolis: b('enableCoriolis', false),
-      enablePowderSensitivity: b('enablePowderSensitivity', false),
-      useDifferentPowderTemperature: b('useDifferentPowderTemperature', false),
       enableDerivation: b('enableDerivation', false),
       enableAerodynamicJump: b('enableAerodynamicJump', false),
       pressureDependsOnAltitude: b('pressureDependsOnAltitude', false),
