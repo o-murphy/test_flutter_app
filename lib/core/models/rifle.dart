@@ -1,13 +1,16 @@
+import 'package:eballistica/core/solver/munition.dart';
+import 'package:eballistica/core/solver/unit.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:eballistica/core/solver/munition.dart';
-import '_dim.dart';
+import '_storage.dart';
 
 class Rifle {
   final String id;
   final String name;
   final String? description;
-  final Weapon weapon;
+  final Distance sightHeight;
+  final Distance twist;
+  final Angular zeroElevation;
   final String? notes;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -16,24 +19,37 @@ class Rifle {
     String? id,
     required this.name,
     this.description,
-    required this.weapon,
+    required this.sightHeight,
+    required this.twist,
+    Angular? zeroElevation,
     this.notes,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : id = id ?? const Uuid().v4(),
+       zeroElevation = zeroElevation ?? Angular(0, Unit.radian),
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
+
+  Weapon toWeapon() => Weapon(
+    sightHeight: sightHeight,
+    twist: twist,
+    zeroElevation: zeroElevation,
+  );
 
   Rifle copyWith({
     String? name,
     String? description,
-    Weapon? weapon,
+    Distance? sightHeight,
+    Distance? twist,
+    Angular? zeroElevation,
     String? notes,
   }) => Rifle(
     id: id,
     name: name ?? this.name,
     description: description ?? this.description,
-    weapon: weapon ?? this.weapon,
+    sightHeight: sightHeight ?? this.sightHeight,
+    twist: twist ?? this.twist,
+    zeroElevation: zeroElevation ?? this.zeroElevation,
     notes: notes ?? this.notes,
     createdAt: createdAt,
     updatedAt: DateTime.now(),
@@ -44,9 +60,9 @@ class Rifle {
     'name': name,
     if (description != null) 'description': description,
     'weapon': {
-      'sightHeight': dimToJson(weapon.sightHeight),
-      'twist': dimToJson(weapon.twist),
-      'zeroElevation': dimToJson(weapon.zeroElevation),
+      'sightHeight': sightHeight.in_(StorageUnits.weaponSightHeight),
+      'twist': twist.in_(StorageUnits.weaponTwist),
+      'zeroElevation': zeroElevation.in_(StorageUnits.weaponZeroElevation),
     },
     if (notes != null) 'notes': notes,
     'createdAt': createdAt.toIso8601String(),
@@ -59,12 +75,14 @@ class Rifle {
       id: json['id'] as String,
       name: json['name'] as String,
       description: json['description'] as String?,
-      weapon: Weapon(
-        sightHeight: distanceFromJson(w['sightHeight'] as Map<String, dynamic>),
-        twist: distanceFromJson(w['twist'] as Map<String, dynamic>),
-        zeroElevation: angularFromJson(
-          w['zeroElevation'] as Map<String, dynamic>,
-        ),
+      sightHeight: Distance(
+        (w['sightHeight'] as num).toDouble(),
+        StorageUnits.weaponSightHeight,
+      ),
+      twist: Distance((w['twist'] as num).toDouble(), StorageUnits.weaponTwist),
+      zeroElevation: Angular(
+        (w['zeroElevation'] as num).toDouble(),
+        StorageUnits.weaponZeroElevation,
       ),
       notes: json['notes'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),

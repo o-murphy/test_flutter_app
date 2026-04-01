@@ -16,22 +16,18 @@ class TrajectoryTable extends ConsumerWidget {
     final vmAsync = ref.watch(trajectoryTablesVmProvider);
     final vmState = vmAsync.value;
 
-    // Показуємо завантаження
     if (vmState is TrajectoryTablesUiLoading || vmState == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Показуємо пустий стан
     if (vmState is TrajectoryTablesUiEmpty) {
       return const EmptyStatePlaceholder();
     }
 
-    // Показуємо помилку
     if (vmState is TrajectoryTablesUiError) {
       return Center(child: Text('Error: ${vmState.message}'));
     }
 
-    // Готові дані - показуємо таблицю
     if (vmState is TrajectoryTablesUiReady) {
       return TrajectoryTableContent(
         mainTable: vmState.mainTable,
@@ -63,7 +59,6 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    // Стилі тексту
     final hdrStyle = theme.textTheme.labelSmall?.copyWith(
       fontWeight: FontWeight.bold,
       color: cs.onSurface,
@@ -92,12 +87,17 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
                 .map(
                   (row) => ListTile(
                     dense: true,
-                    title: Text('${row.label}  (${row.unitSymbol})'),
+                    title: Text(row.label),
+                    subtitle: row.unitSymbol.isNotEmpty
+                        ? Text(row.unitSymbol)
+                        : null,
                     trailing: Text(
                       colIndex < row.cells.length
                           ? row.cells[colIndex].value
                           : '—',
-                      style: const TextStyle(fontFamily: 'monospace'),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.copyWith(fontFamily: 'monospace'),
                     ),
                   ),
                 )
@@ -129,7 +129,7 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
               columnSpacing: 12,
               horizontalMargin: 12,
               minWidth: 80 + (nMetrics * 75),
-              fixedLeftColumns: 1, // ФІКСОВАНА КОЛОНКА RANGE
+              fixedLeftColumns: 1,
               headingRowHeight: 52,
               dataRowHeight: 40,
               headingRowColor: WidgetStateProperty.all(
@@ -180,11 +180,11 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
                 final isT = firstCell?.isTargetColumn ?? false;
 
                 final rowColor = isT
-                    ? cs.primaryContainer.withAlpha(50)
+                    ? cs.primaryContainer.withAlpha(80)
                     : isZ
-                    ? cs.errorContainer.withAlpha(50)
+                    ? cs.errorContainer.withAlpha(100)
                     : isS
-                    ? cs.tertiaryContainer.withAlpha(50)
+                    ? cs.tertiaryContainer.withAlpha(100)
                     : (pi.isEven ? null : cs.surfaceContainerLowest);
 
                 final style = isT
@@ -194,7 +194,12 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
                       )
                     : isZ
                     ? cellStyle?.copyWith(
-                        color: cs.error,
+                        color: cs.onErrorContainer,
+                        fontWeight: FontWeight.bold,
+                      )
+                    : isS
+                    ? cellStyle?.copyWith(
+                        color: cs.onTertiaryContainer,
                         fontWeight: FontWeight.bold,
                       )
                     : cellStyle;
@@ -204,14 +209,7 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
                   onTap: () => showDetail(t, pi),
                   cells: [
                     DataCell(
-                      Center(
-                        child: Text(
-                          t.distanceHeaders[pi],
-                          style: hdrStyle?.copyWith(
-                            color: isT ? cs.primary : null,
-                          ),
-                        ),
-                      ),
+                      Center(child: Text(t.distanceHeaders[pi], style: style)),
                     ),
                     ...List.generate(
                       nMetrics,
@@ -245,7 +243,7 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
           _SectionTitle(text: 'Zero Crossings'),
           SizedBox(
             height:
-                52 + (nPoints * 40.0) + 2, // Динамічна висота для списку нулів
+                52 + (nPoints * 40.0) + 2, // Dynamic height for list of zeros
             child: DataTable2(
               columnSpacing: 12,
               horizontalMargin: 12,
@@ -289,7 +287,7 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
                       Center(
                         child: Text(
                           t.distanceHeaders[pi],
-                          style: hdrStyle?.copyWith(color: cs.primary),
+                          style: cellStyle?.copyWith(color: cs.primary),
                         ),
                       ),
                     ),

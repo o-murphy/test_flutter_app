@@ -24,21 +24,48 @@ abstract final class Routes {
   static const convertors = '/convertors';
   static const settings = '/settings';
 
-  // Home stack
-  static const rifleSelect = '/home/rifle-select';
-  static const rifleEdit = '/home/rifle-select/rifle-edit';
-  static const sightSelect = '/home/rifle-select/sight-select';
-  static const cartridge = '/home/rifle-select/cartridge';
-  static const cartridgeEdit = '/home/rifle-select/cartridge/edit';
-  static const projectileSelect = '/home/projectile-select';
-  static const projectileEdit = '/home/projectile-select/edit';
+  // Home stack — shot info
   static const shotDetails = '/home/shot-details';
+
+  // Profile (profiles) stack
+  static const profiles = '/home/profiles';
+
+  // Profile add → rifle selection
+  static const profileAdd = '/home/profiles/profile-add';
+  static const profileAddRifleCreate =
+      '/home/profiles/profile-add/rifle-create';
+  static const profileAddRifleCollection =
+      '/home/profiles/profile-add/rifle-collection';
+
+  // Cartridge select (from profile card)
+  static const cartridgeSelect = '/home/profiles/cartridge-select';
+  static const cartridgeCreate = '/home/profiles/cartridge-select/create';
+  static const cartridgeCollection =
+      '/home/profiles/cartridge-select/collection';
+
+  // Projectile select (future — nested under cartridge)
+  static const projectileSelect =
+      '/home/profiles/cartridge-select/projectile-select';
+  static const projectileCreate =
+      '/home/profiles/cartridge-select/projectile-select/create';
+  static const projectileCollection =
+      '/home/profiles/cartridge-select/projectile-select/collection';
+
+  // Sight select (from profile card)
+  static const sightSelect = '/home/profiles/sight-select';
+  static const sightCreate = '/home/profiles/sight-select/create';
+  static const sightCollection = '/home/profiles/sight-select/collection';
+
+  // Profile inline edits (from profile card)
+  static const profileEditRifle = '/home/profiles/rifle-edit';
+  static const profileEditCartridge = '/home/profiles/cartridge-edit';
+  static const profileEditSight = '/home/profiles/sight-edit';
 
   // Tables stack
   static const tableConfig = '/tables/configure';
 
   // Convertors stack
-  static const convertor = '/convertors/:type'; // push individual convertor
+  static const convertor = '/convertors/:type';
   static String convertorOf(String type) => '/convertors/$type';
 
   // Settings stack
@@ -65,42 +92,93 @@ final appRouter = GoRouter(
               builder: (_, _) => const HomeScreen(),
               routes: [
                 GoRoute(
-                  path: 'rifle-select',
-                  builder: (_, _) => const RifleSelectScreen(),
+                  path: 'shot-details',
+                  builder: (_, _) => const ShotDetailsScreen(),
+                ),
+                GoRoute(
+                  path: 'profiles',
+                  builder: (_, _) => const ProfilesScreen(),
                   routes: [
+                    // ── Profile add ─────────────────────────────────────────
+                    GoRoute(
+                      path: 'profile-add',
+                      builder: (_, _) => const ProfileAddScreen(),
+                      routes: [
+                        GoRoute(
+                          path: 'rifle-create',
+                          builder: (_, _) => const CreateRifleWizardScreen(),
+                        ),
+                        GoRoute(
+                          path: 'rifle-collection',
+                          builder: (_, _) =>
+                              const SelectRifleCollectionScreen(),
+                        ),
+                      ],
+                    ),
+                    // ── Cartridge select ────────────────────────────────────
+                    GoRoute(
+                      path: 'cartridge-select',
+                      builder: (_, _) => const CartridgeSelectScreen(),
+                      routes: [
+                        GoRoute(
+                          path: 'create',
+                          builder: (_, _) =>
+                              const CreateCartridgeWizardScreen(),
+                        ),
+                        GoRoute(
+                          path: 'collection',
+                          builder: (_, _) =>
+                              const SelectCartridgeCollectionScreen(),
+                        ),
+                        // future: projectile nested under cartridge
+                        GoRoute(
+                          path: 'projectile-select',
+                          builder: (_, _) => const ProjectileSelectScreen(),
+                          routes: [
+                            GoRoute(
+                              path: 'create',
+                              builder: (_, _) =>
+                                  const CreateProjectileWizardScreen(),
+                            ),
+                            GoRoute(
+                              path: 'collection',
+                              builder: (_, _) =>
+                                  const SelectProjectileCollectionScreen(),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    // ── Sight select ────────────────────────────────────────
+                    GoRoute(
+                      path: 'sight-select',
+                      builder: (_, _) => const SightSelectScreen(),
+                      routes: [
+                        GoRoute(
+                          path: 'create',
+                          builder: (_, _) => const CreateSightWizardScreen(),
+                        ),
+                        GoRoute(
+                          path: 'collection',
+                          builder: (_, _) =>
+                              const SelectSightCollectionScreen(),
+                        ),
+                      ],
+                    ),
+                    // ── Profile inline edits ────────────────────────────────
                     GoRoute(
                       path: 'rifle-edit',
                       builder: (_, _) => const RifleEditScreen(),
                     ),
                     GoRoute(
-                      path: 'sight-select',
-                      builder: (_, _) => const SightSelectScreen(),
+                      path: 'cartridge-edit',
+                      builder: (_, _) => const CartridgeEditScreen(),
                     ),
                     GoRoute(
-                      path: 'cartridge',
-                      builder: (_, _) => const CartridgeScreen(),
-                      routes: [
-                        GoRoute(
-                          path: 'edit',
-                          builder: (_, _) => const CartridgeEditScreen(),
-                        ),
-                      ],
+                      path: 'sight-edit',
+                      builder: (_, _) => const SightEditScreen(),
                     ),
                   ],
-                ),
-                GoRoute(
-                  path: 'projectile-select',
-                  builder: (_, _) => const ProjectileSelectScreen(),
-                  routes: [
-                    GoRoute(
-                      path: 'edit',
-                      builder: (_, _) => const ProjectileEditScreen(),
-                    ),
-                  ],
-                ),
-                GoRoute(
-                  path: 'shot-details',
-                  builder: (_, _) => const ShotDetailsScreen(),
                 ),
               ],
             ),

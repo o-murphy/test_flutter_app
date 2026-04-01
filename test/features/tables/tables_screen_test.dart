@@ -53,7 +53,7 @@ FormattedTableData _makeTable({
   );
 }
 
-DetailsTableData _makeFullSpoiler() => const DetailsTableData(
+DetailsTableData _makeFullDetailstable() => const DetailsTableData(
   rifleName: 'Test Rifle',
   caliber: '7.62 mm',
   twist: '1:11"',
@@ -309,21 +309,21 @@ void main() {
       await tester.pumpWidget(
         _wrapWithRiverpod(
           const DetailsTable(),
-          detailsData: _makeFullSpoiler(),
+          detailsData: _makeFullDetailstable(),
         ),
       );
       await tester.pump();
 
       expect(find.text('RIFLE'), findsOneWidget);
       expect(find.text('PROJECTILE'), findsOneWidget);
-      expect(find.text('ATMOSPHERE'), findsOneWidget);
+      expect(find.text('CONDITIONS'), findsOneWidget);
     });
 
     testWidgets('renders rifle details correctly', (tester) async {
       await tester.pumpWidget(
         _wrapWithRiverpod(
           const DetailsTable(),
-          detailsData: _makeFullSpoiler(),
+          detailsData: _makeFullDetailstable(),
         ),
       );
       await tester.pump();
@@ -337,7 +337,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithRiverpod(
           const DetailsTable(),
-          detailsData: _makeFullSpoiler(),
+          detailsData: _makeFullDetailstable(),
         ),
       );
       await tester.pump();
@@ -350,7 +350,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithRiverpod(
           const DetailsTable(),
-          detailsData: _makeFullSpoiler(),
+          detailsData: _makeFullDetailstable(),
         ),
       );
       await tester.pump();
@@ -368,7 +368,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('RIFLE'), findsNothing);
-      expect(find.text('ATMOSPHERE'), findsNothing);
+      expect(find.text('CONDITIONS'), findsNothing);
     });
   });
 

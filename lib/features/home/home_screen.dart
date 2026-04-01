@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:eballistica/shared/widgets/pages_dots_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,7 +14,7 @@ import 'package:eballistica/features/home/widgets/home_reticle_page.dart';
 import 'package:eballistica/features/home/widgets/home_table_page.dart';
 import 'package:eballistica/features/home/widgets/quick_actions_panel.dart';
 import 'package:eballistica/features/home/widgets/side_control_block.dart';
-import 'package:eballistica/shared/widgets/unit_value_field.dart';
+import 'package:eballistica/shared/widgets/unit_value_field_tile.dart';
 import 'package:eballistica/features/home/widgets/wind_indicator.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -70,27 +71,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        const bottomHeight = 40.0; // Фіксована висота пейджинг індикатора
+        const bottomHeight = 40.0; // Fixed height of paging indicator
         const minTopH = 350.0;
         const maxTopH = 400.0;
         const minCentralH = 300.0;
 
-        // Висота для контенту, що скролиться (Top + Central)
+        // Height for scrollable content (Top + Central)
         final scrollableHeight = math.max(
           constraints.maxHeight - bottomHeight,
           minTopH + minCentralH,
         );
 
-        // Розрахунок висоти топ блоку
+        // Calculating the height of the top block
         final topBlockHeight = math.min(
           maxTopH,
           math.max(scrollableHeight * 0.55, minTopH),
         );
 
-        // Висота центрального блоку (те, що залишилось)
+        // Height of the center block (what's left)
         final centralBlockHeight = scrollableHeight - topBlockHeight;
 
-        // Чи потрібен скрол
+        // Is scrolling needed?
         final needsScroll =
             scrollableHeight > constraints.maxHeight - bottomHeight;
 
@@ -126,7 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 Expanded(
                                   child: FilledButton.tonal(
                                     onPressed: () =>
-                                        context.push(Routes.rifleSelect),
+                                        context.push(Routes.profiles),
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
@@ -296,7 +297,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 height: bottomHeight,
                 alignment: Alignment.center,
                 color: Theme.of(context).colorScheme.surface,
-                child: _PageDots(
+                child: PageDotsIndicator(
                   current: _currentPage,
                   count: 3,
                   onPageChanged: (page) {
@@ -313,71 +314,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ],
         );
       },
-    );
-  }
-}
-
-// ─── Page dots indicator with navigation arrows ──────────────────────────────
-
-class _PageDots extends StatelessWidget {
-  const _PageDots({
-    required this.current,
-    required this.count,
-    required this.onPageChanged,
-  });
-
-  final int current;
-  final int count;
-  final void Function(int page) onPageChanged;
-
-  void _previousPage() {
-    if (current > 0) onPageChanged(current - 1);
-  }
-
-  void _nextPage() {
-    if (current < count - 1) onPageChanged(current + 1);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final canGoPrev = current > 0;
-    final canGoNext = current < count - 1;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Left arrow
-        IconButton(
-          onPressed: canGoPrev ? _previousPage : null,
-          icon: Icon(Icons.chevron_left, size: 24),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-        ),
-
-        // Dots
-        ...List.generate(count, (i) {
-          final active = i == current;
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            width: active ? 16 : 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: active ? cs.primary : cs.onSurface.withAlpha(60),
-              borderRadius: BorderRadius.circular(3),
-            ),
-          );
-        }),
-
-        // Right arrow
-        IconButton(
-          onPressed: canGoNext ? _nextPage : null,
-          icon: Icon(Icons.chevron_right, size: 24),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-        ),
-      ],
     );
   }
 }

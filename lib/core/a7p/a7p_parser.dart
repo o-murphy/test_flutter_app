@@ -1,13 +1,10 @@
 import 'package:eballistica/core/models/cartridge.dart';
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/models/projectile.dart';
 import 'package:eballistica/core/models/rifle.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
 import 'package:eballistica/core/models/sight.dart';
-import '../proto/profedit.pb.dart';
-import 'package:eballistica/core/solver/conditions.dart';
-import 'package:eballistica/core/solver/drag_model.dart';
-import 'package:eballistica/core/solver/drag_tables.dart';
-import 'package:eballistica/core/solver/munition.dart';
+import '../proto/profedit.pb.dart' hide CoefRow;
 import 'package:eballistica/core/solver/unit.dart';
 import 'a7p_validator.dart';
 
@@ -25,27 +22,25 @@ class A7pParser {
   // ── main ───────────────────────────────────────────────────────────────────
 
   static ShotProfile _parseProfile(Profile p) {
-    final dm = _buildDragModel(p);
-
-    final weapon = Weapon(
+    final rifle = Rifle(
+      name: p.profileName,
       sightHeight: Distance(p.scHeight.toDouble(), Unit.millimeter),
       twist: Distance(p.rTwist / 100.0, Unit.inch),
-      // zeroElevation is computed by the calculation engine; start at 0
-      zeroElevation: Angular(0, Unit.radian),
     );
-
-    final rifle = Rifle(name: p.profileName, weapon: weapon);
 
     final sight = Sight(
       name: p.profileName,
-      sightHeight: weapon.sightHeight,
-      zeroElevation: weapon.zeroElevation,
+      sightHeight: rifle.sightHeight,
+      zeroElevation: rifle.zeroElevation,
     );
 
     final projectile = Projectile(
       name: p.bulletName,
-      dm: dm,
       dragType: _dragType(p.bcType),
+      weight: Weight(p.bWeight / 10.0, Unit.grain),
+      diameter: Distance(p.bDiameter / 1000.0, Unit.inch),
+      length: Distance(p.bLength / 1000.0, Unit.inch),
+      coefRows: _parseCoefRows(p),
     );
 
     final cartridge = Cartridge(
@@ -53,11 +48,11 @@ class A7pParser {
       projectile: projectile,
       mv: Velocity(p.cMuzzleVelocity / 10.0, Unit.mps),
       powderTemp: Temperature(p.cZeroTemperature.toDouble(), Unit.celsius),
-      powderSensitivity: p.cTCoeff / 1000.0,
+      powderSensitivity: Ratio(p.cTCoeff / 1000.0, Unit.fraction),
       usePowderSensitivity: p.cTCoeff != 0,
     );
 
-    final zeroConds = _buildAtmo(
+    final zeroConds = _buildAtmoData(
       altitudeM: 0,
       pressureHPa: p.cZeroAirPressure / 10.0,
       tempC: p.cZeroAirTemperature.toDouble(),
@@ -65,9 +60,7 @@ class A7pParser {
       powderTempC: p.cZeroPTemperature.toDouble(),
     );
 
-    // The .a7p format does not carry separate current conditions — use zero
-    // conditions as the default current conditions too.
-    final currentConds = _buildAtmo(
+    final currentConds = _buildAtmoData(
       altitudeM: 0,
       pressureHPa: p.cZeroAirPressure / 10.0,
       tempC: p.cZeroAirTemperature.toDouble(),
@@ -75,7 +68,6 @@ class A7pParser {
       powderTempC: p.cZeroPTemperature.toDouble(),
     );
 
-    // Resolve zero distance from the distances list.
     final zeroDist = _zeroDistance(p);
 
     return ShotProfile(
@@ -87,23 +79,26 @@ class A7pParser {
       lookAngle: Angular(0, Unit.radian),
       zeroDistance: zeroDist,
       zeroConditions: zeroConds,
+      usePowderSensitivity: p.cTCoeff != 0,
+      useDiffPowderTemp: false,
+      zeroUseDiffPowderTemp: p.cZeroPTemperature != p.cZeroAirTemperature,
     );
   }
 
   // ── helpers ────────────────────────────────────────────────────────────────
 
-  static Atmo _buildAtmo({
+  static AtmoData _buildAtmoData({
     required double altitudeM,
     required double pressureHPa,
     required double tempC,
     required double humidity,
     required double powderTempC,
-  }) => Atmo(
+  }) => AtmoData(
     altitude: Distance(altitudeM, Unit.meter),
     pressure: Pressure(pressureHPa, Unit.hPa),
     temperature: Temperature(tempC, Unit.celsius),
-    humidity: humidity,
-    powderTemperature: Temperature(powderTempC, Unit.celsius),
+    humidity: humidity / 100.0,
+    powderTemp: Temperature(powderTempC, Unit.celsius),
   );
 
   static Distance _zeroDistance(Profile p) {
@@ -121,96 +116,24 @@ class A7pParser {
     _ => DragModelType.g1,
   };
 
-  static DragModel _buildDragModel(Profile p) {
-    final weight = Weight(p.bWeight / 10.0, Unit.grain);
-    final diameter = Distance(p.bDiameter / 1000.0, Unit.inch);
-    final length = Distance(p.bLength / 1000.0, Unit.inch);
-
+  /// Parse coefRows from the a7p payload into storage-ready [CoeficientRow] objects.
+  ///
+  /// G1/G7: bcCd = BC value (bcCd/10000), mv = velocity m/s (mv/10)
+  /// CUSTOM: bcCd = Cd value (bcCd/10000), mv = Mach (mv/10000)
+  static List<CoeficientRow> _parseCoefRows(Profile p) {
     if (p.bcType == GType.CUSTOM) {
-      return _buildCustomDragModel(p, weight, diameter, length);
-    }
-
-    return _buildBcDragModel(p, weight, diameter, length);
-  }
-
-  /// G1 / G7 — BC-based model, possibly multi-BC.
-  static DragModel _buildBcDragModel(
-    Profile p,
-    Weight weight,
-    Distance diameter,
-    Distance length,
-  ) {
-    final baseTable = p.bcType == GType.G7 ? tableG7 : tableG1;
-
-    if (p.coefRows.isEmpty) {
-      // Fallback: bc = 1.0 (validator should have caught empty rows)
-      return DragModel(
-        bc: 1.0,
-        dragTable: baseTable,
-        weight: weight,
-        diameter: diameter,
-        length: length,
-      );
-    }
-
-    // Single-BC: only one row, or all mv == 0
-    final hasMvBreakpoints = p.coefRows.any((r) => r.mv != 0);
-
-    if (!hasMvBreakpoints) {
-      final bc = p.coefRows.first.bcCd / 10000.0;
-      return DragModel(
-        bc: bc,
-        dragTable: baseTable,
-        weight: weight,
-        diameter: diameter,
-        length: length,
-      );
-    }
-
-    // Multi-BC
-    final bcPoints = p.coefRows.map((r) {
-      final bc = r.bcCd / 10000.0;
-      final v = Velocity(r.mv / 10.0, Unit.mps);
-      return BCPoint(bc: bc, v: v);
-    }).toList();
-
-    return createDragModelMultiBC(
-      bcPoints: bcPoints,
-      dragTable: baseTable,
-      weight: weight,
-      diameter: diameter,
-      length: length,
-    );
-  }
-
-  /// CUSTOM drag model — coef_rows are (Cd×10000, Mach×10000) pairs.
-  static DragModel _buildCustomDragModel(
-    Profile p,
-    Weight weight,
-    Distance diameter,
-    Distance length,
-  ) {
-    // Sort by mach ascending (A7P files may not guarantee order).
-    final sorted = List.of(p.coefRows)..sort((a, b) => a.mv.compareTo(b.mv));
-
-    final table = sorted
-        .map((r) => (mach: r.mv / 10000.0, cd: r.bcCd / 10000.0))
-        .toList();
-
-    // bc for CUSTOM is derived from sectional density (same as createDragModelMultiBC)
-    final sd = (weight.raw > 0 && diameter.raw > 0)
-        ? calculateSectionalDensity(
-            weight.in_(Unit.grain),
-            diameter.in_(Unit.inch),
+      final sorted = List.of(p.coefRows)..sort((a, b) => a.mv.compareTo(b.mv));
+      return sorted
+          .map<CoeficientRow>(
+            (r) => CoeficientRow(bcCd: r.bcCd / 10000.0, mv: r.mv / 10000.0),
           )
-        : 1.0;
-
-    return DragModel(
-      bc: sd > 0 ? sd : 1.0,
-      dragTable: table,
-      weight: weight,
-      diameter: diameter,
-      length: length,
-    );
+          .toList();
+    }
+    // G1 / G7
+    return p.coefRows
+        .map<CoeficientRow>(
+          (r) => CoeficientRow(bcCd: r.bcCd / 10000.0, mv: r.mv / 10.0),
+        )
+        .toList();
   }
 }

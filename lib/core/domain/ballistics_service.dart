@@ -1,4 +1,3 @@
-// ЧИСТИЙ DART — без Flutter імпортів
 import 'package:eballistica/core/models/shot_profile.dart';
 import 'package:eballistica/core/solver/trajectory_data.dart';
 
@@ -6,26 +5,15 @@ class TableCalcOptions {
   final double startM;
   final double endM;
   final double stepM;
-  final bool usePowderSensitivity;
 
-  const TableCalcOptions({
-    this.startM = 0,
-    this.endM = 2000,
-    this.stepM = 100,
-    this.usePowderSensitivity = false,
-  });
+  const TableCalcOptions({this.startM = 0, this.endM = 2000, this.stepM = 100});
 }
 
 class TargetCalcOptions {
   final double targetDistM;
   final double chartStepM;
-  final bool usePowderSensitivity;
 
-  const TargetCalcOptions({
-    required this.targetDistM,
-    this.chartStepM = 10,
-    this.usePowderSensitivity = false,
-  });
+  const TargetCalcOptions({required this.targetDistM, this.chartStepM = 10});
 }
 
 class BallisticsResult {

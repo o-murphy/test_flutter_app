@@ -90,20 +90,20 @@ class UnitSettings {
     }
 
     return UnitSettings(
-      angular: u('angular', Angular.fallback, Angular.accepts),
-      distance: u('distance', Distance.fallback, Distance.accepts),
-      velocity: u('velocity', Velocity.fallback, Velocity.accepts),
-      pressure: u('pressure', Pressure.fallback, Pressure.accepts),
-      temperature: u('temperature', Temperature.fallback, Temperature.accepts),
-      diameter: u('diameter', Distance.fallback, Distance.accepts),
-      length: u('length', Distance.fallback, Distance.accepts),
-      weight: u('weight', Weight.fallback, Weight.accepts),
-      adjustment: u('adjustment', Angular.fallback, Angular.accepts),
-      drop: u('drop', Distance.fallback, Distance.accepts),
-      energy: u('energy', Energy.fallback, Energy.accepts),
-      sightHeight: u('sightHeight', Distance.fallback, Distance.accepts),
-      twist: u('twist', Distance.fallback, Distance.accepts),
-      time: u('time', Time.fallback, Time.accepts),
+      angular: u('angular', Angular.rawUnit, Angular.accepts),
+      distance: u('distance', Distance.rawUnit, Distance.accepts),
+      velocity: u('velocity', Velocity.rawUnit, Velocity.accepts),
+      pressure: u('pressure', Pressure.rawUnit, Pressure.accepts),
+      temperature: u('temperature', Temperature.rawUnit, Temperature.accepts),
+      diameter: u('diameter', Distance.rawUnit, Distance.accepts),
+      length: u('length', Distance.rawUnit, Distance.accepts),
+      weight: u('weight', Weight.rawUnit, Weight.accepts),
+      adjustment: u('adjustment', Angular.rawUnit, Angular.accepts),
+      drop: u('drop', Distance.rawUnit, Distance.accepts),
+      energy: u('energy', Energy.rawUnit, Energy.accepts),
+      sightHeight: u('sightHeight', Distance.rawUnit, Distance.accepts),
+      twist: u('twist', Distance.rawUnit, Distance.accepts),
+      time: u('time', Time.rawUnit, Time.accepts),
     );
   }
 }

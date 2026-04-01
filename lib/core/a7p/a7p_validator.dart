@@ -43,10 +43,10 @@ class A7pValidator {
     // user_note and device_uuid are optional strings — no range check needed.
 
     // ── Weapon / sight ────────────────────────────────────────────────────────
-    _checkRange(errors, 'sc_height', p.scHeight, 0, 15000); // mm ×1
+    _checkRange(errors, 'sc_height', p.scHeight, -5000, 5000); // mm ×1
     _checkRange(errors, 'r_twist', p.rTwist, 0, 10000); // inch ×100
-    _checkRange(errors, 'zero_x', p.zeroX, -200, 200);
-    _checkRange(errors, 'zero_y', p.zeroY, -200, 200);
+    _checkRange(errors, 'zero_x', p.zeroX, -200000, 200000);
+    _checkRange(errors, 'zero_y', p.zeroY, -200000, 200000);
 
     // ── Cartridge ─────────────────────────────────────────────────────────────
     _checkRange(
@@ -63,7 +63,7 @@ class A7pValidator {
       -100,
       100,
     ); // °C
-    _checkRange(errors, 'c_t_coeff', p.cTCoeff, 0, 1000); // %/15°C ×1000
+    _checkRange(errors, 'c_t_coeff', p.cTCoeff, 0, 5000); // %/15°C ×1000
     _checkRange(
       errors,
       'c_zero_p_temperature',

@@ -1,4 +1,3 @@
-// ЧИСТИЙ DART
 import 'package:eballistica/core/models/unit_settings.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -72,10 +71,9 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
         startM: cfg.startM,
         endM: cfg.endM,
         stepM: cfg.stepM < 1.0 ? cfg.stepM : 1.0,
-        usePowderSensitivity: settings.enablePowderSensitivity,
       );
 
-      final zeroKey = _buildZeroKey(profile, settings.enablePowderSensitivity);
+      final zeroKey = _buildZeroKey(profile);
       final useCache = listEquals(zeroKey, _lastZeroKey);
 
       final result = await ref
@@ -116,11 +114,7 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
     final units = settings.units;
     final hit = result.hitResult;
 
-    // Apply per-table unit overrides
-    final effUnits = units.copyWith(
-      drop: cfg.dropUnit,
-      adjustment: cfg.adjUnit,
-    );
+    // Drop/Windage and all other units come from global AppSettings.units.
 
     // Filter trajectory to display step
     final filtered = _filterTraj(
@@ -131,19 +125,14 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
     );
 
     final zeroDistM = profile.zeroDistance.in_(Unit.meter);
-    final mainTable = _buildTable(
-      filtered,
-      effUnits,
-      cfg,
-      zeroDistM: zeroDistM,
-    );
+    final mainTable = _buildTable(filtered, units, cfg, zeroDistM: zeroDistM);
 
     // Zero crossings
     FormattedTableData? zeroCrossings;
     if (cfg.showZeros) {
       final zeros = hit.zeros;
       if (zeros.isNotEmpty) {
-        zeroCrossings = _buildTable(zeros, effUnits, cfg, isZeroTable: true);
+        zeroCrossings = _buildTable(zeros, units, cfg, isZeroTable: true);
       }
     }
 
@@ -155,12 +144,13 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
 
   FormattedTableData _buildTable(
     List<TrajectoryData> rows,
-    UnitSettings effUnits, // UnitSettings
+    UnitSettings units,
     TableConfig cfg, {
     bool isZeroTable = false,
     double? zeroDistM,
   }) {
     final hidden = cfg.hiddenCols;
+    final adjUnits = cfg.enabledAdjUnits;
 
     // Column definitions matching TrajectoryTable._catalogue
     final colDefs =
@@ -176,9 +166,9 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
           (
             'range',
             'Range',
-            (_) => (effUnits.distance).symbol,
-            (r) => r.distance.in_(effUnits.distance),
-            FC.targetDistance.accuracyFor(effUnits.distance),
+            (_) => units.distance.symbol,
+            (r) => r.distance.in_(units.distance),
+            FC.targetDistance.accuracyFor(units.distance),
           ),
           if (!hidden.contains('time'))
             ('time', 'Time', (_) => 's', (r) => r.time, 3),
@@ -186,49 +176,49 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
             (
               'velocity',
               'V',
-              (_) => (effUnits.velocity).symbol,
-              (r) => r.velocity.in_(effUnits.velocity),
-              FC.velocity.accuracyFor(effUnits.velocity),
+              (_) => units.velocity.symbol,
+              (r) => r.velocity.in_(units.velocity),
+              FC.velocity.accuracyFor(units.velocity),
             ),
           if (!hidden.contains('height'))
             (
               'height',
               'Height',
-              (_) => (effUnits.drop).symbol,
-              (r) => r.height.in_(effUnits.drop),
-              FC.drop.accuracyFor(effUnits.drop),
+              (_) => units.drop.symbol,
+              (r) => r.height.in_(units.drop),
+              FC.drop.accuracyFor(units.drop),
             ),
           if (!hidden.contains('drop'))
             (
               'drop',
               'Drop',
-              (_) => (effUnits.drop).symbol,
-              (r) => r.slantHeight.in_(effUnits.drop),
-              FC.drop.accuracyFor(effUnits.drop),
+              (_) => units.drop.symbol,
+              (r) => r.slantHeight.in_(units.drop),
+              FC.drop.accuracyFor(units.drop),
             ),
-          if (!hidden.contains('adjDrop'))
+          for (final u in adjUnits)
             (
-              'adjDrop',
-              'Drop°',
-              (_) => (effUnits.adjustment).symbol,
-              (r) => r.dropAngle.in_(effUnits.adjustment),
-              FC.adjustment.accuracyFor(effUnits.adjustment),
+              'adjDrop_${u.name}',
+              'Drop° ${u.symbol}',
+              (_) => u.symbol,
+              (TrajectoryData r) => r.dropAngle.in_(u),
+              FC.adjustment.accuracyFor(u),
             ),
           if (!hidden.contains('wind'))
             (
               'wind',
               'Wind',
-              (_) => (effUnits.drop).symbol,
-              (r) => r.windage.in_(effUnits.drop),
-              FC.drop.accuracyFor(effUnits.drop),
+              (_) => units.drop.symbol,
+              (r) => r.windage.in_(units.drop),
+              FC.drop.accuracyFor(units.drop),
             ),
-          if (!hidden.contains('adjWind'))
+          for (final u in adjUnits)
             (
-              'adjWind',
-              'Wind°',
-              (_) => (effUnits.adjustment).symbol,
-              (r) => r.windageAngle.in_(effUnits.adjustment),
-              FC.adjustment.accuracyFor(effUnits.adjustment),
+              'adjWind_${u.name}',
+              'Wind° ${u.symbol}',
+              (_) => u.symbol,
+              (TrajectoryData r) => r.windageAngle.in_(u),
+              FC.adjustment.accuracyFor(u),
             ),
           if (!hidden.contains('mach'))
             ('mach', 'Mach', (_) => '', (r) => r.mach, 2),
@@ -236,9 +226,9 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
             (
               'energy',
               'Energy',
-              (_) => (effUnits.energy).symbol,
-              (r) => r.energy.in_(effUnits.energy),
-              FC.energy.accuracyFor(effUnits.energy),
+              (_) => units.energy.symbol,
+              (r) => r.energy.in_(units.energy),
+              FC.energy.accuracyFor(units.energy),
             ),
         ];
 
@@ -339,23 +329,26 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
 
   // ── Zero key ───────────────────────────────────────────────────────────────
 
-  List<double> _buildZeroKey(ShotProfile profile, bool usePowderSens) {
+  List<double> _buildZeroKey(ShotProfile profile) {
     final zeroAtmo = profile.zeroConditions ?? profile.conditions;
-    final w = profile.rifle.weapon;
+    final r = profile.rifle;
     final c = profile.cartridge;
-    final dm = c.projectile.dm;
+    final proj = c.projectile;
+    final zeroUsePowderSens =
+        (profile.zeroUsePowderSensitivity ?? profile.usePowderSensitivity) &&
+        c.usePowderSensitivity;
     return [
-      w.sightHeight.in_(Unit.meter),
-      w.twist.in_(Unit.inch),
+      r.sightHeight.in_(Unit.meter),
+      r.twist.in_(Unit.inch),
       c.mv.in_(Unit.mps),
       c.powderTemp.in_(Unit.celsius),
-      c.powderSensitivity,
+      c.powderSensitivity.in_(Unit.fraction),
       c.usePowderSensitivity ? 1.0 : 0.0,
-      dm.bc,
-      dm.weight.in_(Unit.gram),
-      dm.diameter.in_(Unit.inch),
-      dm.length.in_(Unit.inch),
-      dm.dragTable.length.toDouble(),
+      proj.coefRows.isNotEmpty ? proj.coefRows.first.bcCd : 0.0,
+      proj.weight.in_(Unit.gram),
+      proj.diameter.in_(Unit.inch),
+      proj.length.in_(Unit.inch),
+      proj.coefRows.length.toDouble(),
       zeroAtmo.altitude.in_(Unit.meter),
       zeroAtmo.pressure.in_(Unit.hPa),
       zeroAtmo.temperature.in_(Unit.celsius),
@@ -363,7 +356,8 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
       zeroAtmo.powderTemp.in_(Unit.celsius),
       profile.zeroDistance.in_(Unit.meter),
       profile.lookAngle.in_(Unit.radian),
-      usePowderSens ? 1.0 : 0.0,
+      zeroUsePowderSens ? 1.0 : 0.0,
+      profile.zeroUseDiffPowderTemp ? 1.0 : 0.0,
     ];
   }
 }

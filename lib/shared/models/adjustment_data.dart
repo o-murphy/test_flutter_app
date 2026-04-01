@@ -1,5 +1,3 @@
-// ЧИСТИЙ DART
-
 class AdjustmentValue {
   final double absValue;
   final bool isPositive;

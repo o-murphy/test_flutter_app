@@ -1,16 +1,16 @@
 import 'package:eballistica/features/tables/details_table_mv.dart';
 import 'package:eballistica/shared/widgets/empty_state.dart';
+import 'package:eballistica/shared/widgets/list_section_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DetailsTable extends ConsumerWidget {
-  const DetailsTable({super.key}); // ← прибрали required this.details
+  const DetailsTable({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final details = ref.watch(detailsTableMvProvider);
 
-    // Якщо даних немає - показуємо empty state
     if (details == null) {
       return const EmptyStatePlaceholder();
     }
@@ -29,52 +29,47 @@ class DetailsTableContent extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    final labelStyle = theme.textTheme.bodySmall?.copyWith(
-      color: cs.onSurfaceVariant,
-    );
-    final valueStyle = theme.textTheme.bodySmall?.copyWith(
-      fontFamily: 'monospace',
-      color: cs.onSurface,
-    );
-    final sectionStyle = theme.textTheme.labelSmall?.copyWith(
-      color: cs.primary,
-      fontWeight: FontWeight.w700,
-      letterSpacing: 0.6,
-    );
-
-    Widget row(String label, String value) => Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-      child: Row(
-        children: [
-          Expanded(child: Text(label, style: labelStyle)),
-          Text(value, style: valueStyle),
-        ],
+    Widget row(String label, String value) => ListTile(
+      dense: true,
+      title: Text(label),
+      trailing: Text(
+        value,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          fontFamily: 'monospace',
+          color: cs.onSurface,
+        ),
       ),
     );
 
-    Widget section(String title) => Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
-      child: Text(title.toUpperCase(), style: sectionStyle),
-    );
+    Widget section(String title) => ListSectionTile(title);
 
     final items = <Widget>[];
 
     // Rifle
-    final hasRifle = details.caliber != null || details.twist != null;
-    if (hasRifle) {
-      items.add(section('Rifle'));
-      items.add(row('Name', details.rifleName));
-      if (details.caliber != null) items.add(row('Caliber', details.caliber!));
-      if (details.twist != null) items.add(row('Twist', details.twist!));
+    if (items.isNotEmpty) items.add(const Divider(height: 1));
+    items.add(section('Rifle'));
+    items.add(row('Name', details.rifleName));
+    if (details.caliber != null) items.add(row('Caliber', details.caliber!));
+    if (details.twist != null) items.add(row('Twist', details.twist!));
+    if (details.zeroDist != null) {
+      items.add(row('Zero distance', details.zeroDist!));
+    }
+
+    // Cartridge
+    final hasCart = details.zeroMv != null || details.currentMv != null;
+    if (hasCart) {
+      if (items.isNotEmpty) items.add(const Divider(height: 1));
+      items.add(section('Cartridge'));
+      if (details.zeroMv != null) items.add(row('Zero MV', details.zeroMv!));
+      if (details.currentMv != null) {
+        items.add(row('Current MV', details.currentMv!));
+      }
     }
 
     // Projectile
     final hasProj =
         details.dragModel != null ||
         details.bc != null ||
-        details.zeroMv != null ||
-        details.currentMv != null ||
-        details.zeroDist != null ||
         details.bulletLen != null ||
         details.bulletDiam != null ||
         details.bulletWeight != null ||
@@ -82,18 +77,12 @@ class DetailsTableContent extends StatelessWidget {
         details.sectionalDensity != null ||
         details.gyroStability != null;
     if (hasProj) {
+      if (items.isNotEmpty) items.add(const Divider(height: 1));
       items.add(section('Projectile'));
       if (details.dragModel != null) {
         items.add(row('Drag model', details.dragModel!));
       }
       if (details.bc != null) items.add(row('BC', details.bc!));
-      if (details.zeroMv != null) items.add(row('Zero MV', details.zeroMv!));
-      if (details.currentMv != null) {
-        items.add(row('Current MV', details.currentMv!));
-      }
-      if (details.zeroDist != null) {
-        items.add(row('Zero distance', details.zeroDist!));
-      }
       if (details.bulletLen != null) {
         items.add(row('Length', details.bulletLen!));
       }
@@ -114,15 +103,16 @@ class DetailsTableContent extends StatelessWidget {
       }
     }
 
-    // Atmosphere
-    final hasAtmo =
+    // Conditions
+    final hasCond =
         details.temperature != null ||
         details.humidity != null ||
         details.pressure != null ||
         details.windSpeed != null ||
         details.windDir != null;
-    if (hasAtmo) {
-      items.add(section('Atmosphere'));
+    if (hasCond) {
+      if (items.isNotEmpty) items.add(const Divider(height: 1));
+      items.add(section('Conditions'));
       if (details.temperature != null) {
         items.add(row('Temperature', details.temperature!));
       }
@@ -142,6 +132,6 @@ class DetailsTableContent extends StatelessWidget {
 
     if (items.isEmpty) return const SizedBox.shrink();
 
-    return Column(children: items);
+    return ListView(children: items);
   }
 }

@@ -1,4 +1,5 @@
 import 'package:eballistica/shared/widgets/base_screen.dart';
+import 'package:eballistica/shared/widgets/unit_value_field_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,8 +8,7 @@ import 'package:eballistica/core/providers/settings_provider.dart';
 import 'package:eballistica/router.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
-import 'package:eballistica/core/solver/unit.dart';
-import 'package:eballistica/shared/widgets/section_header.dart';
+import 'package:eballistica/shared/widgets/list_section_tile.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -20,12 +20,14 @@ class SettingsScreen extends ConsumerWidget {
     final notifier = ref.read(settingsProvider.notifier);
     final tt = Theme.of(context).textTheme;
 
+    final distanceUnit = ref.watch(unitSettingsProvider).distance;
+
     return BaseScreen(
       title: 'Settings',
       body: ListView(
         children: [
           // ── Language ───────────────────────────────────────────────────
-          SectionHeader('Language'),
+          ListSectionTile('Language'),
           ListTile(
             leading: const Icon(Icons.language_outlined),
             title: Text(_languageName(settings.languageCode)),
@@ -40,7 +42,7 @@ class SettingsScreen extends ConsumerWidget {
           // const Divider(height: 1),
 
           // ── Appearance ─────────────────────────────────────────────────
-          SectionHeader('Appearance'),
+          ListSectionTile('Appearance'),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: _ThemeSelector(
@@ -52,7 +54,7 @@ class SettingsScreen extends ConsumerWidget {
           const Divider(height: 1),
 
           // ── Display settings ─────────────────────────────────────────────────
-          SectionHeader('Display settings'),
+          ListSectionTile('Display settings'),
           ListTile(
             leading: const Icon(Icons.straighten_outlined),
             title: const Text('Units of Measurement'),
@@ -69,10 +71,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           SwitchListTile(
             secondary: const Icon(Icons.speed_outlined),
-            title: const Text(
-              'Show subsonic transition',
-              style: TextStyle(fontSize: 14),
-            ),
+            title: const Text('Show subsonic transition'),
             value: settings.showSubsonicTransition,
             onChanged: (v) => notifier.setSwitch('subsonicTransition', v),
             dense: true,
@@ -80,24 +79,29 @@ class SettingsScreen extends ConsumerWidget {
           const Divider(height: 1),
 
           // ── Home screen props ─────────────────────────────────────────────────
-          SectionHeader('Main screen'),
+          ListSectionTile('Main screen'),
 
-          _StepTile(
+          UnitValueFieldTile(
             icon: Icons.table_rows_outlined,
             label: 'Table distance step',
-            valueM: settings.homeTableStep,
-            onConfirm: notifier.setHomeTableStep,
+            rawValue: settings.homeTableStep,
+            constraints: FC.distanceStep,
+            displayUnit: distanceUnit,
+            onChanged: (v) => notifier.setHomeTableStep(v),
           ),
-          _StepTile(
+          UnitValueFieldTile(
             icon: Icons.show_chart_outlined,
             label: 'Chart distance step',
-            valueM: settings.chartDistanceStep,
-            onConfirm: notifier.setChartDistanceStep,
+            rawValue: settings.chartDistanceStep,
+            constraints: FC.distanceStep,
+            displayUnit: distanceUnit,
+            onChanged: (v) => notifier.setChartDistanceStep(v),
           ),
+
           const Divider(height: 1),
 
           // ── Profiles ───────────────────────────────────────────────────
-          SectionHeader('Profiles'),
+          ListSectionTile('Profiles'),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: Row(
@@ -123,7 +127,7 @@ class SettingsScreen extends ConsumerWidget {
           const Divider(height: 1),
 
           // ── Links ──────────────────────────────────────────────────────
-          SectionHeader('Links'),
+          ListSectionTile('Links'),
           ListTile(
             leading: const Icon(Icons.code_outlined),
             title: const Text('GitHub'),
@@ -149,7 +153,7 @@ class SettingsScreen extends ConsumerWidget {
           const Divider(height: 1),
 
           // ── About ──────────────────────────────────────────────────────
-          SectionHeader('About'),
+          ListSectionTile('About'),
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('Version'),
@@ -239,75 +243,6 @@ class _ThemeSelector extends StatelessWidget {
       style: const ButtonStyle(
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: VisualDensity.compact,
-      ),
-    );
-  }
-}
-
-// ─── Distance step tile ───────────────────────────────────────────────────────
-
-class _StepTile extends ConsumerWidget {
-  const _StepTile({
-    required this.icon,
-    required this.label,
-    required this.valueM, // stored in metres
-    required this.onConfirm, // receives metres
-  });
-
-  final IconData icon;
-  final String label;
-  final double valueM;
-  final ValueChanged<double> onConfirm;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final distUnit = ref.watch(unitSettingsProvider).distance;
-    final acc = FC.targetDistance.accuracyFor(distUnit);
-    final dispVal = Distance(valueM, Unit.meter).in_(distUnit);
-    final display = '${dispVal.toStringAsFixed(acc)} ${distUnit.symbol}';
-
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(label, style: const TextStyle(fontSize: 14)),
-      trailing: Text(display, style: Theme.of(context).textTheme.bodyMedium),
-      dense: true,
-      onTap: () => _showDialog(context, distUnit, acc),
-    );
-  }
-
-  void _showDialog(BuildContext context, Unit distUnit, int acc) {
-    final dispVal = Distance(valueM, Unit.meter).in_(distUnit);
-    final controller = TextEditingController(
-      text: dispVal.toStringAsFixed(acc),
-    );
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(label),
-        content: TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          autofocus: true,
-          decoration: InputDecoration(suffixText: distUnit.symbol),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              final v = double.tryParse(controller.text);
-              if (v != null && v > 0) {
-                // convert display unit → metres
-                final metres = Distance(v, distUnit).in_(Unit.meter);
-                onConfirm(metres);
-              }
-              Navigator.pop(ctx);
-            },
-            child: const Text('OK'),
-          ),
-        ],
       ),
     );
   }

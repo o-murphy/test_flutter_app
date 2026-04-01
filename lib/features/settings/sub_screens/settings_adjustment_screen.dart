@@ -1,10 +1,10 @@
 import 'package:eballistica/shared/widgets/base_screen.dart';
+import 'package:eballistica/shared/widgets/list_section_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/core/providers/settings_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';
-import 'package:eballistica/features/settings/widgets/settings_helpers.dart';
 
 // ─── Adjustment Display Screen ────────────────────────────────────────────────
 
@@ -21,7 +21,7 @@ class AdjustmentDisplayScreen extends ConsumerWidget {
       isSubscreen: true,
       body: ListView(
         children: [
-          const SettingsSectionLabel('Format'),
+          const ListSectionTile('Format'),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
             child: SegmentedButton<AdjustmentFormat>(
@@ -48,33 +48,33 @@ class AdjustmentDisplayScreen extends ConsumerWidget {
             ),
           ),
           const Divider(height: 1),
-          const SettingsSectionLabel('Show units'),
+          const ListSectionTile('Show units'),
           SwitchListTile(
-            title: const Text('MRAD', style: TextStyle(fontSize: 14)),
+            title: const Text('MRAD'),
             value: settings.showMrad,
             onChanged: (v) => notifier.setAdjustmentToggle('showMrad', v),
             dense: true,
           ),
           SwitchListTile(
-            title: const Text('MOA', style: TextStyle(fontSize: 14)),
+            title: const Text('MOA'),
             value: settings.showMoa,
             onChanged: (v) => notifier.setAdjustmentToggle('showMoa', v),
             dense: true,
           ),
           SwitchListTile(
-            title: const Text('MIL', style: TextStyle(fontSize: 14)),
+            title: const Text('MIL'),
             value: settings.showMil,
             onChanged: (v) => notifier.setAdjustmentToggle('showMil', v),
             dense: true,
           ),
           SwitchListTile(
-            title: const Text('cm / 100m', style: TextStyle(fontSize: 14)),
+            title: const Text('cm / 100m'),
             value: settings.showCmPer100m,
             onChanged: (v) => notifier.setAdjustmentToggle('showCmPer100m', v),
             dense: true,
           ),
           SwitchListTile(
-            title: const Text('in / 100yd', style: TextStyle(fontSize: 14)),
+            title: const Text('in / 100yd'),
             value: settings.showInPer100yd,
             onChanged: (v) => notifier.setAdjustmentToggle('showInPer100yd', v),
             dense: true,

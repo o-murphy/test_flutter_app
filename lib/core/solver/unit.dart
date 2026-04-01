@@ -134,7 +134,7 @@ abstract class Dimension<T extends Dimension<T>> {
 class Angular extends Dimension<Angular> {
   Angular(super.value, super.unit);
 
-  static const fallback = Unit.degree;
+  static const rawUnit = Unit.radian;
   static bool accepts(Unit u) => u.id >= 0 && u.id < 10;
 
   static final _conversionFactors = <Unit, double>{
@@ -168,7 +168,7 @@ class Angular extends Dimension<Angular> {
 class Energy extends Dimension<Energy> {
   Energy(super.value, super.unit);
 
-  static const fallback = Unit.joule;
+  static const rawUnit = Unit.footPound;
   static bool accepts(Unit u) => u.id >= 30 && u.id < 40;
 
   static final _conversionFactors = <Unit, double>{
@@ -186,7 +186,7 @@ class Energy extends Dimension<Energy> {
 class Distance extends Dimension<Distance> {
   Distance(super.value, super.unit);
 
-  static const fallback = Unit.meter;
+  static const rawUnit = Unit.inch;
   static bool accepts(Unit u) => u.id >= 10 && u.id < 20;
 
   static final _conversionFactors = <Unit, double>{
@@ -212,7 +212,7 @@ class Distance extends Dimension<Distance> {
 class Pressure extends Dimension<Pressure> {
   Pressure(super.value, super.unit);
 
-  static const fallback = Unit.hPa;
+  static const rawUnit = Unit.mmHg;
   static bool accepts(Unit u) => u.id >= 40 && u.id < 50;
 
   static final _conversionFactors = <Unit, double>{
@@ -233,7 +233,7 @@ class Pressure extends Dimension<Pressure> {
 class Temperature extends Dimension<Temperature> {
   Temperature(super.value, super.unit);
 
-  static const fallback = Unit.celsius;
+  static const rawUnit = Unit.fahrenheit;
   static bool accepts(Unit u) => u.id >= 50 && u.id < 60;
 
   @override
@@ -268,7 +268,7 @@ class Temperature extends Dimension<Temperature> {
 class Time extends Dimension<Time> {
   Time(super.value, super.unit);
 
-  static const fallback = Unit.second;
+  static const rawUnit = Unit.second;
   static bool accepts(Unit u) => u.id >= 80 && u.id < 90;
 
   static final _conversionFactors = <Unit, double>{
@@ -290,7 +290,7 @@ class Time extends Dimension<Time> {
 class Velocity extends Dimension<Velocity> {
   Velocity(super.value, super.unit);
 
-  static const fallback = Unit.mps;
+  static const rawUnit = Unit.mps;
   static bool accepts(Unit u) => u.id >= 60 && u.id < 70;
 
   static final _conversionFactors = <Unit, double>{
@@ -311,7 +311,7 @@ class Velocity extends Dimension<Velocity> {
 class Weight extends Dimension<Weight> {
   Weight(super.value, super.unit);
 
-  static const fallback = Unit.grain;
+  static const rawUnit = Unit.grain;
   static bool accepts(Unit u) => u.id >= 70 && u.id < 80;
 
   static final _conversionFactors = <Unit, double>{
@@ -333,8 +333,8 @@ class Weight extends Dimension<Weight> {
 class Ratio extends Dimension<Ratio> {
   Ratio(super.value, super.unit);
 
-  static const fallback = Unit.scalar;
-  static bool accepts(Unit u) => u.id < 0; // Всі від'ємні ID
+  static const rawUnit = Unit.scalar;
+  static bool accepts(Unit u) => u.id < 0; // All negative IDs
 
   static final _conversionFactors = <Unit, double>{
     Unit.scalar: 1.0,
@@ -375,39 +375,4 @@ extension UnitConvertor on double {
     }
     return Dimension.auto(this, from).in_(to);
   }
-
-  // Dimension<dynamic> asDimension(Unit unit) => Dimension.auto(this, unit);
-  // Angular asAngular(Unit unit) => Angular(this, unit);
-  // Distance asDistance(Unit unit) => Distance(this, unit);
-  // Velocity asVelocity(Unit unit) => Velocity(this, unit);
-  // Weight asWeight(Unit unit) => Weight(this, unit);
-  // Time asTime(Unit unit) => Time(this, unit);
-  // Temperature asTemperature(Unit unit) => Temperature(this, unit);
-  // Pressure asPressure(Unit unit) => Pressure(this, unit);
-  // Energy asEnergy(Unit unit) => Energy(this, unit);
-  // Scalar asScalarLess(Unit unit) => Scalar(this);
 }
-
-// Dimension<dynamic, Unit> parse(String input, [Unit? preferred]) {
-//   final cleanInput = input.trim().toLowerCase().replaceAll(' ', '');
-
-//   final match = RegExp(r"^(-?\d+\.?\d*)(.*)$").firstMatch(cleanInput);
-
-//   if (match != null) {
-//     final double value = .parse(match.group(1)!);
-//     final alias = match.group(2)!;
-
-//     if (alias.isEmpty) {
-//       if (preferred != null) return dimFromUnit(value, preferred);
-//       throw Exception("No unit alias found and no preferred unit provided");
-//     }
-
-//     final unit = Unit.values.firstWhere(
-//       (u) => u.symbol.toLowerCase() == alias || u.name.toLowerCase() == alias,
-//       orElse: () => throw Exception("Unknown unit alias: $alias"),
-//     );
-
-//     return dimFromUnit(value, unit);
-//   }
-//   throw Exception("Could not parse: $input");
-// }

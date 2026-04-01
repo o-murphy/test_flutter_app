@@ -1,5 +1,3 @@
-// ЧИСТИЙ DART — для trajectory table
-
 class FormattedCell {
   final String value;
   final bool isZeroCrossing;

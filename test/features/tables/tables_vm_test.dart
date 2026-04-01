@@ -17,12 +17,9 @@ import 'package:eballistica/core/models/cartridge.dart';
 import 'package:eballistica/core/models/projectile.dart';
 import 'package:eballistica/core/models/rifle.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/models/sight.dart';
 import 'package:eballistica/core/models/unit_settings.dart';
-import 'package:eballistica/core/solver/conditions.dart';
-import 'package:eballistica/core/solver/drag_model.dart';
-import 'package:eballistica/core/solver/drag_tables.dart';
-import 'package:eballistica/core/solver/munition.dart';
 import 'package:eballistica/core/solver/trajectory_data.dart';
 import 'package:eballistica/core/solver/unit.dart';
 import 'package:eballistica/features/tables/trajectory_tables_vm.dart';
@@ -31,31 +28,27 @@ import 'package:eballistica/features/tables/details_table_mv.dart';
 // ── Fixtures ────────────────────────────────────────────────────────────────
 
 ShotProfile _makeProfile({double windMps = 3.0, double windDeg = 90.0}) {
-  final dm = DragModel(
-    bc: 0.475,
-    dragTable: tableG7,
+  final projectile = Projectile(
+    name: 'Test 175gr',
+    dragType: DragModelType.g7,
     weight: Weight(175, Unit.grain),
     diameter: Distance(7.62, Unit.millimeter),
     length: Distance(31.0, Unit.millimeter),
-  );
-  final projectile = Projectile(
-    name: 'Test 175gr',
-    dm: dm,
-    dragType: DragModelType.g7,
+    coefRows: [CoeficientRow(bcCd: 0.475, mv: 0.0)],
   );
   final cartridge = Cartridge(
     name: 'Test .308',
     projectile: projectile,
     mv: Velocity(800, Unit.mps),
     powderTemp: Temperature(15.0, Unit.celsius),
-    powderSensitivity: 1.0,
+    powderSensitivity: Ratio(1.0, Unit.fraction),
     usePowderSensitivity: true,
   );
-  final weapon = Weapon(
+  final rifle = Rifle(
+    name: 'Test Rifle',
     sightHeight: Distance(38.0, Unit.millimeter),
     twist: Distance(11.0, Unit.inch),
   );
-  final rifle = Rifle(name: 'Test Rifle', weapon: weapon);
   final sight = Sight(
     name: 'Test Scope',
     sightHeight: Distance(38.0, Unit.millimeter),
@@ -66,17 +59,18 @@ ShotProfile _makeProfile({double windMps = 3.0, double windDeg = 90.0}) {
     rifle: rifle,
     sight: sight,
     cartridge: cartridge,
-    conditions: Atmo(
+    conditions: AtmoData(
       temperature: Temperature(20.0, Unit.celsius),
       altitude: Distance(150.0, Unit.meter),
       pressure: Pressure(1013.25, Unit.hPa),
       humidity: 0.50,
-      powderTemperature: Temperature(20.0, Unit.celsius),
+      powderTemp: Temperature(20.0, Unit.celsius),
     ),
     winds: [
-      Wind(
+      WindData(
         velocity: Velocity(windMps, Unit.mps),
         directionFrom: Angular(windDeg, Unit.degree),
+        untilDistance: Distance(9999.0, Unit.meter),
       ),
     ],
     lookAngle: Angular(0, Unit.degree),

@@ -1,10 +1,10 @@
 import 'package:uuid/uuid.dart';
 
-import 'package:eballistica/core/solver/conditions.dart';
 import 'package:eballistica/core/solver/shot.dart';
 import 'package:eballistica/core/solver/unit.dart';
-import '_dim.dart';
+import '_storage.dart';
 import 'cartridge.dart';
+import 'conditions_data.dart';
 import 'rifle.dart';
 import 'sight.dart';
 
@@ -14,9 +14,9 @@ class ShotProfile {
   final Rifle rifle;
   final Sight sight;
   final Cartridge cartridge;
-  final Atmo conditions;
-  final List<Wind> winds;
-  final Angular lookAngle; // Angular
+  final AtmoData conditions;
+  final List<WindData> winds;
+  final Angular lookAngle;
   final double? latitudeDeg;
   final double? azimuthDeg;
 
@@ -24,7 +24,21 @@ class ShotProfile {
   final Distance zeroDistance;
 
   /// Optional separate conditions for zeroing. Null → use [conditions].
-  final Atmo? zeroConditions;
+  final AtmoData? zeroConditions;
+
+  /// Whether to apply powder sensitivity correction to the current shot.
+  final bool usePowderSensitivity;
+
+  /// Whether the current shot uses a separately-entered powder temperature
+  /// (true) or syncs powder temp to air temperature (false).
+  final bool useDiffPowderTemp;
+
+  /// Whether to apply powder sensitivity correction to the zero calculation.
+  /// Null = inherit from [usePowderSensitivity].
+  final bool? zeroUsePowderSensitivity;
+
+  /// Whether the zero conditions use a separately-entered powder temperature.
+  final bool zeroUseDiffPowderTemp;
 
   /// Current target range for the quick-actions panel.
   final Distance targetDistance;
@@ -44,6 +58,10 @@ class ShotProfile {
     this.azimuthDeg,
     Distance? zeroDistance,
     this.zeroConditions,
+    this.usePowderSensitivity = false,
+    this.useDiffPowderTemp = false,
+    this.zeroUsePowderSensitivity,
+    this.zeroUseDiffPowderTemp = false,
     Distance? targetDistance,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -54,11 +72,11 @@ class ShotProfile {
        updatedAt = updatedAt ?? DateTime.now();
 
   Shot toShot() => Shot(
-    weapon: rifle.weapon,
+    weapon: rifle.toWeapon(),
     ammo: cartridge.toAmmo(),
     lookAngle: lookAngle,
-    atmo: conditions,
-    winds: winds,
+    atmo: conditions.toAtmo(),
+    winds: winds.map((w) => w.toWind()).toList(),
     latitudeDeg: latitudeDeg,
     azimuthDeg: azimuthDeg,
   );
@@ -68,14 +86,19 @@ class ShotProfile {
     Rifle? rifle,
     Sight? sight,
     Cartridge? cartridge,
-    Atmo? conditions,
-    List<Wind>? winds,
+    AtmoData? conditions,
+    List<WindData>? winds,
     Angular? lookAngle,
     double? latitudeDeg,
     double? azimuthDeg,
     Distance? zeroDistance,
-    Atmo? zeroConditions,
+    AtmoData? zeroConditions,
     bool clearZeroConditions = false,
+    bool? usePowderSensitivity,
+    bool? useDiffPowderTemp,
+    bool? zeroUsePowderSensitivity,
+    bool clearZeroUsePowderSensitivity = false,
+    bool? zeroUseDiffPowderTemp,
     Distance? targetDistance,
   }) => ShotProfile(
     id: id,
@@ -92,6 +115,12 @@ class ShotProfile {
     zeroConditions: clearZeroConditions
         ? null
         : (zeroConditions ?? this.zeroConditions),
+    usePowderSensitivity: usePowderSensitivity ?? this.usePowderSensitivity,
+    useDiffPowderTemp: useDiffPowderTemp ?? this.useDiffPowderTemp,
+    zeroUsePowderSensitivity: clearZeroUsePowderSensitivity
+        ? null
+        : (zeroUsePowderSensitivity ?? this.zeroUsePowderSensitivity),
+    zeroUseDiffPowderTemp: zeroUseDiffPowderTemp ?? this.zeroUseDiffPowderTemp,
     targetDistance: targetDistance ?? this.targetDistance,
     createdAt: createdAt,
     updatedAt: DateTime.now(),
@@ -103,35 +132,19 @@ class ShotProfile {
     'rifle': rifle.toJson(),
     'sight': sight.toJson(),
     'cartridge': cartridge.toJson(),
-    'conditions': {
-      'altitude': dimToJson(conditions.altitude),
-      'pressure': dimToJson(conditions.pressure),
-      'temperature': dimToJson(conditions.temperature),
-      'humidity': conditions.humidity,
-      'powderTemp': dimToJson(conditions.powderTemp),
-    },
-    'winds': winds
-        .map(
-          (w) => {
-            'velocity': dimToJson(w.velocity),
-            'directionFrom': dimToJson(w.directionFrom),
-            'untilDistance': dimToJson(w.untilDistance),
-          },
-        )
-        .toList(),
-    'lookAngle': dimToJson(lookAngle),
+    'conditions': conditions.toJson(),
+    'winds': winds.map((w) => w.toJson()).toList(),
+    'lookAngle': lookAngle.in_(StorageUnits.profileLookAngle),
     if (latitudeDeg != null) 'latitudeDeg': latitudeDeg,
     if (azimuthDeg != null) 'azimuthDeg': azimuthDeg,
-    'zeroDistance': dimToJson(zeroDistance),
-    if (zeroConditions != null)
-      'zeroConditions': {
-        'altitude': dimToJson(zeroConditions!.altitude),
-        'pressure': dimToJson(zeroConditions!.pressure),
-        'temperature': dimToJson(zeroConditions!.temperature),
-        'humidity': zeroConditions!.humidity,
-        'powderTemp': dimToJson(zeroConditions!.powderTemp),
-      },
-    'targetDistance': dimToJson(targetDistance),
+    'zeroDistance': zeroDistance.in_(StorageUnits.profileZeroDistance),
+    if (zeroConditions != null) 'zeroConditions': zeroConditions!.toJson(),
+    'targetDistance': targetDistance.in_(StorageUnits.profileTargetDistance),
+    'usePowderSensitivity': usePowderSensitivity,
+    'useDiffPowderTemp': useDiffPowderTemp,
+    if (zeroUsePowderSensitivity != null)
+      'zeroUsePowderSensitivity': zeroUsePowderSensitivity,
+    'zeroUseDiffPowderTemp': zeroUseDiffPowderTemp,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
   };
@@ -145,54 +158,33 @@ class ShotProfile {
       rifle: Rifle.fromJson(json['rifle'] as Map<String, dynamic>),
       sight: Sight.fromJson(json['sight'] as Map<String, dynamic>),
       cartridge: Cartridge.fromJson(json['cartridge'] as Map<String, dynamic>),
-      conditions: Atmo(
-        altitude: distanceFromJson(c['altitude'] as Map<String, dynamic>),
-        pressure: pressureFromJson(c['pressure'] as Map<String, dynamic>),
-        temperature: temperatureFromJson(
-          c['temperature'] as Map<String, dynamic>,
-        ),
-        humidity: (c['humidity'] as num).toDouble(),
-        powderTemperature: temperatureFromJson(
-          c['powderTemp'] as Map<String, dynamic>,
-        ),
-      ),
+      conditions: AtmoData.fromJson(c),
       winds: (json['winds'] as List)
-          .map(
-            (w) => Wind(
-              velocity: velocityFromJson(w['velocity'] as Map<String, dynamic>),
-              directionFrom: angularFromJson(
-                w['directionFrom'] as Map<String, dynamic>,
-              ),
-              untilDistance: distanceFromJson(
-                w['untilDistance'] as Map<String, dynamic>,
-              ),
-            ),
-          )
+          .map((w) => WindData.fromJson(w as Map))
           .toList(),
-      lookAngle: angularFromJson(json['lookAngle'] as Map<String, dynamic>),
+      lookAngle: Angular(
+        (json['lookAngle'] as num).toDouble(),
+        StorageUnits.profileLookAngle,
+      ),
       latitudeDeg: (json['latitudeDeg'] as num?)?.toDouble(),
       azimuthDeg: (json['azimuthDeg'] as num?)?.toDouble(),
       zeroDistance: json['zeroDistance'] != null
-          ? distanceFromJson(json['zeroDistance'] as Map<String, dynamic>)
+          ? Distance(
+              (json['zeroDistance'] as num).toDouble(),
+              StorageUnits.profileZeroDistance,
+            )
           : null,
-      zeroConditions: Atmo(
-        altitude: distanceFromJson(
-          (zc ?? c)['altitude'] as Map<String, dynamic>,
-        ),
-        pressure: pressureFromJson(
-          (zc ?? c)['pressure'] as Map<String, dynamic>,
-        ),
-        temperature: temperatureFromJson(
-          (zc ?? c)['temperature'] as Map<String, dynamic>,
-        ),
-        humidity: ((zc ?? c)['humidity'] as num).toDouble(),
-        powderTemperature: temperatureFromJson(
-          (zc ?? c)['powderTemp'] as Map<String, dynamic>,
-        ),
-      ),
+      zeroConditions: AtmoData.fromJson(zc ?? c),
       targetDistance: json['targetDistance'] != null
-          ? distanceFromJson(json['targetDistance'] as Map<String, dynamic>)
+          ? Distance(
+              (json['targetDistance'] as num).toDouble(),
+              StorageUnits.profileTargetDistance,
+            )
           : null,
+      usePowderSensitivity: json['usePowderSensitivity'] as bool? ?? false,
+      useDiffPowderTemp: json['useDiffPowderTemp'] as bool? ?? false,
+      zeroUsePowderSensitivity: json['zeroUsePowderSensitivity'] as bool?,
+      zeroUseDiffPowderTemp: json['zeroUseDiffPowderTemp'] as bool? ?? true,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );

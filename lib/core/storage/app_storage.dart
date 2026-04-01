@@ -28,6 +28,11 @@ abstract interface class AppStorage {
   Future<void> saveSight(Sight s);
   Future<void> deleteSight(String id);
 
+  // Profile library
+  Future<List<ShotProfile>> loadProfiles();
+  Future<void> saveProfile(ShotProfile p);
+  Future<void> deleteProfile(String id);
+
   // Import / Export
   Future<Map<String, dynamic>> exportAll();
   Future<void> importAll(Map<String, dynamic> data);

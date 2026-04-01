@@ -175,11 +175,11 @@ abstract final class FC {
   );
 
   static const powderSensitivity = FieldConstraints(
-    rawUnit: Unit.fraction, // sentinel — no conversion used for humidity
+    rawUnit: Unit.fraction, // sentinel — no conversion used for sensitivity
     minRaw: 0.0,
-    maxRaw: 100.0,
-    stepRaw: 1.0,
-    accuracy: 0,
+    maxRaw: 5.0, // c_t_coeff max = 5000 ÷ 1000
+    stepRaw: 0.001,
+    accuracy: 3,
   );
 
   // Display-only — trajectory output

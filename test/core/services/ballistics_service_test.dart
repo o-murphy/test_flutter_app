@@ -10,12 +10,9 @@ import 'package:eballistica/core/services/ballistics_service_impl.dart';
 import 'package:eballistica/core/models/cartridge.dart';
 import 'package:eballistica/core/models/projectile.dart';
 import 'package:eballistica/core/models/rifle.dart';
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
 import 'package:eballistica/core/models/sight.dart';
-import 'package:eballistica/core/solver/conditions.dart';
-import 'package:eballistica/core/solver/drag_model.dart';
-import 'package:eballistica/core/solver/drag_tables.dart';
-import 'package:eballistica/core/solver/munition.dart';
 import 'package:eballistica/core/solver/unit.dart';
 
 // ── Test fixtures ────────────────────────────────────────────────────────────
@@ -25,29 +22,30 @@ ShotProfile _makeProfile({
   double mvMps = 800.0,
   double zeroDistM = 100.0,
   double targetDistM = 300.0,
-  Atmo? conditions,
-  Atmo? zeroConditions,
-  List<Wind> winds = const [],
+  AtmoData? conditions,
+  AtmoData? zeroConditions,
+  List<WindData> winds = const [],
 }) {
-  final dm = DragModel(
-    bc: 0.475,
-    dragTable: tableG7,
+  final projectile = Projectile(
+    name: 'Test 175gr',
+    dragType: DragModelType.g7,
     weight: Weight(175, Unit.grain),
     diameter: Distance(7.62, Unit.millimeter),
     length: Distance(31.0, Unit.millimeter),
+    coefRows: [CoeficientRow(bcCd: 0.475, mv: 0.0)],
   );
-  final projectile = Projectile(name: 'Test 175gr', dm: dm);
   final cartridge = Cartridge(
     name: 'Test .308',
     projectile: projectile,
     mv: Velocity(mvMps, Unit.mps),
     powderTemp: Temperature(15.0, Unit.celsius),
+    powderSensitivity: Ratio(0.0, Unit.fraction),
   );
-  final weapon = Weapon(
+  final rifle = Rifle(
+    name: 'Test Rifle',
     sightHeight: Distance(38.0, Unit.millimeter),
     twist: Distance(11.0, Unit.inch),
   );
-  final rifle = Rifle(name: 'Test Rifle', weapon: weapon);
   final sight = Sight(
     name: 'Test Scope',
     sightHeight: Distance(38.0, Unit.millimeter),
@@ -58,7 +56,15 @@ ShotProfile _makeProfile({
     rifle: rifle,
     sight: sight,
     cartridge: cartridge,
-    conditions: conditions ?? Atmo.icao(),
+    conditions:
+        conditions ??
+        AtmoData(
+          altitude: Distance(0, Unit.meter),
+          temperature: Temperature(15.0, Unit.celsius),
+          pressure: Pressure(1013.25, Unit.hPa),
+          humidity: 0.0,
+          powderTemp: Temperature(15.0, Unit.celsius),
+        ),
     winds: winds,
     lookAngle: Angular(0, Unit.degree),
     zeroDistance: Distance(zeroDistM, Unit.meter),
@@ -264,7 +270,7 @@ void main() {
     test('wind produces non-zero windage', () async {
       final profile = _makeProfile(
         winds: [
-          Wind(
+          WindData(
             velocity: Velocity(5.0, Unit.mps),
             directionFrom: Angular(90.0, Unit.degree),
             untilDistance: Distance(2000.0, Unit.meter),
@@ -286,7 +292,7 @@ void main() {
       final noWindProfile = _makeProfile(winds: const []);
       final windProfile = _makeProfile(
         winds: [
-          Wind(
+          WindData(
             velocity: Velocity(10.0, Unit.mps),
             directionFrom: Angular(90.0, Unit.degree),
             untilDistance: Distance(2000.0, Unit.meter),
@@ -318,20 +324,24 @@ void main() {
   group('BallisticsService — error handling', () {
     test('throws CalculationException for invalid profile', () async {
       // BC must be positive, zero MV will cause issues in zeroing
-      final dm = DragModel(
-        bc: 0.001,
-        dragTable: tableG7,
+      final projectile = Projectile(
+        name: 'Bad',
+        dragType: DragModelType.g7,
         weight: Weight(1, Unit.grain),
+        coefRows: [CoeficientRow(bcCd: 0.001, mv: 0.0)],
       );
-      final projectile = Projectile(name: 'Bad', dm: dm);
       final cartridge = Cartridge(
         name: 'Bad',
         projectile: projectile,
         mv: Velocity(10.0, Unit.mps), // extremely low velocity
         powderTemp: Temperature(15.0, Unit.celsius),
+        powderSensitivity: Ratio(0.0, Unit.fraction),
       );
-      final weapon = Weapon(sightHeight: Distance(38.0, Unit.millimeter));
-      final rifle = Rifle(name: 'Bad', weapon: weapon);
+      final rifle = Rifle(
+        name: 'Bad',
+        sightHeight: Distance(38.0, Unit.millimeter),
+        twist: Distance(0.0, Unit.inch),
+      );
       final sight = Sight(
         name: 'Bad',
         sightHeight: Distance(38.0, Unit.millimeter),
@@ -342,7 +352,13 @@ void main() {
         rifle: rifle,
         sight: sight,
         cartridge: cartridge,
-        conditions: Atmo.icao(),
+        conditions: AtmoData(
+          altitude: Distance(0, Unit.meter),
+          temperature: Temperature(15.0, Unit.celsius),
+          pressure: Pressure(1013.25, Unit.hPa),
+          humidity: 0.0,
+          powderTemp: Temperature(15.0, Unit.celsius),
+        ),
         lookAngle: Angular(0, Unit.degree),
         zeroDistance: Distance(3000.0, Unit.meter), // impossible zero
       );
@@ -364,30 +380,35 @@ void main() {
           name: 'Temp Sens',
           projectile: Projectile(
             name: 'Test',
-            dm: DragModel(
-              bc: 0.475,
-              dragTable: tableG7,
-              weight: Weight(175, Unit.grain),
-              diameter: Distance(7.62, Unit.millimeter),
-            ),
+            dragType: DragModelType.g7,
+            weight: Weight(175, Unit.grain),
+            diameter: Distance(7.62, Unit.millimeter),
+            coefRows: [CoeficientRow(bcCd: 0.475, mv: 0.0)],
           ),
           mv: Velocity(800, Unit.mps),
           powderTemp: Temperature(15, Unit.celsius),
-          powderSensitivity: 1.0, // 1.0 m/s per °C (stored as %)
+          powderSensitivity: Ratio(
+            1.0,
+            Unit.fraction,
+          ), // 1.0 m/s per °C (stored as %)
           usePowderSensitivity: true,
         ),
-        conditions: Atmo(
+        conditions: AtmoData(
           temperature: Temperature(35, Unit.celsius), // 20°C above reference
+          altitude: Distance(0, Unit.meter),
+          pressure: Pressure(1013.25, Unit.hPa),
+          humidity: 0.0,
+          powderTemp: Temperature(35, Unit.celsius),
         ),
       );
 
       final withSens = await service.calculateTable(
-        profile,
-        const TableCalcOptions(stepM: 100, usePowderSensitivity: true),
+        profile.copyWith(usePowderSensitivity: true),
+        const TableCalcOptions(stepM: 100),
       );
       final withoutSens = await service.calculateTable(
-        profile,
-        const TableCalcOptions(stepM: 100, usePowderSensitivity: false),
+        profile.copyWith(usePowderSensitivity: false),
+        const TableCalcOptions(stepM: 100),
       );
 
       // With +20°C and powder sensitivity, MV is higher → different zero elev
@@ -418,14 +439,12 @@ void main() {
       expect(opts.startM, 0);
       expect(opts.endM, 2000);
       expect(opts.stepM, 100);
-      expect(opts.usePowderSensitivity, false);
     });
 
     test('TargetCalcOptions required targetDistM', () {
       const opts = TargetCalcOptions(targetDistM: 500.0);
       expect(opts.targetDistM, 500.0);
       expect(opts.chartStepM, 10.0);
-      expect(opts.usePowderSensitivity, false);
     });
   });
 }

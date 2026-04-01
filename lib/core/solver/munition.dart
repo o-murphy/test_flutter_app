@@ -74,7 +74,12 @@ class Ammo {
       'Ammo(mv: $mv, powderTemp: $powderTemp, mod: ${tempModifier.toStringAsFixed(4)})';
 }
 
-double velocityForPowderTemp(double vMps, tC, tCurC, tempModifier) {
+double velocityForPowderTemp(
+  double vMps,
+  double tC,
+  double tCurC,
+  double tempModifier,
+) {
   final double tDelta = tCurC - tC;
   double adjustedMv;
   try {

@@ -146,8 +146,8 @@ void showUnitEditDialog(
 /// - [displayUnit] is the currently-selected user unit (from UnitSettings).
 ///   If [displayUnit] == [constraints.rawUnit], no conversion is done.
 /// - min / max / step come from [constraints] and are in the raw unit.
-class UnitValueField extends StatelessWidget {
-  const UnitValueField({
+class UnitValueFieldTile extends StatelessWidget {
+  const UnitValueFieldTile({
     super.key,
     required this.rawValue,
     required this.constraints,
@@ -210,31 +210,25 @@ class UnitValueField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
 
-    return InkWell(
-      onTap: () => _showDialog(context),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 20, color: cs.onSurfaceVariant),
-              const SizedBox(width: 12),
-            ],
-            Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
-            Text(
-              '${_displayValue.toStringAsFixed(_accuracy)} $_sym',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontFamily: 'monospace',
-                color: cs.onSurface,
-              ),
+    return ListTile(
+      leading: icon != null ? Icon(icon, size: 20) : null,
+      title: Text(label),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${_displayValue.toStringAsFixed(_accuracy)} $_sym',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontFamily: 'monospace',
             ),
-            const SizedBox(width: 8),
-            Icon(Icons.edit_outlined, size: 16, color: cs.onSurfaceVariant),
-          ],
-        ),
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.edit_outlined, size: 16),
+        ],
       ),
+      onTap: () => _showDialog(context),
+      dense: true,
     );
   }
 }

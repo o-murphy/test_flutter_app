@@ -1,10 +1,11 @@
 import 'package:eballistica/shared/widgets/base_screen.dart';
+import 'package:eballistica/shared/widgets/info_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/features/conditions/conditions_vm.dart';
 import 'package:eballistica/features/conditions/widgets/temperature_control.dart';
-import 'package:eballistica/shared/widgets/unit_value_field.dart';
+import 'package:eballistica/shared/widgets/unit_value_field_tile.dart';
 
 class ConditionsScreen extends ConsumerWidget {
   const ConditionsScreen({super.key});
@@ -36,7 +37,7 @@ class ConditionsScreen extends ConsumerWidget {
           const Divider(height: 1),
 
           // ── Altitude / Humidity / Pressure ────────────────────────────
-          UnitValueField(
+          UnitValueFieldTile(
             label: 'Altitude',
             icon: Icons.terrain_outlined,
             rawValue: state.altitude.rawValue,
@@ -44,7 +45,7 @@ class ConditionsScreen extends ConsumerWidget {
             displayUnit: state.altitude.displayUnit,
             onChanged: (v) => notifier.updateAltitude(v),
           ),
-          UnitValueField(
+          UnitValueFieldTile(
             label: 'Humidity',
             icon: Icons.water_drop_outlined,
             rawValue: state.humidity.rawValue,
@@ -53,7 +54,7 @@ class ConditionsScreen extends ConsumerWidget {
             symbol: '%',
             onChanged: (v) => notifier.updateHumidity(v),
           ),
-          UnitValueField(
+          UnitValueFieldTile(
             label: 'Pressure',
             icon: Icons.speed_outlined,
             rawValue: state.pressure.rawValue,
@@ -64,21 +65,23 @@ class ConditionsScreen extends ConsumerWidget {
           const Divider(height: 1),
 
           // ── Switches ──────────────────────────────────────────────────
-          _SwitchTile(
-            label: 'Powder temperature sensitivity',
-            icon: Icons.local_fire_department_outlined,
+          SwitchListTile(
+            title: const Text('Powder temperature sensitivity'),
+            secondary: const Icon(Icons.local_fire_department_outlined),
             value: state.powderSensOn,
             onChanged: (v) => notifier.setPowderSensitivity(v),
+            dense: true,
           ),
           if (state.powderSensOn) ...[
-            _SwitchTile(
-              label: 'Use different powder temperature',
-              icon: Icons.thermostat_outlined,
+            SwitchListTile(
+              title: const Text('Use different powder temperature'),
+              secondary: const Icon(Icons.thermostat_outlined),
               value: state.useDiffPowderTemp,
               onChanged: (v) => notifier.setDiffPowderTemp(v),
+              dense: true,
             ),
             if (state.powderTemperature != null)
-              UnitValueField(
+              UnitValueFieldTile(
                 label: 'Powder temperature',
                 icon: Icons.local_fire_department_outlined,
                 rawValue: state.powderTemperature!.rawValue,
@@ -87,107 +90,52 @@ class ConditionsScreen extends ConsumerWidget {
                 onChanged: (v) => notifier.updatePowderTemp(v),
               ),
             if (state.mvAtPowderTemp != null)
-              _InfoTile(
+              InfoTile(
                 label: 'Muzzle velocity at powder temp',
                 value: state.mvAtPowderTemp!,
                 icon: Icons.speed_outlined,
               ),
             if (state.powderSensitivity != null)
-              _InfoTile(
+              InfoTile(
                 label: 'Powder sensitivity',
                 value: state.powderSensitivity!,
                 icon: Icons.show_chart_outlined,
               ),
           ],
           const Divider(height: 1),
-          _SwitchTile(
-            label: 'Coriolis effect',
-            icon: Icons.rotate_right_outlined,
+          SwitchListTile(
+            title: const Text('Coriolis effect'),
+            secondary: const Icon(Icons.rotate_right_outlined),
             value: state.coriolisOn,
             onChanged: (v) => notifier.setCoriolis(v),
+            dense: true,
           ),
-          _SwitchTile(
-            label: 'Spin drift (derivation)',
-            icon: Icons.rotate_left_outlined,
+          SwitchListTile(
+            title: const Text('Spin drift (derivation)'),
+            secondary: const Icon(Icons.rotate_left_outlined),
             value: state.derivationOn,
             onChanged: (v) => notifier.setDerivation(v),
+            dense: true,
           ),
           // Always OFF — engine limitation, control disabled
-          const _SwitchTile(
-            label: 'Aerodynamic jump',
-            icon: Icons.air_outlined,
+          SwitchListTile(
+            title: const Text('Aerodynamic jump'),
+            secondary: const Icon(Icons.air_outlined),
             value: false,
             onChanged: null,
+            dense: true,
           ),
           // Always ON — engine limitation, control disabled
-          const _SwitchTile(
-            label: 'Pressure depends on altitude',
-            icon: Icons.compress_outlined,
+          SwitchListTile(
+            title: const Text('Pressure depends on altitude'),
+            secondary: const Icon(Icons.compress_outlined),
             value: true,
             onChanged: null,
+            dense: true,
           ),
           const SizedBox(height: 16),
         ],
       ),
-    );
-  }
-}
-
-// ─── Info tile (readonly) ────────────────────────────────────────────────────
-
-class _InfoTile extends StatelessWidget {
-  const _InfoTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return ListTile(
-      dense: true,
-      leading: Icon(icon, color: cs.onSurfaceVariant),
-      title: Text(label, style: const TextStyle(fontSize: 14)),
-      trailing: Text(
-        value,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontFamily: 'monospace',
-          color: cs.onSurfaceVariant,
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Switch tile ──────────────────────────────────────────────────────────────
-
-class _SwitchTile extends StatelessWidget {
-  const _SwitchTile({
-    required this.label,
-    required this.icon,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool value;
-  final ValueChanged<bool>? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SwitchListTile(
-      secondary: Icon(icon),
-      title: Text(label, style: const TextStyle(fontSize: 14)),
-      value: value,
-      onChanged: onChanged,
-      dense: true,
     );
   }
 }

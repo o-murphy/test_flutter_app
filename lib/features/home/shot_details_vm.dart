@@ -93,7 +93,6 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
       final opts = TargetCalcOptions(
         targetDistM: profile.targetDistance.in_(Unit.meter),
         chartStepM: settings.chartDistanceStep,
-        usePowderSensitivity: settings.enablePowderSensitivity,
       );
 
       final result = await ref
@@ -121,30 +120,35 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
     // MV Logic with powder sensitivity
     final refMvMps = cartridge.mv.in_(Unit.mps);
     final refPowderTempC = cartridge.powderTemp.in_(Unit.celsius);
-    final powderSensOn =
-        settings.enablePowderSensitivity && cartridge.usePowderSensitivity;
-    final useDiffTemp = powderSensOn && settings.useDifferentPowderTemperature;
+
+    final currentPowderSensOn =
+        profile.usePowderSensitivity && cartridge.usePowderSensitivity;
+    final zeroPowderSensOn =
+        (profile.zeroUsePowderSensitivity ?? profile.usePowderSensitivity) &&
+        cartridge.usePowderSensitivity;
+    final currentUseDiffTemp = currentPowderSensOn && profile.useDiffPowderTemp;
+    final zeroUseDiffTemp = zeroPowderSensOn && profile.zeroUseDiffPowderTemp;
 
     double mvAtTempC(double tCurC) => velocityForPowderTemp(
       refMvMps,
       refPowderTempC,
       tCurC,
-      cartridge.powderSensitivity,
+      cartridge.powderSensitivity.in_(Unit.fraction),
     );
 
     final conditions = profile.conditions;
-    final currentPowderTempC = useDiffTemp
+    final currentPowderTempC = currentUseDiffTemp
         ? conditions.powderTemp.in_(Unit.celsius)
         : conditions.temperature.in_(Unit.celsius);
-    final currentMvMps = powderSensOn
+    final currentMvMps = currentPowderSensOn
         ? mvAtTempC(currentPowderTempC)
         : refMvMps;
 
     final zeroAtmo = profile.zeroConditions ?? conditions;
-    final zeroPowderTempC = useDiffTemp
+    final zeroPowderTempC = zeroUseDiffTemp
         ? zeroAtmo.powderTemp.in_(Unit.celsius)
         : zeroAtmo.temperature.in_(Unit.celsius);
-    final zeroMvMps = powderSensOn ? mvAtTempC(zeroPowderTempC) : refMvMps;
+    final zeroMvMps = zeroPowderSensOn ? mvAtTempC(zeroPowderTempC) : refMvMps;
 
     // Speed of sound estimation from first point
     final double? soundSpeedFps = (traj.isNotEmpty && traj[0].mach > 0)

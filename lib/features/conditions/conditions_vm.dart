@@ -1,8 +1,7 @@
-// ЧИСТИЙ DART
-import 'package:eballistica/core/solver/munition.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/core/formatting/unit_formatter.dart';
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/providers/formatter_provider.dart';
 import 'package:eballistica/core/providers/settings_provider.dart';
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
@@ -10,7 +9,8 @@ import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
 import 'package:eballistica/core/models/unit_settings.dart';
-import 'package:eballistica/core/solver/conditions.dart' as solver;
+import 'package:eballistica/core/solver/munition.dart'
+    show velocityForPowderTemp;
 import 'package:eballistica/core/solver/unit.dart';
 
 // ── Data classes ─────────────────────────────────────────────────────────────
@@ -111,14 +111,12 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
 
   Future<void> setPowderSensitivity(bool value) async {
     await ref
-        .read(settingsProvider.notifier)
-        .setSwitch('powderSensitivity', value);
+        .read(shotProfileProvider.notifier)
+        .updateUsePowderSensitivity(value);
   }
 
   Future<void> setDiffPowderTemp(bool value) async {
-    await ref
-        .read(settingsProvider.notifier)
-        .setSwitch('diffPowderTemperature', value);
+    await ref.read(shotProfileProvider.notifier).updateUseDiffPowderTemp(value);
   }
 
   Future<void> setCoriolis(bool value) async {
@@ -141,7 +139,6 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
     final profile = ref.read(shotProfileProvider).value;
     if (profile == null) return;
 
-    final settings = ref.read(settingsProvider).value;
     final atmo = profile.conditions;
 
     final currentTempC = atmo.temperature.in_(Unit.celsius);
@@ -149,9 +146,8 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
     final currentPressHPa = atmo.pressure.in_(Unit.hPa);
     final currentHumFrac = atmo.humidity;
 
-    final powderSensOn = settings?.enablePowderSensitivity ?? false;
-    final useDiffTemp =
-        powderSensOn && (settings?.useDifferentPowderTemperature ?? false);
+    final powderSensOn = profile.usePowderSensitivity;
+    final useDiffTemp = powderSensOn && profile.useDiffPowderTemp;
 
     final currentPowderTempC = useDiffTemp
         ? atmo.powderTemp.in_(Unit.celsius)
@@ -162,12 +158,12 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
     ref
         .read(shotProfileProvider.notifier)
         .updateConditions(
-          solver.Atmo(
+          AtmoData(
             temperature: Temperature(newTempC, Unit.celsius),
             altitude: Distance(altM ?? currentAltM, Unit.meter),
             pressure: Pressure(pressHPa ?? currentPressHPa, Unit.hPa),
             humidity: humFrac ?? currentHumFrac,
-            powderTemperature: Temperature(
+            powderTemp: Temperature(
               useDiffTemp ? (powderTempC ?? currentPowderTempC) : newTempC,
               Unit.celsius,
             ),
@@ -188,9 +184,8 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
     final pressRaw = atmo.pressure.in_(Unit.hPa);
     final humRaw = atmo.humidity;
 
-    final powderSensOn = settings.enablePowderSensitivity;
-    final useDiffPowderTemp =
-        powderSensOn && settings.useDifferentPowderTemperature;
+    final powderSensOn = profile.usePowderSensitivity;
+    final useDiffPowderTemp = powderSensOn && profile.useDiffPowderTemp;
 
     final powderTempRaw = useDiffPowderTemp
         ? atmo.powderTemp.in_(Unit.celsius)
@@ -206,14 +201,15 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
       refMvMps,
       refPowderTempC,
       tCurC,
-      powderSensitivity,
+      powderSensitivity.in_(Unit.fraction),
     );
 
     final currentMvMps = mvAtTempC(powderTempRaw);
     final currentMvDisp = Velocity(currentMvMps, Unit.mps).in_(units.velocity);
     final mvStr =
         '${currentMvDisp.toStringAsFixed(FC.velocity.accuracyFor(units.velocity))} ${units.velocity.symbol}';
-    final sensStr = '${(powderSensitivity * 100.0).toStringAsFixed(2)} %/15°C';
+    final sensStr =
+        '${(powderSensitivity.in_(Unit.percent)).toStringAsFixed(2)} %/15°C';
 
     return ConditionsUiState(
       temperature: _field(

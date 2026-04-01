@@ -8,12 +8,9 @@
 //   sc_height  / 10   → mm
 //   r_twist    / 100  → inch
 
-import 'package:eballistica/core/solver/conditions.dart';
-import 'package:eballistica/core/solver/drag_model.dart';
-import 'package:eballistica/core/solver/drag_tables.dart';
-import 'package:eballistica/core/solver/munition.dart';
 import 'package:eballistica/core/solver/unit.dart';
 import 'cartridge.dart';
+import 'conditions_data.dart';
 import 'projectile.dart';
 import 'rifle.dart';
 import 'shot_profile.dart';
@@ -26,11 +23,8 @@ final seedRifle = Rifle(
   id: 'seed-rifle-338lm',
   name: '.338 Lapua Magnum',
   description: 'Generic .338LM platform',
-  weapon: Weapon(
-    sightHeight: Distance(8.5, Unit.millimeter),
-    twist: Distance(10.0, Unit.inch),
-    zeroElevation: Angular(0.0, Unit.radian),
-  ),
+  sightHeight: Distance(8.5, Unit.millimeter),
+  twist: Distance(10.0, Unit.inch),
 );
 
 // ── Sight ─────────────────────────────────────────────────────────────────────
@@ -50,13 +44,10 @@ final _projUkrop250 = Projectile(
   name: 'UKROP 250GR SMK',
   manufacturer: 'Ukrop / Zbroyar',
   dragType: DragModelType.g7,
-  dm: createDragModelMultiBC(
-    bcPoints: [BCPoint(bc: 0.314, v: Velocity(888.0, Unit.mps))],
-    dragTable: tableG7,
-    weight: Weight(250.0, Unit.grain),
-    diameter: Distance(0.338, Unit.inch),
-    length: Distance(1.555, Unit.inch),
-  ),
+  weight: Weight(250.0, Unit.grain),
+  diameter: Distance(0.338, Unit.inch),
+  length: Distance(1.555, Unit.inch),
+  coefRows: [CoeficientRow(bcCd: 0.314, mv: 888.0)],
 );
 
 // 338LM_HORNADY_250GR_BTHP_G7 — single BC G7 0.322 @ 885 m/s
@@ -66,13 +57,10 @@ final _projHornady250 = Projectile(
   name: 'Hornady 250GR BTHP',
   manufacturer: 'Hornady',
   dragType: DragModelType.g7,
-  dm: createDragModelMultiBC(
-    bcPoints: [BCPoint(bc: 0.322, v: Velocity(885.0, Unit.mps))],
-    dragTable: tableG7,
-    weight: Weight(250.0, Unit.grain),
-    diameter: Distance(0.338, Unit.inch),
-    length: Distance(1.567, Unit.inch),
-  ),
+  weight: Weight(250.0, Unit.grain),
+  diameter: Distance(0.338, Unit.inch),
+  length: Distance(1.567, Unit.inch),
+  coefRows: [CoeficientRow(bcCd: 0.322, mv: 885.0)],
 );
 
 // 338LM_LAPUA_300GR_SMK_G7 — single BC G7 0.381 @ 825 m/s
@@ -82,13 +70,10 @@ final _projLapua300 = Projectile(
   name: 'Lapua 300GR SMK',
   manufacturer: 'Lapua',
   dragType: DragModelType.g7,
-  dm: createDragModelMultiBC(
-    bcPoints: [BCPoint(bc: 0.381, v: Velocity(825.0, Unit.mps))],
-    dragTable: tableG7,
-    weight: Weight(300.0, Unit.grain),
-    diameter: Distance(0.338, Unit.inch),
-    length: Distance(1.700, Unit.inch),
-  ),
+  weight: Weight(300.0, Unit.grain),
+  diameter: Distance(0.338, Unit.inch),
+  length: Distance(1.700, Unit.inch),
+  coefRows: [CoeficientRow(bcCd: 0.381, mv: 825.0)],
 );
 
 // 338LM_STS_285GR_ELD_M_G7MBC — multi-BC G7
@@ -98,17 +83,14 @@ final _projSts285EldM = Projectile(
   name: 'Hornady 285GR ELD-M',
   manufacturer: 'Hornady / STS',
   dragType: DragModelType.g7,
-  dm: createDragModelMultiBC(
-    bcPoints: [
-      BCPoint(bc: 0.417, v: Velocity(765.0, Unit.mps)),
-      BCPoint(bc: 0.409, v: Velocity(680.0, Unit.mps)),
-      BCPoint(bc: 0.400, v: Velocity(595.0, Unit.mps)),
-    ],
-    dragTable: tableG7,
-    weight: Weight(285.0, Unit.grain),
-    diameter: Distance(0.338, Unit.inch),
-    length: Distance(1.746, Unit.inch),
-  ),
+  weight: Weight(285.0, Unit.grain),
+  diameter: Distance(0.338, Unit.inch),
+  length: Distance(1.746, Unit.inch),
+  coefRows: [
+    CoeficientRow(bcCd: 0.417, mv: 765.0),
+    CoeficientRow(bcCd: 0.409, mv: 680.0),
+    CoeficientRow(bcCd: 0.400, mv: 595.0),
+  ],
 );
 
 // ── Cartridges ────────────────────────────────────────────────────────────────
@@ -119,7 +101,7 @@ final seedCartridgeUkrop250 = Cartridge(
   projectile: _projUkrop250,
   mv: Velocity(888.0, Unit.mps),
   powderTemp: Temperature(29.0, Unit.celsius),
-  powderSensitivity: 2.0,
+  powderSensitivity: Ratio(0.02, Unit.fraction),
   usePowderSensitivity: true,
 );
 
@@ -129,7 +111,7 @@ final seedCartridgeHornady250 = Cartridge(
   projectile: _projHornady250,
   mv: Velocity(885.0, Unit.mps),
   powderTemp: Temperature(15.0, Unit.celsius),
-  powderSensitivity: 0.02,
+  powderSensitivity: Ratio(0.02, Unit.fraction),
   usePowderSensitivity: true,
 );
 
@@ -139,7 +121,7 @@ final seedCartridgeLapua300 = Cartridge(
   projectile: _projLapua300,
   mv: Velocity(825.0, Unit.mps),
   powderTemp: Temperature(15.0, Unit.celsius),
-  powderSensitivity: 0.123,
+  powderSensitivity: Ratio(0.123, Unit.fraction),
   usePowderSensitivity: true,
 );
 
@@ -149,7 +131,7 @@ final seedCartridgeSts285EldM = Cartridge(
   projectile: _projSts285EldM,
   mv: Velocity(810.0, Unit.mps),
   powderTemp: Temperature(15.0, Unit.celsius),
-  powderSensitivity: 0.02,
+  powderSensitivity: Ratio(0.02, Unit.fraction),
   usePowderSensitivity: true,
 );
 
@@ -162,13 +144,12 @@ final seedCartridges = [
 
 // ── Default Shot Profile ──────────────────────────────────────────────────────
 
-// Conditions extracted from the .a7p profile — these are the ZERO conditions
-// (altitude, temperature, pressure, humidity at time of zeroing).
-final _seedZeroConditions = Atmo(
+final _seedZeroConditions = AtmoData(
   altitude: Distance(0.0, Unit.meter),
   temperature: Temperature(15.0, Unit.celsius),
   pressure: Pressure(1000.0, Unit.hPa),
   humidity: 0.02,
+  powderTemp: Temperature(15.0, Unit.celsius),
 );
 
 final seedShotProfile = ShotProfile(
@@ -177,10 +158,11 @@ final seedShotProfile = ShotProfile(
   rifle: seedRifle,
   sight: seedSight,
   cartridge: seedCartridgeUkrop250,
-  zeroConditions:
-      _seedZeroConditions, // from a7p — conditions at time of zeroing
-  conditions:
-      _seedZeroConditions, // current conditions start equal; user adjusts via Conditions screen
+  zeroConditions: _seedZeroConditions,
+  conditions: _seedZeroConditions,
   winds: [],
   lookAngle: Angular(0.0, Unit.degree),
+  usePowderSensitivity: true,
+  useDiffPowderTemp: false,
+  zeroUseDiffPowderTemp: false,
 );

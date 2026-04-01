@@ -17,19 +17,17 @@ class TableConfig {
 
   // ── Columns ────────────────────────────────────────────────────────────────
   /// IDs of columns that are hidden. 'range' is always visible.
-  /// Column IDs: time, velocity, height, drop, adjDrop, wind, adjWind,
-  ///             mach, drag, energy
+  /// Column IDs: time, velocity, height, drop, wind, mach, drag, energy
   final Set<String> hiddenCols;
 
-  /// false = show adjustment in [adjUnit] only
-  /// true  = show one column per adjustment unit enabled in Adjustment Display
-  final bool adjAllUnits;
-
-  /// Override drop/windage unit for this table; null = use global unit.
-  final Unit? dropUnit;
-
-  /// Override adjustment unit for this table; null = use global unit.
-  final Unit? adjUnit;
+  // ── Adjustment unit columns ────────────────────────────────────────────────
+  // Each flag enables one pair of adjustment columns (Drop° + Wind° for that unit).
+  // Drop/Windage distance unit always comes from AppSettings.units.drop.
+  final bool tableShowMrad;
+  final bool tableShowMoa;
+  final bool tableShowMil;
+  final bool tableShowCmPer100m;
+  final bool tableShowInPer100yd;
 
   const TableConfig({
     this.startM = 0,
@@ -38,10 +36,21 @@ class TableConfig {
     this.showZeros = true,
     this.showSubsonicTransition = false,
     this.hiddenCols = const {},
-    this.adjAllUnits = false,
-    this.dropUnit,
-    this.adjUnit,
+    this.tableShowMrad = true,
+    this.tableShowMoa = false,
+    this.tableShowMil = false,
+    this.tableShowCmPer100m = false,
+    this.tableShowInPer100yd = false,
   });
+
+  /// Adjustment units enabled for this table.
+  List<Unit> get enabledAdjUnits => [
+    if (tableShowMrad) Unit.mRad,
+    if (tableShowMoa) Unit.moa,
+    if (tableShowMil) Unit.mil,
+    if (tableShowCmPer100m) Unit.cmPer100m,
+    if (tableShowInPer100yd) Unit.inPer100Yd,
+  ];
 
   TableConfig copyWith({
     double? startM,
@@ -50,9 +59,11 @@ class TableConfig {
     bool? showZeros,
     bool? showSubsonicTransition,
     Set<String>? hiddenCols,
-    bool? adjAllUnits,
-    Unit? dropUnit,
-    Unit? adjUnit,
+    bool? tableShowMrad,
+    bool? tableShowMoa,
+    bool? tableShowMil,
+    bool? tableShowCmPer100m,
+    bool? tableShowInPer100yd,
   }) {
     return TableConfig(
       startM: startM ?? this.startM,
@@ -62,9 +73,11 @@ class TableConfig {
       showSubsonicTransition:
           showSubsonicTransition ?? this.showSubsonicTransition,
       hiddenCols: hiddenCols ?? this.hiddenCols,
-      adjAllUnits: adjAllUnits ?? this.adjAllUnits,
-      dropUnit: dropUnit ?? this.dropUnit,
-      adjUnit: adjUnit ?? this.adjUnit,
+      tableShowMrad: tableShowMrad ?? this.tableShowMrad,
+      tableShowMoa: tableShowMoa ?? this.tableShowMoa,
+      tableShowMil: tableShowMil ?? this.tableShowMil,
+      tableShowCmPer100m: tableShowCmPer100m ?? this.tableShowCmPer100m,
+      tableShowInPer100yd: tableShowInPer100yd ?? this.tableShowInPer100yd,
     );
   }
 
@@ -77,21 +90,17 @@ class TableConfig {
     'showZeros': showZeros,
     'showSubsonicTransition': showSubsonicTransition,
     'hiddenCols': hiddenCols.toList(),
-    'adjAllUnits': adjAllUnits,
-    'dropUnit': dropUnit?.name,
-    'adjUnit': adjUnit?.name,
+    'tableShowMrad': tableShowMrad,
+    'tableShowMoa': tableShowMoa,
+    'tableShowMil': tableShowMil,
+    'tableShowCmPer100m': tableShowCmPer100m,
+    'tableShowInPer100yd': tableShowInPer100yd,
   };
 
   factory TableConfig.fromJson(Map<String, dynamic> json) {
     bool b(String key, bool def) => json[key] as bool? ?? def;
     double d(String key, double default_) {
       return (json[key] as num?)?.toDouble() ?? default_;
-    }
-
-    Unit? u(String key) {
-      final name = json[key] as String?;
-      if (name == null) return null;
-      return .fromName(name) ?? Unit.mil;
     }
 
     return TableConfig(
@@ -101,9 +110,11 @@ class TableConfig {
       showZeros: b('showZeros', true),
       showSubsonicTransition: b('showSubsonicTransition', false),
       hiddenCols: Set<String>.from(json['hiddenCols'] as List? ?? []),
-      adjAllUnits: b('adjAllUnits', false),
-      dropUnit: u('dropUnit'),
-      adjUnit: u('adjUnit'),
+      tableShowMrad: b('tableShowMrad', true),
+      tableShowMoa: b('tableShowMoa', false),
+      tableShowMil: b('tableShowMil', false),
+      tableShowCmPer100m: b('tableShowCmPer100m', false),
+      tableShowInPer100yd: b('tableShowInPer100yd', false),
     );
   }
 }
