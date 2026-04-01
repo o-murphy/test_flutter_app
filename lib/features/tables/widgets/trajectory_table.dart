@@ -16,22 +16,18 @@ class TrajectoryTable extends ConsumerWidget {
     final vmAsync = ref.watch(trajectoryTablesVmProvider);
     final vmState = vmAsync.value;
 
-    // Показуємо завантаження
     if (vmState is TrajectoryTablesUiLoading || vmState == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Показуємо пустий стан
     if (vmState is TrajectoryTablesUiEmpty) {
       return const EmptyStatePlaceholder();
     }
 
-    // Показуємо помилку
     if (vmState is TrajectoryTablesUiError) {
       return Center(child: Text('Error: ${vmState.message}'));
     }
 
-    // Готові дані - показуємо таблицю
     if (vmState is TrajectoryTablesUiReady) {
       return TrajectoryTableContent(
         mainTable: vmState.mainTable,
@@ -63,7 +59,6 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    // Стилі тексту
     final hdrStyle = theme.textTheme.labelSmall?.copyWith(
       fontWeight: FontWeight.bold,
       color: cs.onSurface,
@@ -134,7 +129,7 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
               columnSpacing: 12,
               horizontalMargin: 12,
               minWidth: 80 + (nMetrics * 75),
-              fixedLeftColumns: 1, // ФІКСОВАНА КОЛОНКА RANGE
+              fixedLeftColumns: 1,
               headingRowHeight: 52,
               dataRowHeight: 40,
               headingRowColor: WidgetStateProperty.all(
@@ -248,7 +243,7 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
           _SectionTitle(text: 'Zero Crossings'),
           SizedBox(
             height:
-                52 + (nPoints * 40.0) + 2, // Динамічна висота для списку нулів
+                52 + (nPoints * 40.0) + 2, // Dynamic height for list of zeros
             child: DataTable2(
               columnSpacing: 12,
               horizontalMargin: 12,

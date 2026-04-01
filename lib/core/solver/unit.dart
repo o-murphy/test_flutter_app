@@ -334,7 +334,7 @@ class Ratio extends Dimension<Ratio> {
   Ratio(super.value, super.unit);
 
   static const rawUnit = Unit.scalar;
-  static bool accepts(Unit u) => u.id < 0; // Всі від'ємні ID
+  static bool accepts(Unit u) => u.id < 0; // All negative IDs
 
   static final _conversionFactors = <Unit, double>{
     Unit.scalar: 1.0,

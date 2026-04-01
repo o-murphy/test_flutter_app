@@ -1,4 +1,3 @@
-// ЧИСТИЙ DART — без Flutter імпортів
 import 'package:eballistica/core/solver/unit.dart';
 import 'package:eballistica/core/models/unit_settings.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
@@ -106,7 +105,7 @@ class UnitFormatterImpl implements UnitFormatter {
   @override
   String get sightHeightSymbol => _u.sightHeight.symbol;
 
-  // --- Input conversion (для діалогів вводу) ---
+  // --- Input conversion (for input dialogs) ---
 
   @override
   double inputToRaw(double displayValue, InputField field) {
@@ -134,7 +133,7 @@ class UnitFormatterImpl implements UnitFormatter {
         displayValue,
         _u.velocity,
       ).in_(Unit.mps),
-      InputField.lookAngle => displayValue, // завжди degrees
+      InputField.lookAngle => displayValue, // always degrees
       InputField.sightHeight => Distance(
         displayValue,
         _u.sightHeight,

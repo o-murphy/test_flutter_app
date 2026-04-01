@@ -17,7 +17,7 @@ class BaseScreen extends StatelessWidget {
   final List<Widget>? actions;
   final bool isSubscreen;
   final Widget? floatingActionButton;
-  final List<Tab>? withTabs; // нове поле
+  final List<Tab>? withTabs;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class BaseScreen extends StatelessWidget {
         title: title,
         actions: actions,
         isSubscreen: isSubscreen,
-        withTabs: withTabs, // прокидаємо таби
+        withTabs: withTabs,
       ),
       body: SafeArea(child: body),
       floatingActionButton: floatingActionButton,

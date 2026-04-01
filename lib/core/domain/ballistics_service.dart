@@ -1,4 +1,3 @@
-// ЧИСТИЙ DART — без Flutter імпортів
 import 'package:eballistica/core/models/shot_profile.dart';
 import 'package:eballistica/core/solver/trajectory_data.dart';
 

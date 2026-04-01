@@ -1,4 +1,3 @@
-// ЧИСТИЙ DART (крім compute — для ізоляту)
 import 'package:flutter/foundation.dart' show compute;
 
 import 'package:eballistica/core/domain/ballistics_service.dart';

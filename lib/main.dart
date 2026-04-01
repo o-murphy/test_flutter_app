@@ -7,7 +7,7 @@ import 'package:window_manager/window_manager.dart';
 import 'core/providers/settings_provider.dart';
 import 'router.dart';
 
-// Константи для розмірів вікна
+// Constants for window sizes
 const _windowMinWidth = 320.0;
 const _windowMinHeight = 600.0;
 const _windowMaxWidth = 1000.0;
@@ -15,7 +15,7 @@ const _windowMaxHeight = 1080.0;
 const _windowInitialWidth = 375.0;
 const _windowInitialHeight = 812.0;
 
-// Константи для обмежень контенту
+// Constants for content restrictions
 const _contentMaxWidth = _windowMaxWidth;
 const _contentMaxHeight = _windowMaxHeight;
 

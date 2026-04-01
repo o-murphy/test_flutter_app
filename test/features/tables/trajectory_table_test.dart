@@ -133,13 +133,13 @@ void main() {
 
   group('TrajectoryTable — zero crossings section', () {
     testWidgets('shows Zero Crossings title when provided', (tester) async {
-      // Задаємо фіксований розмір екрана для тесту, щоб DataTable2 мав куди розтягнутися
+      // Set a fixed screen size for the test so that DataTable2 has room to stretch
       tester.view.physicalSize = const Size(1080, 1920);
       tester.view.devicePixelRatio = 1.0;
 
       await tester.pumpWidget(
         _wrap(
-          // Переконайтеся, що ви викликаєте TrajectoryTable2, якщо перейменували його
+          // Make sure you call TrajectoryTable2 if you renamed it
           TrajectoryTableContent(
             mainTable: _makeTable(),
             zeroCrossings: _makeTable(),
@@ -147,14 +147,14 @@ void main() {
         ),
       );
 
-      // Даємо час на розрахунок таблиці
+      // Give time for the table to be calculated
       await tester.pumpAndSettle();
 
-      // Шукаємо текст заголовка. Використовуємо .text('ZERO CROSSINGS')
-      // бо в _SectionTitle ми робимо .toUpperCase()
+      // Find the title text. Use .text('ZERO CROSSINGS')
+      // because in _SectionTitle we do .toUpperCase()
       expect(find.text('ZERO CROSSINGS'), findsOneWidget);
 
-      // Скидаємо розмір екрана після тесту
+      // Reset the screen size after the test
       addTearDown(tester.view.resetPhysicalSize);
     });
 
@@ -195,7 +195,6 @@ void main() {
       );
       await tester.pump();
 
-      // Тепер ці заголовки мають бути знайдені відразу, без тапів
       expect(find.text('RIFLE'), findsOneWidget);
       expect(find.text('PROJECTILE'), findsOneWidget);
       expect(find.text('ATMOSPHERE'), findsOneWidget);
@@ -235,7 +234,7 @@ void main() {
     });
 
     testWidgets('returns empty space if no data provided', (tester) async {
-      // Створюємо порожній об'єкт деталей, якщо це дозволяє ваша модель
+      // Create an empty part object if your model allows it
       const emptyDetails = DetailsTableData(rifleName: '');
 
       await tester.pumpWidget(
@@ -243,7 +242,7 @@ void main() {
       );
       await tester.pump();
 
-      // Якщо у вашому коді є перевірка на items.isEmpty -> SizedBox.shrink()
+      // If your code has a check for items.isEmpty -> SizedBox.shrink()
       expect(find.text('RIFLE'), findsNothing);
       expect(find.text('ATMOSPHERE'), findsNothing);
     });

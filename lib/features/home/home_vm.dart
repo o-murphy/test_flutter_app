@@ -1,4 +1,3 @@
-// ЧИСТИЙ DART — 0 flutter імпортів (крім flutter_riverpod)
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

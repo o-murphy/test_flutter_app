@@ -1,4 +1,3 @@
-// ЧИСТИЙ DART
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/core/formatting/unit_formatter.dart';

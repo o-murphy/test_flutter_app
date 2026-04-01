@@ -31,7 +31,7 @@ class ProfileCard extends StatelessWidget {
         child: Column(
           children: [
             _ProfileTitleRow(title: profile.name, isActive: isActive),
-            const SizedBox(height: 16), // Додаємо відступ
+            const SizedBox(height: 16),
             Expanded(
               child: ListView(
                 children: [
@@ -139,7 +139,7 @@ class _ProfileControls extends StatelessWidget {
       child: Card(
         child: Stack(
           children: [
-            // Основний контент
+            // Main content
             const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -151,7 +151,7 @@ class _ProfileControls extends StatelessWidget {
               ),
             ),
 
-            // Ліва верхня кнопка
+            // Top left button
             Positioned(
               top: 8,
               left: 8,
@@ -165,7 +165,7 @@ class _ProfileControls extends StatelessWidget {
               ),
             ),
 
-            // Права нижня кнопка
+            // Bottom right button
             Positioned(
               bottom: 8,
               right: 8,

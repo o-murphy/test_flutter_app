@@ -38,7 +38,6 @@ class HomeReticlePage extends ConsumerWidget {
           ),
         ),
         Expanded(
-          // Прибрали Align та IntrinsicHeight, щоб Row міг зайняти весь Expanded
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -58,7 +57,6 @@ class HomeReticlePage extends ConsumerWidget {
                           child: Text('Enable units...', style: tt.bodySmall),
                         )
                       : _AdjPanel(
-                          // Прибрали Center тут, він заважає розтягуванню
                           adjustment: vmState.adjustment,
                           fmt: vmState.adjustmentFormat,
                         ),
@@ -160,7 +158,6 @@ class _AdjPanel extends StatelessWidget {
   final AdjustmentData adjustment;
   final AdjustmentFormat fmt;
 
-  // Методи _elevDir та _windDir без змін...
   String _elevDir() {
     if (adjustment.elevation.isEmpty) return '';
     final pos = adjustment.elevation.first.isPositive;
@@ -202,7 +199,7 @@ class _AdjPanel extends StatelessWidget {
     Widget valueRow(AdjustmentValue v) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
       child: Row(
-        mainAxisSize: MainAxisSize.min, // Обов'язково min для коректного BoxFit
+        mainAxisSize: MainAxisSize.min, // Required min for correct BoxFit
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: [
@@ -214,7 +211,7 @@ class _AdjPanel extends StatelessWidget {
     );
 
     Widget sectionHeader(String label, String dir) => Row(
-      mainAxisSize: MainAxisSize.min, // Обов'язково min
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
@@ -231,8 +228,8 @@ class _AdjPanel extends StatelessWidget {
       alignment: Alignment.center,
       child: IntrinsicWidth(
         child: Column(
-          // stretch змушує дітей (включаючи SizedBox з Divider)
-          // зайняти всю ширину, яку вирахував IntrinsicWidth
+          // stretch forces the children (including the SizedBox with Divider)
+          // to take up the full width calculated by IntrinsicWidth
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -240,7 +237,7 @@ class _AdjPanel extends StatelessWidget {
             const SizedBox(height: 2),
             ...adjustment.elevation.map(valueRow),
 
-            // Контейнер-обгортка для адаптивної ширини Divider
+            // Wrapper container for adaptive width Divider
             const SizedBox(
               width: double.infinity,
               child: Divider(height: 16, thickness: 1, indent: 0, endIndent: 0),

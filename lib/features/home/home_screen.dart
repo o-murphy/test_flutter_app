@@ -71,27 +71,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        const bottomHeight = 40.0; // Фіксована висота пейджинг індикатора
+        const bottomHeight = 40.0; // Fixed height of paging indicator
         const minTopH = 350.0;
         const maxTopH = 400.0;
         const minCentralH = 300.0;
 
-        // Висота для контенту, що скролиться (Top + Central)
+        // Height for scrollable content (Top + Central)
         final scrollableHeight = math.max(
           constraints.maxHeight - bottomHeight,
           minTopH + minCentralH,
         );
 
-        // Розрахунок висоти топ блоку
+        // Calculating the height of the top block
         final topBlockHeight = math.min(
           maxTopH,
           math.max(scrollableHeight * 0.55, minTopH),
         );
 
-        // Висота центрального блоку (те, що залишилось)
+        // Height of the center block (what's left)
         final centralBlockHeight = scrollableHeight - topBlockHeight;
 
-        // Чи потрібен скрол
+        // Is scrolling needed?
         final needsScroll =
             scrollableHeight > constraints.maxHeight - bottomHeight;
 

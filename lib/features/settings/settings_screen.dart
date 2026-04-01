@@ -84,17 +84,17 @@ class SettingsScreen extends ConsumerWidget {
           UnitValueFieldTile(
             icon: Icons.table_rows_outlined,
             label: 'Table distance step',
-            rawValue: settings.homeTableStep, // в метрах
-            constraints: FC.distanceStep, // обмеження для кроку
-            displayUnit: distanceUnit, // одиниця відображення
+            rawValue: settings.homeTableStep,
+            constraints: FC.distanceStep,
+            displayUnit: distanceUnit,
             onChanged: (v) => notifier.setHomeTableStep(v),
           ),
           UnitValueFieldTile(
             icon: Icons.show_chart_outlined,
             label: 'Chart distance step',
-            rawValue: settings.chartDistanceStep, // в метрах
-            constraints: FC.distanceStep, // обмеження для кроку
-            displayUnit: distanceUnit, // одиниця відображення
+            rawValue: settings.chartDistanceStep,
+            constraints: FC.distanceStep,
+            displayUnit: distanceUnit,
             onChanged: (v) => notifier.setChartDistanceStep(v),
           ),
 

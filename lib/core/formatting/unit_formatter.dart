@@ -1,11 +1,9 @@
-// ЧИСТИЙ DART — без Flutter імпортів
-
 import 'package:eballistica/core/solver/unit.dart';
 
-/// Єдиний контракт для форматування фізичних величин у рядки для UI.
-/// ViewModel і Widget ніколи не викликають .in_() напряму.
+/// A single contract for formatting physical quantities into strings for UI.
+/// ViewModel і Widget never call .in_() directly.
 abstract interface class UnitFormatter {
-  // --- Форматовані рядки (з одиницею) ---
+  // --- Formatted strings (with unit) ---
   String velocity(Velocity dim); // "888 m/s"
   String distance(Distance dim); // "300 m"
   String temperature(Temperature dim); // "15 °C"
@@ -22,7 +20,7 @@ abstract interface class UnitFormatter {
   String time(double seconds); // "1.234 s"
   String powderSensitivity(Ratio dim); // "2.00 %"
 
-  // --- Сирі числа (без одиниці, для слайдерів/полів вводу) ---
+  // --- Raw numbers (without units, for sliders/input fields) ---
   double rawVelocity(Velocity dim);
   double rawDistance(Distance dim);
   double rawTemperature(Temperature dim);
@@ -33,7 +31,7 @@ abstract interface class UnitFormatter {
   double rawWeight(Weight dim);
   double rawSightHeight(Distance dim);
 
-  // --- Символи поточних одиниць ---
+  // --- Current unit symbols ---
   String get velocitySymbol;
   String get distanceSymbol;
   String get temperatureSymbol;
@@ -44,13 +42,12 @@ abstract interface class UnitFormatter {
   String get weightSymbol;
   String get sightHeightSymbol;
 
-  // --- Конвертація введення користувача назад у raw (для діалогів) ---
   /// Converts user input value (in display unit) back to raw storage unit.
   double inputToRaw(double displayValue, InputField field);
   double rawToInput(double rawValue, InputField field);
 }
 
-/// Позначає яке поле вводить користувач — для зворотної конвертації
+/// Indicates which field the user enters — for reverse conversion
 enum InputField {
   velocity,
   distance,

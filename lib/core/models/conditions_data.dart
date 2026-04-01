@@ -1,4 +1,3 @@
-// ЧИСТИЙ DART
 import 'package:eballistica/core/solver/conditions.dart';
 import 'package:eballistica/core/solver/unit.dart';
 

@@ -1,5 +1,3 @@
-// ЧИСТИЙ DART
-
 class ChartPoint {
   final double distanceM;
   final double heightCm;

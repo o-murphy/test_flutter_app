@@ -52,7 +52,7 @@ class TableConfigScreen extends ConsumerWidget {
             rawValueM: cfg.startM,
             constraints: FC.tableRange,
             displayUnit: distanceUnit,
-            maxRawM: cfg.endM, // Зрозуміло: не більше ніж end
+            maxRawM: cfg.endM, // no more than end
             onChanged: (v) => save(cfg.copyWith(startM: v)),
           ),
 
@@ -62,7 +62,7 @@ class TableConfigScreen extends ConsumerWidget {
             rawValueM: cfg.endM,
             constraints: FC.tableRange,
             displayUnit: distanceUnit,
-            minRawM: cfg.startM, // Зрозуміло: не менше ніж start
+            minRawM: cfg.startM, // not less than start
             onChanged: (v) => save(cfg.copyWith(endM: v)),
           ),
 
@@ -72,7 +72,6 @@ class TableConfigScreen extends ConsumerWidget {
             rawValueM: cfg.stepM,
             constraints: FC.distanceStep,
             displayUnit: distanceUnit,
-            // Без обмежень
             onChanged: (v) => save(cfg.copyWith(stepM: v)),
           ),
 
@@ -160,8 +159,8 @@ class _ConstrainedDistanceTile extends StatelessWidget {
     required this.constraints,
     required this.displayUnit,
     required this.onChanged,
-    this.minRawM, // Перейменовано для ясності
-    this.maxRawM, // Перейменовано для ясності
+    this.minRawM,
+    this.maxRawM,
   });
 
   final IconData icon;

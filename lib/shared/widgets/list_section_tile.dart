@@ -21,7 +21,7 @@ class ListSectionTile extends StatelessWidget {
       ),
       dense: true,
       trailing: trailing,
-      // style: ListTileStyle.list, // робить більш компактним
+      // style: ListTileStyle.list, // makes it more compact
     );
   }
 }

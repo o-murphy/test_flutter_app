@@ -5,13 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DetailsTable extends ConsumerWidget {
-  const DetailsTable({super.key}); // ← прибрали required this.details
+  const DetailsTable({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final details = ref.watch(detailsTableMvProvider);
 
-    // Якщо даних немає - показуємо empty state
     if (details == null) {
       return const EmptyStatePlaceholder();
     }
