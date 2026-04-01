@@ -41,6 +41,8 @@ dependencies:
   protobuf: ^6.0.0
   uuid: ^4.0.0
   path_provider: ^2.1.0
+  share_plus: ^10.0.0
+  url_launcher: ^6.3.0
   go_router: ^17.1.0
   native_assets_cli: ^0.18.0
   sticky_headers: ^0.3.0

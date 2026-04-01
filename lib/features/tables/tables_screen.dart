@@ -1,3 +1,6 @@
+import 'package:eballistica/features/tables/details_table_mv.dart';
+import 'package:eballistica/features/tables/table_html_exporter.dart';
+import 'package:eballistica/features/tables/trajectory_tables_vm.dart';
 import 'package:eballistica/features/tables/widgets/details_table.dart';
 import 'package:eballistica/shared/widgets/base_screen.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +34,7 @@ class TablesScreen extends ConsumerWidget {
                   ),
                 IconButton(
                   icon: const Icon(Icons.share_outlined),
-                  onPressed: () {},
+                  onPressed: () => _onShare(ref),
                   tooltip: 'Share',
                 ),
               ],
@@ -48,5 +51,12 @@ class TablesScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  Future<void> _onShare(WidgetRef ref) async {
+    final vmState = ref.read(trajectoryTablesVmProvider).value;
+    if (vmState is! TrajectoryTablesUiReady) return;
+    final details = ref.read(detailsTableMvProvider);
+    await TableHtmlExporter.share(details: details, tables: vmState);
   }
 }
