@@ -92,12 +92,17 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
                 .map(
                   (row) => ListTile(
                     dense: true,
-                    title: Text('${row.label}  (${row.unitSymbol})'),
+                    title: Text(row.label),
+                    subtitle: row.unitSymbol.isNotEmpty
+                        ? Text(row.unitSymbol)
+                        : null,
                     trailing: Text(
                       colIndex < row.cells.length
                           ? row.cells[colIndex].value
                           : '—',
-                      style: const TextStyle(fontFamily: 'monospace'),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontFamily: 'monospace',
+                      ),
                     ),
                   ),
                 )
@@ -180,11 +185,11 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
                 final isT = firstCell?.isTargetColumn ?? false;
 
                 final rowColor = isT
-                    ? cs.primaryContainer.withAlpha(50)
+                    ? cs.primaryContainer.withAlpha(80)
                     : isZ
-                    ? cs.errorContainer.withAlpha(50)
+                    ? cs.errorContainer.withAlpha(100)
                     : isS
-                    ? cs.tertiaryContainer.withAlpha(50)
+                    ? cs.tertiaryContainer.withAlpha(100)
                     : (pi.isEven ? null : cs.surfaceContainerLowest);
 
                 final style = isT
@@ -194,7 +199,12 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
                       )
                     : isZ
                     ? cellStyle?.copyWith(
-                        color: cs.error,
+                        color: cs.onErrorContainer,
+                        fontWeight: FontWeight.bold,
+                      )
+                    : isS
+                    ? cellStyle?.copyWith(
+                        color: cs.onTertiaryContainer,
                         fontWeight: FontWeight.bold,
                       )
                     : cellStyle;
@@ -207,9 +217,7 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
                       Center(
                         child: Text(
                           t.distanceHeaders[pi],
-                          style: hdrStyle?.copyWith(
-                            color: isT ? cs.primary : null,
-                          ),
+                          style: style,
                         ),
                       ),
                     ),
@@ -289,7 +297,7 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
                       Center(
                         child: Text(
                           t.distanceHeaders[pi],
-                          style: hdrStyle?.copyWith(color: cs.primary),
+                          style: cellStyle?.copyWith(color: cs.primary),
                         ),
                       ),
                     ),

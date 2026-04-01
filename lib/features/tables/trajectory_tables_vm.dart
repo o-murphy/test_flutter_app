@@ -115,11 +115,7 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
     final units = settings.units;
     final hit = result.hitResult;
 
-    // Apply per-table unit overrides
-    final effUnits = units.copyWith(
-      drop: cfg.dropUnit,
-      adjustment: cfg.adjUnit,
-    );
+    // Drop/Windage and all other units come from global AppSettings.units.
 
     // Filter trajectory to display step
     final filtered = _filterTraj(
@@ -132,7 +128,7 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
     final zeroDistM = profile.zeroDistance.in_(Unit.meter);
     final mainTable = _buildTable(
       filtered,
-      effUnits,
+      units,
       cfg,
       zeroDistM: zeroDistM,
     );
@@ -142,7 +138,7 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
     if (cfg.showZeros) {
       final zeros = hit.zeros;
       if (zeros.isNotEmpty) {
-        zeroCrossings = _buildTable(zeros, effUnits, cfg, isZeroTable: true);
+        zeroCrossings = _buildTable(zeros, units, cfg, isZeroTable: true);
       }
     }
 
@@ -154,12 +150,13 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
 
   FormattedTableData _buildTable(
     List<TrajectoryData> rows,
-    UnitSettings effUnits, // UnitSettings
+    UnitSettings units,
     TableConfig cfg, {
     bool isZeroTable = false,
     double? zeroDistM,
   }) {
     final hidden = cfg.hiddenCols;
+    final adjUnits = cfg.enabledAdjUnits;
 
     // Column definitions matching TrajectoryTable._catalogue
     final colDefs =
@@ -175,9 +172,9 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
           (
             'range',
             'Range',
-            (_) => (effUnits.distance).symbol,
-            (r) => r.distance.in_(effUnits.distance),
-            FC.targetDistance.accuracyFor(effUnits.distance),
+            (_) => units.distance.symbol,
+            (r) => r.distance.in_(units.distance),
+            FC.targetDistance.accuracyFor(units.distance),
           ),
           if (!hidden.contains('time'))
             ('time', 'Time', (_) => 's', (r) => r.time, 3),
@@ -185,49 +182,49 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
             (
               'velocity',
               'V',
-              (_) => (effUnits.velocity).symbol,
-              (r) => r.velocity.in_(effUnits.velocity),
-              FC.velocity.accuracyFor(effUnits.velocity),
+              (_) => units.velocity.symbol,
+              (r) => r.velocity.in_(units.velocity),
+              FC.velocity.accuracyFor(units.velocity),
             ),
           if (!hidden.contains('height'))
             (
               'height',
               'Height',
-              (_) => (effUnits.drop).symbol,
-              (r) => r.height.in_(effUnits.drop),
-              FC.drop.accuracyFor(effUnits.drop),
+              (_) => units.drop.symbol,
+              (r) => r.height.in_(units.drop),
+              FC.drop.accuracyFor(units.drop),
             ),
           if (!hidden.contains('drop'))
             (
               'drop',
               'Drop',
-              (_) => (effUnits.drop).symbol,
-              (r) => r.slantHeight.in_(effUnits.drop),
-              FC.drop.accuracyFor(effUnits.drop),
+              (_) => units.drop.symbol,
+              (r) => r.slantHeight.in_(units.drop),
+              FC.drop.accuracyFor(units.drop),
             ),
-          if (!hidden.contains('adjDrop'))
+          for (final u in adjUnits)
             (
-              'adjDrop',
-              'Drop°',
-              (_) => (effUnits.adjustment).symbol,
-              (r) => r.dropAngle.in_(effUnits.adjustment),
-              FC.adjustment.accuracyFor(effUnits.adjustment),
+              'adjDrop_${u.name}',
+              'Drop° ${u.symbol}',
+              (_) => u.symbol,
+              (TrajectoryData r) => r.dropAngle.in_(u),
+              FC.adjustment.accuracyFor(u),
             ),
           if (!hidden.contains('wind'))
             (
               'wind',
               'Wind',
-              (_) => (effUnits.drop).symbol,
-              (r) => r.windage.in_(effUnits.drop),
-              FC.drop.accuracyFor(effUnits.drop),
+              (_) => units.drop.symbol,
+              (r) => r.windage.in_(units.drop),
+              FC.drop.accuracyFor(units.drop),
             ),
-          if (!hidden.contains('adjWind'))
+          for (final u in adjUnits)
             (
-              'adjWind',
-              'Wind°',
-              (_) => (effUnits.adjustment).symbol,
-              (r) => r.windageAngle.in_(effUnits.adjustment),
-              FC.adjustment.accuracyFor(effUnits.adjustment),
+              'adjWind_${u.name}',
+              'Wind° ${u.symbol}',
+              (_) => u.symbol,
+              (TrajectoryData r) => r.windageAngle.in_(u),
+              FC.adjustment.accuracyFor(u),
             ),
           if (!hidden.contains('mach'))
             ('mach', 'Mach', (_) => '', (r) => r.mach, 2),
@@ -235,9 +232,9 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
             (
               'energy',
               'Energy',
-              (_) => (effUnits.energy).symbol,
-              (r) => r.energy.in_(effUnits.energy),
-              FC.energy.accuracyFor(effUnits.energy),
+              (_) => units.energy.symbol,
+              (r) => r.energy.in_(units.energy),
+              FC.energy.accuracyFor(units.energy),
             ),
         ];
 

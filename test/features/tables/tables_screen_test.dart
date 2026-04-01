@@ -53,7 +53,7 @@ FormattedTableData _makeTable({
   );
 }
 
-DetailsTableData _makeFullSpoiler() => const DetailsTableData(
+DetailsTableData _makeFullDetailstable() => const DetailsTableData(
   rifleName: 'Test Rifle',
   caliber: '7.62 mm',
   twist: '1:11"',
@@ -309,7 +309,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithRiverpod(
           const DetailsTable(),
-          detailsData: _makeFullSpoiler(),
+          detailsData: _makeFullDetailstable(),
         ),
       );
       await tester.pump();
@@ -323,7 +323,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithRiverpod(
           const DetailsTable(),
-          detailsData: _makeFullSpoiler(),
+          detailsData: _makeFullDetailstable(),
         ),
       );
       await tester.pump();
@@ -337,7 +337,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithRiverpod(
           const DetailsTable(),
-          detailsData: _makeFullSpoiler(),
+          detailsData: _makeFullDetailstable(),
         ),
       );
       await tester.pump();
@@ -350,7 +350,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithRiverpod(
           const DetailsTable(),
-          detailsData: _makeFullSpoiler(),
+          detailsData: _makeFullDetailstable(),
         ),
       );
       await tester.pump();

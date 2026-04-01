@@ -88,7 +88,7 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
     refMvMps,
     refPowderTempC,
     tCurC,
-    cart.powderSensitivity,
+    cart.powderSensitivity.in_(Unit.fraction),
   );
 
   // Zero MV

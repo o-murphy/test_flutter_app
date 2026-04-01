@@ -202,7 +202,7 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
       refMvMps,
       refPowderTempC,
       tCurC,
-      powderSensitivity,
+      powderSensitivity.in_(Unit.fraction),
     );
 
     final currentMvMps = mvAtTempC(powderTempRaw);

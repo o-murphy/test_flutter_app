@@ -18,7 +18,7 @@ class TableConfigScreen extends ConsumerWidget {
     final settings = ref.watch(settingsProvider).value ?? const AppSettings();
     final cfg = settings.tableConfig;
     final notifier = ref.read(settingsProvider.notifier);
-    final units = ref.watch(unitSettingsProvider);
+    final distanceUnit = settings.units.distance;
 
     void save(TableConfig updated) => notifier.updateTableConfig(updated);
 
@@ -34,7 +34,7 @@ class TableConfigScreen extends ConsumerWidget {
             icon: Icons.first_page_outlined,
             label: 'Start distance',
             valueM: cfg.startM,
-            units: units.distance,
+            units: distanceUnit,
             constraints: FC.tableRange,
             maxValueM: cfg.endM,
             onChanged: (v) => save(cfg.copyWith(startM: v)),
@@ -43,7 +43,7 @@ class TableConfigScreen extends ConsumerWidget {
             icon: Icons.last_page_outlined,
             label: 'End distance',
             valueM: cfg.endM,
-            units: units.distance,
+            units: distanceUnit,
             constraints: FC.tableRange,
             minValueM: cfg.startM,
             onChanged: (v) => save(cfg.copyWith(endM: v)),
@@ -53,7 +53,7 @@ class TableConfigScreen extends ConsumerWidget {
             icon: Icons.straighten_outlined,
             label: 'Distance step',
             valueM: cfg.stepM,
-            units: units.distance,
+            units: distanceUnit,
             constraints: FC.distanceStep,
             onChanged: (v) => save(cfg.copyWith(stepM: v)),
           ),
@@ -85,78 +85,6 @@ class TableConfigScreen extends ConsumerWidget {
           ),
 
           const Divider(height: 1),
-
-          // ── Columns ────────────────────────────────────────────────────
-          const SettingsSectionLabel('Table columns'),
-
-          // Drop / Windage unit override
-          _UnitOverrideTile(
-            label: 'Drop / Windage unit',
-            current: cfg.dropUnit,
-            globalUnit: units.drop,
-            options: const [
-              Unit.meter,
-              Unit.centimeter,
-              Unit.millimeter,
-              Unit.inch,
-              Unit.foot,
-            ],
-            onChanged: (u) => save(cfg.copyWith(dropUnit: u)),
-          ),
-
-          // Adjustment mode
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Adjustment display',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<bool>(
-                    segments: const [
-                      ButtonSegment(value: false, label: Text('Current unit')),
-                      ButtonSegment(
-                        value: true,
-                        label: Text('All selected units'),
-                      ),
-                    ],
-                    selected: {cfg.adjAllUnits},
-                    onSelectionChanged: (s) =>
-                        save(cfg.copyWith(adjAllUnits: s.first)),
-                    expandedInsets: EdgeInsets.zero,
-                    style: const ButtonStyle(
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          _UnitOverrideTile(
-            label: 'Adjustment unit',
-            current: cfg.adjUnit,
-            globalUnit: units.adjustment,
-            options: const [
-              Unit.mil,
-              Unit.moa,
-              Unit.mRad,
-              Unit.cmPer100m,
-              Unit.inPer100Yd,
-            ],
-            enabled: !cfg.adjAllUnits,
-            onChanged: (u) => save(cfg.copyWith(adjUnit: u)),
-          ),
-
-          const Divider(height: 1),
           const SettingsSectionLabel('Visible columns'),
 
           for (final col in _columnDefs)
@@ -175,6 +103,40 @@ class TableConfigScreen extends ConsumerWidget {
                 },
                 dense: true,
               ),
+
+          const Divider(height: 1),
+          const SettingsSectionLabel('Adjustment columns'),
+
+          SwitchListTile(
+            title: const Text('MRAD', style: TextStyle(fontSize: 14)),
+            value: cfg.tableShowMrad,
+            onChanged: (v) => save(cfg.copyWith(tableShowMrad: v)),
+            dense: true,
+          ),
+          SwitchListTile(
+            title: const Text('MOA', style: TextStyle(fontSize: 14)),
+            value: cfg.tableShowMoa,
+            onChanged: (v) => save(cfg.copyWith(tableShowMoa: v)),
+            dense: true,
+          ),
+          SwitchListTile(
+            title: const Text('MIL', style: TextStyle(fontSize: 14)),
+            value: cfg.tableShowMil,
+            onChanged: (v) => save(cfg.copyWith(tableShowMil: v)),
+            dense: true,
+          ),
+          SwitchListTile(
+            title: const Text('cm/100m', style: TextStyle(fontSize: 14)),
+            value: cfg.tableShowCmPer100m,
+            onChanged: (v) => save(cfg.copyWith(tableShowCmPer100m: v)),
+            dense: true,
+          ),
+          SwitchListTile(
+            title: const Text('in/100yd', style: TextStyle(fontSize: 14)),
+            value: cfg.tableShowInPer100yd,
+            onChanged: (v) => save(cfg.copyWith(tableShowInPer100yd: v)),
+            dense: true,
+          ),
 
           const SizedBox(height: 16),
         ],
