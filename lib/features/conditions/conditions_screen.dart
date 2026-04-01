@@ -1,4 +1,5 @@
 import 'package:eballistica/shared/widgets/base_screen.dart';
+import 'package:eballistica/shared/widgets/info_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
@@ -89,13 +90,13 @@ class ConditionsScreen extends ConsumerWidget {
                 onChanged: (v) => notifier.updatePowderTemp(v),
               ),
             if (state.mvAtPowderTemp != null)
-              _InfoTile(
+              InfoTile(
                 label: 'Muzzle velocity at powder temp',
                 value: state.mvAtPowderTemp!,
                 icon: Icons.speed_outlined,
               ),
             if (state.powderSensitivity != null)
-              _InfoTile(
+              InfoTile(
                 label: 'Powder sensitivity',
                 value: state.powderSensitivity!,
                 icon: Icons.show_chart_outlined,
@@ -134,38 +135,6 @@ class ConditionsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
         ],
-      ),
-    );
-  }
-}
-
-// ─── Info tile (readonly) ────────────────────────────────────────────────────
-
-class _InfoTile extends StatelessWidget {
-  const _InfoTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return ListTile(
-      dense: true,
-      leading: Icon(icon, color: cs.onSurfaceVariant),
-      title: Text(label, style: const TextStyle(fontSize: 14)),
-      trailing: Text(
-        value,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontFamily: 'monospace',
-          color: cs.onSurfaceVariant,
-        ),
       ),
     );
   }

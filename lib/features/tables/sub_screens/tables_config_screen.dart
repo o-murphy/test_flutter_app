@@ -1,5 +1,6 @@
 import 'package:eballistica/shared/widgets/base_screen.dart';
 import 'package:eballistica/shared/widgets/list_section_tile.dart';
+import 'package:eballistica/shared/widgets/unit_value_field_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,6 +13,21 @@ import 'package:eballistica/core/solver/unit.dart';
 
 class TableConfigScreen extends ConsumerWidget {
   const TableConfigScreen({super.key});
+
+  static void _toggleColumnVisibility(
+    String colId,
+    bool visible,
+    TableConfig cfg,
+    void Function(TableConfig) save,
+  ) {
+    final hidden = Set<String>.from(cfg.hiddenCols);
+    if (visible) {
+      hidden.remove(colId);
+    } else {
+      hidden.add(colId);
+    }
+    save(cfg.copyWith(hiddenCols: hidden));
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,31 +46,33 @@ class TableConfigScreen extends ConsumerWidget {
           // ── Range ──────────────────────────────────────────────────────
           const ListSectionTile('Range'),
 
-          _DistanceTile(
+          _ConstrainedDistanceTile(
             icon: Icons.first_page_outlined,
             label: 'Start distance',
-            valueM: cfg.startM,
-            units: distanceUnit,
+            rawValueM: cfg.startM,
             constraints: FC.tableRange,
-            maxValueM: cfg.endM,
+            displayUnit: distanceUnit,
+            maxRawM: cfg.endM, // Зрозуміло: не більше ніж end
             onChanged: (v) => save(cfg.copyWith(startM: v)),
           ),
-          _DistanceTile(
+
+          _ConstrainedDistanceTile(
             icon: Icons.last_page_outlined,
             label: 'End distance',
-            valueM: cfg.endM,
-            units: distanceUnit,
+            rawValueM: cfg.endM,
             constraints: FC.tableRange,
-            minValueM: cfg.startM,
+            displayUnit: distanceUnit,
+            minRawM: cfg.startM, // Зрозуміло: не менше ніж start
             onChanged: (v) => save(cfg.copyWith(endM: v)),
           ),
 
-          _DistanceTile(
+          _ConstrainedDistanceTile(
             icon: Icons.straighten_outlined,
             label: 'Distance step',
-            valueM: cfg.stepM,
-            units: distanceUnit,
+            rawValueM: cfg.stepM,
             constraints: FC.distanceStep,
+            displayUnit: distanceUnit,
+            // Без обмежень
             onChanged: (v) => save(cfg.copyWith(stepM: v)),
           ),
 
@@ -86,15 +104,7 @@ class TableConfigScreen extends ConsumerWidget {
               SwitchListTile(
                 title: Text(col.label),
                 value: !cfg.hiddenCols.contains(col.id),
-                onChanged: (v) {
-                  final hidden = Set<String>.from(cfg.hiddenCols);
-                  if (v) {
-                    hidden.remove(col.id);
-                  } else {
-                    hidden.add(col.id);
-                  }
-                  save(cfg.copyWith(hiddenCols: hidden));
-                },
+                onChanged: (v) => _toggleColumnVisibility(col.id, v, cfg, save),
                 dense: true,
               ),
 
@@ -141,114 +151,52 @@ class TableConfigScreen extends ConsumerWidget {
   // ── Helpers ────────────────────────────────────────────────────────────────
 }
 
-// ── Distance tile with text field dialog ──────────────────────────────────────
-
-class _DistanceTile extends StatelessWidget {
-  const _DistanceTile({
+/// Distance tile with cross-field constraints (min/max in metres).
+class _ConstrainedDistanceTile extends StatelessWidget {
+  const _ConstrainedDistanceTile({
     required this.icon,
     required this.label,
-    required this.valueM,
-    required this.units,
+    required this.rawValueM,
     required this.constraints,
+    required this.displayUnit,
     required this.onChanged,
-    this.minValueM,
-    this.maxValueM,
+    this.minRawM, // Перейменовано для ясності
+    this.maxRawM, // Перейменовано для ясності
   });
 
   final IconData icon;
   final String label;
-  final double valueM;
-  final Unit units;
+  final double rawValueM;
   final FieldConstraints constraints;
+  final Unit displayUnit;
   final ValueChanged<double> onChanged;
-
-  /// Cross-field lower bound (metres). Overrides constraints.minRaw if set.
-  final double? minValueM;
-
-  /// Cross-field upper bound (metres). Overrides constraints.maxRaw if set.
-  final double? maxValueM;
+  final double? minRawM;
+  final double? maxRawM;
 
   @override
   Widget build(BuildContext context) {
-    final acc = constraints.accuracyFor(units);
-    final disp = Distance(valueM, Unit.meter).in_(units);
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(label, style: const TextStyle(fontSize: 14)),
-      trailing: Text(
-        '${disp.toStringAsFixed(acc)} ${units.symbol}',
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      dense: true,
-      onTap: () => _showDialog(context, disp, acc),
+    final effectiveMin =
+        minRawM?.clamp(constraints.minRaw, constraints.maxRaw) ??
+        constraints.minRaw;
+    final effectiveMax =
+        maxRawM?.clamp(constraints.minRaw, constraints.maxRaw) ??
+        constraints.maxRaw;
+
+    final updatedConstraints = FieldConstraints(
+      rawUnit: constraints.rawUnit,
+      minRaw: effectiveMin,
+      maxRaw: effectiveMax,
+      stepRaw: constraints.stepRaw,
+      accuracy: constraints.accuracy,
     );
-  }
 
-  void _showDialog(BuildContext context, double currentDisp, int acc) {
-    final ctrl = TextEditingController(text: currentDisp.toStringAsFixed(acc));
-    final effectiveMinM = (minValueM != null && minValueM! > constraints.minRaw)
-        ? minValueM!
-        : constraints.minRaw;
-    final effectiveMaxM = (maxValueM != null && maxValueM! < constraints.maxRaw)
-        ? maxValueM!
-        : constraints.maxRaw;
-    final minDisp = Distance(effectiveMinM, Unit.meter).in_(units);
-    final maxDisp = Distance(effectiveMaxM, Unit.meter).in_(units);
-    final rangeMsg =
-        '${minDisp.toStringAsFixed(acc)}–${maxDisp.toStringAsFixed(acc)} ${units.symbol}';
-
-    String? error;
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          title: Text('$label (${units.symbol})'),
-          content: TextField(
-            controller: ctrl,
-            autofocus: true,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              suffixText: units.symbol,
-              errorText: error,
-            ),
-            onChanged: (t) {
-              setState(() {
-                final v = double.tryParse(t.replaceAll(',', '.'));
-                if (v == null) {
-                  error = 'Invalid number';
-                } else {
-                  final rawM = Distance(v, units).in_(Unit.meter);
-                  error = (rawM < effectiveMinM || rawM > effectiveMaxM)
-                      ? rangeMsg
-                      : null;
-                }
-              });
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: error != null
-                  ? null
-                  : () {
-                      final v = double.tryParse(ctrl.text.replaceAll(',', '.'));
-                      if (v != null) {
-                        final rawM = Distance(v, units).in_(Unit.meter);
-                        onChanged(rawM.clamp(effectiveMinM, effectiveMaxM));
-                      }
-                      Navigator.pop(ctx);
-                    },
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      ),
+    return UnitValueFieldTile(
+      icon: icon,
+      label: label,
+      rawValue: rawValueM,
+      constraints: updatedConstraints,
+      displayUnit: displayUnit,
+      onChanged: onChanged,
     );
   }
 }

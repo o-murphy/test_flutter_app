@@ -1,4 +1,5 @@
 import 'package:eballistica/shared/widgets/base_screen.dart';
+import 'package:eballistica/shared/widgets/info_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -32,106 +33,74 @@ class ShotDetailsScreen extends ConsumerWidget {
     return ListView(
       children: [
         const ListSectionTile('Velocity'),
-        _InfoTile(
+        InfoTile(
           icon: Icons.speed_outlined,
           label: 'Current muzzle velocity',
           value: state.currentMv,
         ),
-        _InfoTile(
+        InfoTile(
           icon: Icons.speed_outlined,
           label: 'Zero muzzle velocity',
           value: state.zeroMv,
         ),
-        _InfoTile(
+        InfoTile(
           icon: Icons.graphic_eq_outlined,
           label: 'Speed of sound',
           value: state.speedOfSound,
         ),
-        _InfoTile(
+        InfoTile(
           icon: Icons.arrow_forward_outlined,
           label: 'Velocity at target',
           value: state.velocityAtTarget,
         ),
         const Divider(height: 1),
         const ListSectionTile('Energy'),
-        _InfoTile(
+        InfoTile(
           icon: Icons.bolt_outlined,
           label: 'Energy at muzzle',
           value: state.energyAtMuzzle,
         ),
-        _InfoTile(
+        InfoTile(
           icon: Icons.bolt_outlined,
           label: 'Energy at target',
           value: state.energyAtTarget,
         ),
         const Divider(height: 1),
         const ListSectionTile('Stability'),
-        _InfoTile(
+        InfoTile(
           icon: Icons.rotate_right_outlined,
           label: 'Gyroscopic stability factor',
           value: state.gyroscopicStability,
         ),
         const Divider(height: 1),
         const ListSectionTile('Trajectory'),
-        _InfoTile(
+        InfoTile(
           icon: Icons.flag_outlined,
           label: 'Shot distance',
           value: state.shotDistance,
         ),
-        _InfoTile(
+        InfoTile(
           icon: Icons.height,
           label: 'Height at target',
           value: state.heightAtTarget,
         ),
-        _InfoTile(
+        InfoTile(
           icon: Icons.architecture_outlined,
           label: 'Max height distance',
           value: state.maxHeightDistance,
         ),
-        _InfoTile(
+        InfoTile(
           icon: Icons.arrow_right_alt_outlined,
           label: 'Windage',
           value: state.windage,
         ),
-        _InfoTile(
+        InfoTile(
           icon: Icons.timer_outlined,
           label: 'Time to target',
           value: state.timeToTarget,
         ),
         const SizedBox(height: 16),
       ],
-    );
-  }
-}
-
-// ─── Info row ─────────────────────────────────────────────────────────────────
-
-class _InfoTile extends StatelessWidget {
-  const _InfoTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return ListTile(
-      dense: true,
-      leading: Icon(icon, color: cs.onSurfaceVariant),
-      title: Text(label, style: const TextStyle(fontSize: 14)),
-      trailing: Text(
-        value,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontFamily: 'monospace',
-          color: cs.onSurfaceVariant,
-        ),
-      ),
     );
   }
 }

@@ -210,7 +210,6 @@ class UnitValueFieldTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return ListTile(
       leading: icon != null ? Icon(icon, size: 20) : null,
