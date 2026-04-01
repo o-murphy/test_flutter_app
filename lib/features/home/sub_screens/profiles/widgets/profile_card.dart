@@ -1,8 +1,10 @@
 // ── Profile Card ──────────────────────────────────────────────────────────────
 
 import 'package:eballistica/core/models/shot_profile.dart';
-import 'package:eballistica/shared/widgets/section_header.dart';
+import 'package:eballistica/router.dart';
+import 'package:eballistica/shared/widgets/list_section_tile.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfileCard extends StatelessWidget {
   const ProfileCard({
@@ -34,7 +36,17 @@ class ProfileCard extends StatelessWidget {
               child: ListView(
                 children: [
                   _ProfileControls(),
-                  const ListSectionTile("Rifle"),
+                  ListSectionTile(
+                    "Rifle",
+                    trailing: IconButton(
+                      onPressed: () => debugPrint("Rifle edit"),
+                      icon: Icon(
+                        Icons.edit,
+                        size: 16,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
                   ListTile(
                     leading: const Icon(Icons.military_tech_outlined),
                     title: Text(profile.rifle.name),
@@ -42,7 +54,17 @@ class ProfileCard extends StatelessWidget {
                     onTap: () => debugPrint("edit rifle"),
                   ),
                   const Divider(height: 1),
-                  const ListSectionTile("Cartridge"),
+                  ListSectionTile(
+                    "Cartridge",
+                    trailing: IconButton(
+                      onPressed: () => debugPrint("Cartridge edit"),
+                      icon: Icon(
+                        Icons.edit,
+                        size: 16,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
                   ListTile(
                     leading: const Icon(Icons.grain_outlined),
                     title: Text(profile.cartridge.name),
@@ -50,7 +72,17 @@ class ProfileCard extends StatelessWidget {
                     onTap: () => debugPrint("edit cartridge"),
                   ),
                   const Divider(height: 1),
-                  const ListSectionTile("Sight"),
+                  ListSectionTile(
+                    "Sight",
+                    trailing: IconButton(
+                      onPressed: () => debugPrint("Sight edit"),
+                      icon: Icon(
+                        Icons.edit,
+                        size: 16,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
                   ListTile(
                     leading: const Icon(Icons.my_location_outlined),
                     title: Text(profile.sight.name),
@@ -126,7 +158,7 @@ class _ProfileControls extends StatelessWidget {
               child: FloatingActionButton(
                 mini: true,
                 heroTag: 'select_sight_button',
-                onPressed: () => debugPrint('Select/Replace sight'),
+                onPressed: () => context.push(Routes.sightSelect),
                 backgroundColor: colorScheme.secondaryContainer,
                 foregroundColor: colorScheme.onSecondaryContainer,
                 child: const Icon(Icons.my_location_outlined, size: 20),
@@ -140,7 +172,7 @@ class _ProfileControls extends StatelessWidget {
               child: FloatingActionButton(
                 mini: true,
                 heroTag: 'select_cartridge_button',
-                onPressed: () => debugPrint('Select/Replace Cartridge'),
+                onPressed: () => context.push(Routes.cartridgeSelect),
                 backgroundColor: colorScheme.primaryContainer,
                 foregroundColor: colorScheme.onPrimaryContainer,
                 child: const Icon(Icons.rocket_launch_outlined, size: 20),

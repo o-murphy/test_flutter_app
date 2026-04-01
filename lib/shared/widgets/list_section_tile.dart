@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 /// A small all-caps section header used in list screens.
 class ListSectionTile extends StatelessWidget {
-  const ListSectionTile(this.title, {super.key});
+  const ListSectionTile(this.title, {this.trailing, super.key});
   final String title;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +20,7 @@ class ListSectionTile extends StatelessWidget {
         ),
       ),
       dense: true,
+      trailing: trailing,
       // style: ListTileStyle.list, // робить більш компактним
     );
   }

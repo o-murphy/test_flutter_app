@@ -1,5 +1,5 @@
 import 'package:eballistica/shared/widgets/base_screen.dart';
-import 'package:eballistica/shared/widgets/section_header.dart';
+import 'package:eballistica/shared/widgets/list_section_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -8,7 +8,7 @@ import 'package:eballistica/router.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/solver/unit.dart';
-import 'package:eballistica/shared/widgets/section_header.dart';
+import 'package:eballistica/shared/widgets/list_section_tile.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});

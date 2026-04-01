@@ -1,6 +1,6 @@
 import 'package:eballistica/features/tables/details_table_mv.dart';
 import 'package:eballistica/shared/widgets/empty_state.dart';
-import 'package:eballistica/shared/widgets/section_header.dart';
+import 'package:eballistica/shared/widgets/list_section_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

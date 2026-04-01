@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/features/home/shot_details_vm.dart';
-import 'package:eballistica/shared/widgets/section_header.dart';
+import 'package:eballistica/shared/widgets/list_section_tile.dart';
 
 class ShotDetailsScreen extends ConsumerWidget {
   const ShotDetailsScreen({super.key});
