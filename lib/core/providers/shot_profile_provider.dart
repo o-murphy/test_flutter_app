@@ -12,12 +12,22 @@ import 'storage_provider.dart';
 class ShotProfileNotifier extends AsyncNotifier<ShotProfile> {
   @override
   Future<ShotProfile> build() async {
-    final loaded =
-        await ref.read(appStorageProvider).loadCurrentProfile() ??
-        seedShotProfile;
-    // Clamp look angle to ±45° — corrupted values (e.g. from old wind-wheel
-    // bug that wrote wind direction into lookAngle) cause zero-finding to fail.
-    final laDeg = (loaded.lookAngle).in_(Unit.degree);
+    final storage = ref.read(appStorageProvider);
+    final activeId = await storage.loadActiveProfileId();
+    final profiles = await storage.loadProfiles();
+
+    ShotProfile loaded;
+    if (activeId != null) {
+      final matches = profiles.where((p) => p.id == activeId);
+      loaded = matches.isNotEmpty
+          ? matches.first
+          : (profiles.isNotEmpty ? profiles.first : seedShotProfile);
+    } else {
+      loaded = profiles.isNotEmpty ? profiles.first : seedShotProfile;
+    }
+
+    // Clamp look angle to ±45° — corrupted values cause zero-finding to fail.
+    final laDeg = loaded.lookAngle.in_(Unit.degree);
     if (laDeg.abs() > 45) {
       return loaded.copyWith(lookAngle: Angular(0.0, Unit.degree));
     }
@@ -86,34 +96,18 @@ class ShotProfileNotifier extends AsyncNotifier<ShotProfile> {
     );
   });
 
-  /// Applies all ballistic-profile fields from [template] while keeping the
-  /// current runtime state (conditions, winds, lookAngle, targetDistance).
-  Future<void> selectProfile(ShotProfile template) => _update((current) {
-    ShotProfile next = current.copyWith(
-      name: template.name,
-      rifle: template.rifle,
-      sight: template.sight,
-      cartridge: template.cartridge,
-      zeroDistance: template.zeroDistance,
-      zeroConditions: template.zeroConditions,
-      usePowderSensitivity: template.usePowderSensitivity,
-      useDiffPowderTemp: template.useDiffPowderTemp,
-      zeroUseDiffPowderTemp: template.zeroUseDiffPowderTemp,
-    );
-    final zeroUsePowderSens = template.zeroUsePowderSensitivity;
-    if (zeroUsePowderSens != null) {
-      next = next.copyWith(zeroUsePowderSensitivity: zeroUsePowderSens);
-    } else {
-      next = next.copyWith(clearZeroUsePowderSensitivity: true);
-    }
-    return next;
-  });
+  /// Switches to [profile], restoring its own stored runtime state.
+  Future<void> selectProfile(ShotProfile profile) async {
+    state = AsyncData(profile);
+    await ref.read(appStorageProvider).saveActiveProfileId(profile.id);
+  }
 
   Future<void> _update(ShotProfile Function(ShotProfile) fn) async {
     final current = state.value ?? seedShotProfile;
     final updated = fn(current);
     state = AsyncData(updated);
-    await ref.read(appStorageProvider).saveCurrentProfile(updated);
+    // Persists runtime state changes into the profile's entry in profiles.json
+    await ref.read(appStorageProvider).saveProfile(updated);
   }
 }
 

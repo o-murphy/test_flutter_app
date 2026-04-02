@@ -9,8 +9,10 @@ class ProfileLibraryNotifier extends AsyncNotifier<List<ShotProfile>> {
   Future<List<ShotProfile>> build() async {
     final profiles = await ref.read(appStorageProvider).loadProfiles();
     if (profiles.isEmpty) {
-      await ref.read(appStorageProvider).saveProfile(seedShotProfile);
-      return [seedShotProfile];
+      for (final p in seedShotProfiles) {
+        await ref.read(appStorageProvider).saveProfile(p);
+      }
+      return seedShotProfiles;
     }
     return profiles;
   }
@@ -27,6 +29,20 @@ class ProfileLibraryNotifier extends AsyncNotifier<List<ShotProfile>> {
   Future<void> delete(String id) async {
     await ref.read(appStorageProvider).deleteProfile(id);
     state = AsyncData((state.value ?? []).where((p) => p.id != id).toList());
+  }
+
+  Future<void> moveToFirst(String id) async {
+    final current =
+        state.value ?? await ref.read(appStorageProvider).loadProfiles();
+    final idx = current.indexWhere((p) => p.id == id);
+    if (idx <= 0) return;
+    final reordered = [
+      current[idx],
+      ...current.sublist(0, idx),
+      ...current.sublist(idx + 1),
+    ];
+    await ref.read(appStorageProvider).saveProfilesOrdered(reordered);
+    state = AsyncData(reordered);
   }
 }
 

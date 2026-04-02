@@ -142,7 +142,7 @@ final seedCartridges = [
   seedCartridgeSts285EldM,
 ];
 
-// ── Default Shot Profile ──────────────────────────────────────────────────────
+// ── Default Shot Profiles ─────────────────────────────────────────────────────
 
 final _seedZeroConditions = AtmoData(
   altitude: Distance(0.0, Unit.meter),
@@ -166,3 +166,39 @@ final seedShotProfile = ShotProfile(
   useDiffPowderTemp: false,
   zeroUseDiffPowderTemp: false,
 );
+
+final seedShotProfileHornady = ShotProfile(
+  id: 'seed-profile-hornady-250',
+  name: '.338LM Hornady 250GR BTHP',
+  rifle: seedRifle,
+  sight: seedSight,
+  cartridge: seedCartridgeHornady250,
+  zeroConditions: _seedZeroConditions,
+  conditions: _seedZeroConditions,
+  winds: [],
+  lookAngle: Angular(0.0, Unit.degree),
+  usePowderSensitivity: true,
+  useDiffPowderTemp: false,
+  zeroUseDiffPowderTemp: false,
+);
+
+final seedShotProfileLapua300 = ShotProfile(
+  id: 'seed-profile-lapua-300',
+  name: '.338LM Lapua 300GR SMK',
+  rifle: seedRifle,
+  sight: seedSight,
+  cartridge: seedCartridgeLapua300,
+  zeroConditions: _seedZeroConditions,
+  conditions: _seedZeroConditions,
+  winds: [],
+  lookAngle: Angular(0.0, Unit.degree),
+  usePowderSensitivity: true,
+  useDiffPowderTemp: false,
+  zeroUseDiffPowderTemp: false,
+);
+
+final seedShotProfiles = [
+  seedShotProfile,
+  seedShotProfileHornady,
+  seedShotProfileLapua300,
+];

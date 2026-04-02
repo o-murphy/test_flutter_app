@@ -135,18 +135,6 @@ class JsonFileStorage implements AppStorage {
   @override
   Future<void> saveSettings(AppSettings s) => _writeMap('settings', s.toJson());
 
-  // ── Current profile ────────────────────────────────────────────────────────
-
-  @override
-  Future<ShotProfile?> loadCurrentProfile() async {
-    final map = await _readMap('profile');
-    return map == null ? null : ShotProfile.fromJson(map);
-  }
-
-  @override
-  Future<void> saveCurrentProfile(ShotProfile p) =>
-      _writeMap('profile', p.toJson());
-
   // ── Rifles ─────────────────────────────────────────────────────────────────
 
   @override
@@ -223,41 +211,102 @@ class JsonFileStorage implements AppStorage {
   }
 
   // ── Profile library ────────────────────────────────────────────────────────
+  // profiles.json format: {"activeProfileId": "...", "profiles": [...]}
+  // Backward-compat: if file contains a plain array, treat as profiles with no active ID.
+
+  Future<(List<Map<String, dynamic>>, String?)> _readProfilesFile() async {
+    try {
+      final f = await _file('profiles');
+      if (!await f.exists()) return (<Map<String, dynamic>>[], null);
+      final content = await f.readAsString();
+      if (content.trim().isEmpty) return (<Map<String, dynamic>>[], null);
+      final decoded = jsonDecode(content);
+      if (decoded is Map<String, dynamic>) {
+        final list = ((decoded['profiles'] as List?) ?? [])
+            .cast<Map<String, dynamic>>();
+        final activeId = decoded['activeProfileId'] as String?;
+        return (list, activeId);
+      }
+      if (decoded is List) {
+        // Old plain-array format
+        return (decoded.cast<Map<String, dynamic>>(), null);
+      }
+      return (<Map<String, dynamic>>[], null);
+    } on StorageException {
+      rethrow;
+    } catch (e, st) {
+      throw StorageException('Failed to read profiles.json', e, st);
+    }
+  }
+
+  Future<void> _writeProfilesFile(
+    List<Map<String, dynamic>> profiles,
+    String? activeProfileId,
+  ) => _writeMap('profiles', {
+    'activeProfileId': activeProfileId,
+    'profiles': profiles,
+  });
 
   @override
-  Future<List<ShotProfile>> loadProfiles() async =>
-      (await _readList('profiles')).map(ShotProfile.fromJson).toList();
+  Future<String?> loadActiveProfileId() async {
+    final (_, activeId) = await _readProfilesFile();
+    return activeId;
+  }
+
+  @override
+  Future<void> saveActiveProfileId(String id) async {
+    final (profiles, _) = await _readProfilesFile();
+    await _writeProfilesFile(profiles, id);
+  }
+
+  @override
+  Future<List<ShotProfile>> loadProfiles() async {
+    final (list, _) = await _readProfilesFile();
+    return list.map(ShotProfile.fromJson).toList();
+  }
 
   @override
   Future<void> saveProfile(ShotProfile p) async {
-    final list = await _readList('profiles');
+    final (list, activeId) = await _readProfilesFile();
     final idx = list.indexWhere((m) => m['id'] == p.id);
     if (idx >= 0) {
       list[idx] = p.toJson();
     } else {
       list.add(p.toJson());
     }
-    await _writeList('profiles', list);
+    await _writeProfilesFile(list, activeId);
+  }
+
+  @override
+  Future<void> saveProfilesOrdered(List<ShotProfile> profiles) async {
+    final (_, activeId) = await _readProfilesFile();
+    await _writeProfilesFile(
+      profiles.map((p) => p.toJson()).toList(),
+      activeId,
+    );
   }
 
   @override
   Future<void> deleteProfile(String id) async {
-    final list = await _readList('profiles');
+    final (list, activeId) = await _readProfilesFile();
     list.removeWhere((m) => m['id'] == id);
-    await _writeList('profiles', list);
+    await _writeProfilesFile(list, activeId);
   }
 
   // ── Export / Import ────────────────────────────────────────────────────────
 
   @override
-  Future<Map<String, dynamic>> exportAll() async => {
-    'settings': await _readMap('settings') ?? {},
-    'profile': await _readMap('profile') ?? {},
-    'rifles': await _readList('rifles'),
-    'cartridges': await _readList('cartridges'),
-    'sights': await _readList('sights'),
-    'profiles': await _readList('profiles'),
-  };
+  Future<Map<String, dynamic>> exportAll() async {
+    final (profilesList, activeProfileId) = await _readProfilesFile();
+    return {
+      'settings': await _readMap('settings') ?? {},
+      'rifles': await _readList('rifles'),
+      'cartridges': await _readList('cartridges'),
+      'sights': await _readList('sights'),
+      'activeProfileId': activeProfileId,
+      'profiles': profilesList,
+    };
+  }
 
   @override
   Future<void> importAll(Map<String, dynamic> data) async {
@@ -271,16 +320,6 @@ class JsonFileStorage implements AppStorage {
           );
         }
         await _writeMap('settings', s);
-      }
-
-      if (data.containsKey('profile')) {
-        final p = data['profile'];
-        if (p is! Map<String, dynamic>) {
-          throw StorageException(
-            'Invalid profile: expected Map, got ${p.runtimeType}',
-          );
-        }
-        await _writeMap('profile', p);
       }
 
       if (data.containsKey('rifles')) {
@@ -360,7 +399,8 @@ class JsonFileStorage implements AppStorage {
           }
           profiles.add(item);
         }
-        await _writeList('profiles', profiles);
+        final activeId = data['activeProfileId'] as String?;
+        await _writeProfilesFile(profiles, activeId);
       }
     } catch (e, st) {
       if (e is StorageException) rethrow;

@@ -1,45 +1,27 @@
 // ── Profile Card ──────────────────────────────────────────────────────────────
-import 'package:eballistica/core/models/field_constraints.dart';
-import 'package:eballistica/core/models/projectile.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:eballistica/core/models/shot_profile.dart';
-import 'package:eballistica/core/providers/formatter_provider.dart';
+import 'package:eballistica/features/home/sub_screens/profiles/profiles_vm.dart';
 import 'package:eballistica/router.dart';
 import 'package:eballistica/shared/widgets/info_tile.dart';
 import 'package:eballistica/shared/widgets/list_section_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class ProfileCard extends ConsumerWidget {
+class ProfileCard extends StatelessWidget {
   const ProfileCard({
-    required this.profile,
+    required this.data,
     required this.isActive,
     required this.onSelect,
     super.key,
   });
 
-  final ShotProfile profile;
+  final ProfileCardData data;
   final bool isActive;
   final VoidCallback onSelect;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-
-    final formatter = ref.read(unitFormatterProvider);
-
-    final proj = profile.cartridge.projectile;
-    final bcAcc = FC.ballisticCoefficient.accuracy;
-    final firstBc = proj.coefRows.isNotEmpty ? proj.coefRows.first.bcCd : 0.0;
-    final dragStr = switch (proj.dragType) {
-      DragModelType.g1 =>
-        proj.isMultiBC ? 'G1 Multi' : 'G1 ${firstBc.toStringAsFixed(bcAcc)}',
-      DragModelType.g7 =>
-        proj.isMultiBC ? 'G7 Multi' : 'G7 ${firstBc.toStringAsFixed(bcAcc)}',
-      DragModelType.custom => 'CUSTOM',
-    };
 
     return Card(
       color: colorScheme.surfaceContainer,
@@ -48,16 +30,16 @@ class ProfileCard extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _ProfileTitleRow(title: profile.name, isActive: isActive),
+            _ProfileTitleRow(title: data.name, isActive: isActive),
             const SizedBox(height: 16),
             Expanded(
               child: ListView(
                 children: [
-                  _ProfileControls(),
+                  _ProfileControlTile(profileId: data.id),
                   ListSectionTile("Rifle"),
                   ListTile(
                     leading: const Icon(Icons.military_tech_outlined),
-                    title: Text(profile.rifle.name),
+                    title: Text(data.rifleName),
                     dense: true,
                     trailing: IconButton(
                       onPressed: () => context.go(Routes.profileEditRifle),
@@ -66,26 +48,24 @@ class ProfileCard extends ConsumerWidget {
                   ),
                   InfoListTile(
                     label: "Caliber",
-                    value: formatter.diameter(
-                      profile.cartridge.projectile.diameter,
-                    ),
+                    value: data.caliber,
                     icon: Icons.circle_outlined,
                   ),
                   InfoListTile(
                     label: "Twist",
-                    value: formatter.twist(profile.rifle.twist),
+                    value: data.twist,
                     icon: Icons.rotate_left_outlined,
                   ),
                   InfoListTile(
                     label: "Twist direction",
-                    value: profile.rifle.twist.raw > 0 ? "right" : "left",
+                    value: data.twistDirection,
                     icon: Icons.rotate_left_outlined,
                   ),
                   const Divider(height: 1),
                   ListSectionTile("Cartridge"),
                   ListTile(
                     leading: const Icon(Icons.grain_outlined),
-                    title: Text(profile.cartridge.name),
+                    title: Text(data.cartridgeName),
                     dense: true,
                     trailing: IconButton(
                       onPressed: () => context.go(Routes.profileEditCartridge),
@@ -94,33 +74,29 @@ class ProfileCard extends ConsumerWidget {
                   ),
                   InfoListTile(
                     label: "Drag model",
-                    value: dragStr,
+                    value: data.dragModel,
                     icon: Icons.trending_up_outlined,
                   ),
                   InfoListTile(
                     label: "Muzzle velocity",
-                    value: formatter.velocity(profile.cartridge.mv),
+                    value: data.muzzleVelocity,
                     icon: Icons.speed_outlined,
                   ),
                   InfoListTile(
                     label: "Caliber",
-                    value: formatter.diameter(
-                      profile.cartridge.projectile.diameter,
-                    ),
+                    value: data.caliber,
                     icon: Icons.circle_outlined,
                   ),
                   InfoListTile(
                     label: "Weight",
-                    value: formatter.weight(
-                      profile.cartridge.projectile.weight,
-                    ),
+                    value: data.weight,
                     icon: Icons.balance_outlined,
                   ),
                   const Divider(height: 1),
                   ListSectionTile("Sight"),
                   ListTile(
                     leading: const Icon(Icons.my_location_outlined),
-                    title: Text(profile.sight.name),
+                    title: Text(data.sightName),
                     dense: true,
                     trailing: IconButton(
                       onPressed: () => context.go(Routes.profileEditSight),
@@ -165,8 +141,10 @@ class _ProfileTitleRow extends StatelessWidget {
   }
 }
 
-class _ProfileControls extends StatelessWidget {
-  const _ProfileControls();
+class _ProfileControlTile extends StatelessWidget {
+  const _ProfileControlTile({required this.profileId});
+
+  final String profileId;
 
   @override
   Widget build(BuildContext context) {
@@ -195,7 +173,7 @@ class _ProfileControls extends StatelessWidget {
               left: 8,
               child: FloatingActionButton(
                 mini: true,
-                heroTag: 'select_sight_button',
+                heroTag: 'sight_btn_$profileId',
                 onPressed: () => context.push(Routes.sightSelect),
                 backgroundColor: colorScheme.secondaryContainer,
                 foregroundColor: colorScheme.onSecondaryContainer,
@@ -209,7 +187,7 @@ class _ProfileControls extends StatelessWidget {
               right: 8,
               child: FloatingActionButton(
                 mini: true,
-                heroTag: 'select_cartridge_button',
+                heroTag: 'cartridge_btn_$profileId',
                 onPressed: () => context.push(Routes.cartridgeSelect),
                 backgroundColor: colorScheme.primaryContainer,
                 foregroundColor: colorScheme.onPrimaryContainer,

@@ -9,10 +9,6 @@ abstract interface class AppStorage {
   Future<AppSettings?> loadSettings();
   Future<void> saveSettings(AppSettings s);
 
-  // Current profile
-  Future<ShotProfile?> loadCurrentProfile();
-  Future<void> saveCurrentProfile(ShotProfile p);
-
   // Rifles
   Future<List<Rifle>> loadRifles();
   Future<void> saveRifle(Rifle r);
@@ -28,9 +24,12 @@ abstract interface class AppStorage {
   Future<void> saveSight(Sight s);
   Future<void> deleteSight(String id);
 
-  // Profile library
+  // Profile library  (profiles.json stores {activeProfileId, profiles:[...]})
+  Future<String?> loadActiveProfileId();
+  Future<void> saveActiveProfileId(String id);
   Future<List<ShotProfile>> loadProfiles();
   Future<void> saveProfile(ShotProfile p);
+  Future<void> saveProfilesOrdered(List<ShotProfile> profiles);
   Future<void> deleteProfile(String id);
 
   // Import / Export

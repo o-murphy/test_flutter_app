@@ -1,10 +1,10 @@
-import 'package:eballistica/core/models/shot_profile.dart';
 import 'package:eballistica/features/home/sub_screens/profiles/profiles_vm.dart';
 import 'package:eballistica/features/home/sub_screens/profiles/widgets/profile_card.dart';
 import 'package:eballistica/shared/widgets/base_screen.dart';
 import 'package:eballistica/shared/widgets/pages_dots_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfilesScreen extends ConsumerStatefulWidget {
   const ProfilesScreen({super.key});
@@ -36,7 +36,7 @@ class _ProfilesScreenState extends ConsumerState<ProfilesScreen> {
     return state.profiles[idx].name;
   }
 
-  ShotProfile? _currentProfile(ProfilesUiState state) {
+  ProfileCardData? _currentProfile(ProfilesUiState state) {
     if (state is! ProfilesReady || state.profiles.isEmpty) return null;
     final idx = _currentPage.clamp(0, state.profiles.length - 1);
     return state.profiles[idx];
@@ -46,7 +46,7 @@ class _ProfilesScreenState extends ConsumerState<ProfilesScreen> {
     // TODO: navigate to profile wizard (Phase 5)
   }
 
-  Future<void> _onRemove(ShotProfile? profile) async {
+  Future<void> _onRemove(ProfileCardData? profile) async {
     if (profile == null) return;
     final confirmed = await showDialog<bool>(
       context: context,
@@ -85,14 +85,14 @@ class _ProfilesScreenState extends ConsumerState<ProfilesScreen> {
     ).showSnackBar(const SnackBar(content: Text('Import not yet available')));
   }
 
-  Future<void> _onExport(ShotProfile? profile) async {
+  Future<void> _onExport(ProfileCardData? profile) async {
     if (profile == null) return;
     // TODO: serialize profile and share (Phase 5+)
   }
 
-  Future<void> _onSelect(ShotProfile profile) async {
+  Future<void> _onSelect(ProfileCardData profile) async {
     await ref.read(rifleSelectVmProvider.notifier).selectProfile(profile.id);
-    if (mounted) Navigator.of(context).pop();
+    if (mounted) context.pop();
   }
 
   @override
@@ -165,12 +165,12 @@ class _ProfilePageView extends StatelessWidget {
     required this.onSelect,
   });
 
-  final List<ShotProfile> profiles;
+  final List<ProfileCardData> profiles;
   final String? activeProfileId;
   final PageController pageController;
   final int currentPage;
   final void Function(int) onPageChanged;
-  final void Function(ShotProfile) onSelect;
+  final void Function(ProfileCardData) onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +185,7 @@ class _ProfilePageView extends StatelessWidget {
                   (p) => Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                     child: ProfileCard(
-                      profile: p,
+                      data: p,
                       isActive: p.id == activeProfileId,
                       onSelect: () => onSelect(p),
                     ),
