@@ -12,7 +12,11 @@ abstract interface class UnitFormatter {
   String windage(Distance dim); // "3.2 cm"
   String adjustment(Angular dim); // "3.45 MIL"
   String energy(Energy dim); // "4200 J"
+
   String weight(Weight dim); // "250 gr"
+  String length(Distance dim); // "2.00 inch"
+  String diameter(Distance dim); // "0.338 inch"
+
   String sightHeight(Distance dim); // "8.5 mm"
   String twist(Distance dim); // "1:10 inch"
   String humidity(Ratio dim); // "50 %"

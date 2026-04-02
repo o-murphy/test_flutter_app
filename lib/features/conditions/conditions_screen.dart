@@ -90,13 +90,13 @@ class ConditionsScreen extends ConsumerWidget {
                 onChanged: (v) => notifier.updatePowderTemp(v),
               ),
             if (state.mvAtPowderTemp != null)
-              InfoTile(
+              InfoListTile(
                 label: 'Muzzle velocity at powder temp',
                 value: state.mvAtPowderTemp!,
                 icon: Icons.speed_outlined,
               ),
             if (state.powderSensitivity != null)
-              InfoTile(
+              InfoListTile(
                 label: 'Powder sensitivity',
                 value: state.powderSensitivity!,
                 icon: Icons.show_chart_outlined,

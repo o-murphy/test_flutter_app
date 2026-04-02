@@ -1,12 +1,17 @@
 // ── Profile Card ──────────────────────────────────────────────────────────────
+import 'package:eballistica/core/models/field_constraints.dart';
+import 'package:eballistica/core/models/projectile.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/core/models/shot_profile.dart';
+import 'package:eballistica/core/providers/formatter_provider.dart';
 import 'package:eballistica/router.dart';
+import 'package:eballistica/shared/widgets/info_tile.dart';
 import 'package:eballistica/shared/widgets/list_section_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class ProfileCard extends StatelessWidget {
+class ProfileCard extends ConsumerWidget {
   const ProfileCard({
     required this.profile,
     required this.isActive,
@@ -19,9 +24,22 @@ class ProfileCard extends StatelessWidget {
   final VoidCallback onSelect;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
+    final formatter = ref.read(unitFormatterProvider);
+
+    final proj = profile.cartridge.projectile;
+    final bcAcc = FC.ballisticCoefficient.accuracy;
+    final firstBc = proj.coefRows.isNotEmpty ? proj.coefRows.first.bcCd : 0.0;
+    final dragStr = switch (proj.dragType) {
+      DragModelType.g1 =>
+        proj.isMultiBC ? 'G1 Multi' : 'G1 ${firstBc.toStringAsFixed(bcAcc)}',
+      DragModelType.g7 =>
+        proj.isMultiBC ? 'G7 Multi' : 'G7 ${firstBc.toStringAsFixed(bcAcc)}',
+      DragModelType.custom => 'CUSTOM',
+    };
 
     return Card(
       color: colorScheme.surfaceContainer,
@@ -36,58 +54,78 @@ class ProfileCard extends StatelessWidget {
               child: ListView(
                 children: [
                   _ProfileControls(),
-                  ListSectionTile(
-                    "Rifle",
-                    trailing: IconButton(
-                      onPressed: () => context.go(Routes.profileEditRifle),
-                      icon: Icon(
-                        Icons.edit_outlined,
-                        size: 16,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
+                  ListSectionTile("Rifle"),
                   ListTile(
                     leading: const Icon(Icons.military_tech_outlined),
                     title: Text(profile.rifle.name),
                     dense: true,
-                    onTap: () => debugPrint("edit rifle"),
-                  ),
-                  const Divider(height: 1),
-                  ListSectionTile(
-                    "Cartridge",
                     trailing: IconButton(
-                      onPressed: () => context.go(Routes.profileEditCartridge),
-                      icon: Icon(
-                        Icons.edit_outlined,
-                        size: 16,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                      onPressed: () => context.go(Routes.profileEditRifle),
+                      icon: Icon(Icons.edit_outlined, size: 16),
                     ),
                   ),
+                  InfoListTile(
+                    label: "Caliber",
+                    value: formatter.diameter(
+                      profile.cartridge.projectile.diameter,
+                    ),
+                    icon: Icons.circle_outlined,
+                  ),
+                  InfoListTile(
+                    label: "Twist",
+                    value: formatter.twist(profile.rifle.twist),
+                    icon: Icons.rotate_left_outlined,
+                  ),
+                  InfoListTile(
+                    label: "Twist direction",
+                    value: profile.rifle.twist.raw > 0 ? "right" : "left",
+                    icon: Icons.rotate_left_outlined,
+                  ),
+                  const Divider(height: 1),
+                  ListSectionTile("Cartridge"),
                   ListTile(
                     leading: const Icon(Icons.grain_outlined),
                     title: Text(profile.cartridge.name),
                     dense: true,
-                    onTap: () => debugPrint("edit cartridge"),
-                  ),
-                  const Divider(height: 1),
-                  ListSectionTile(
-                    "Sight",
                     trailing: IconButton(
-                      onPressed: () => context.go(Routes.profileEditSight),
-                      icon: Icon(
-                        Icons.edit_outlined,
-                        size: 16,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                      onPressed: () => context.go(Routes.profileEditCartridge),
+                      icon: Icon(Icons.edit_outlined, size: 16),
                     ),
                   ),
+                  InfoListTile(
+                    label: "Drag model",
+                    value: dragStr,
+                    icon: Icons.trending_up_outlined,
+                  ),
+                  InfoListTile(
+                    label: "Muzzle velocity",
+                    value: formatter.velocity(profile.cartridge.mv),
+                    icon: Icons.speed_outlined,
+                  ),
+                  InfoListTile(
+                    label: "Caliber",
+                    value: formatter.diameter(
+                      profile.cartridge.projectile.diameter,
+                    ),
+                    icon: Icons.circle_outlined,
+                  ),
+                  InfoListTile(
+                    label: "Weight",
+                    value: formatter.weight(
+                      profile.cartridge.projectile.weight,
+                    ),
+                    icon: Icons.balance_outlined,
+                  ),
+                  const Divider(height: 1),
+                  ListSectionTile("Sight"),
                   ListTile(
                     leading: const Icon(Icons.my_location_outlined),
                     title: Text(profile.sight.name),
                     dense: true,
-                    onTap: () => debugPrint("edit sight"),
+                    trailing: IconButton(
+                      onPressed: () => context.go(Routes.profileEditSight),
+                      icon: Icon(Icons.edit_outlined, size: 16),
+                    ),
                   ),
                 ],
               ),

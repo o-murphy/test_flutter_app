@@ -33,68 +33,68 @@ class ShotDetailsScreen extends ConsumerWidget {
     return ListView(
       children: [
         const ListSectionTile('Velocity'),
-        InfoTile(
+        InfoListTile(
           icon: Icons.speed_outlined,
           label: 'Current muzzle velocity',
           value: state.currentMv,
         ),
-        InfoTile(
+        InfoListTile(
           icon: Icons.speed_outlined,
           label: 'Zero muzzle velocity',
           value: state.zeroMv,
         ),
-        InfoTile(
+        InfoListTile(
           icon: Icons.graphic_eq_outlined,
           label: 'Speed of sound',
           value: state.speedOfSound,
         ),
-        InfoTile(
+        InfoListTile(
           icon: Icons.arrow_forward_outlined,
           label: 'Velocity at target',
           value: state.velocityAtTarget,
         ),
         const Divider(height: 1),
         const ListSectionTile('Energy'),
-        InfoTile(
+        InfoListTile(
           icon: Icons.bolt_outlined,
           label: 'Energy at muzzle',
           value: state.energyAtMuzzle,
         ),
-        InfoTile(
+        InfoListTile(
           icon: Icons.bolt_outlined,
           label: 'Energy at target',
           value: state.energyAtTarget,
         ),
         const Divider(height: 1),
         const ListSectionTile('Stability'),
-        InfoTile(
+        InfoListTile(
           icon: Icons.rotate_right_outlined,
           label: 'Gyroscopic stability factor',
           value: state.gyroscopicStability,
         ),
         const Divider(height: 1),
         const ListSectionTile('Trajectory'),
-        InfoTile(
+        InfoListTile(
           icon: Icons.flag_outlined,
           label: 'Shot distance',
           value: state.shotDistance,
         ),
-        InfoTile(
+        InfoListTile(
           icon: Icons.height,
           label: 'Height at target',
           value: state.heightAtTarget,
         ),
-        InfoTile(
+        InfoListTile(
           icon: Icons.architecture_outlined,
           label: 'Max height distance',
           value: state.maxHeightDistance,
         ),
-        InfoTile(
+        InfoListTile(
           icon: Icons.arrow_right_alt_outlined,
           label: 'Windage',
           value: state.windage,
         ),
-        InfoTile(
+        InfoListTile(
           icon: Icons.timer_outlined,
           label: 'Time to target',
           value: state.timeToTarget,

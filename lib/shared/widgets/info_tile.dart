@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 
-class InfoTile extends StatelessWidget {
-  const InfoTile({
+class InfoListTile extends StatelessWidget {
+  const InfoListTile({
     required this.label,
     required this.value,
     required this.icon,
