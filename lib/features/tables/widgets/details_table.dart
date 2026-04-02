@@ -43,94 +43,43 @@ class DetailsTableContent extends StatelessWidget {
 
     Widget section(String title) => ListSectionTile(title);
 
-    final items = <Widget>[];
+    String v(String? s) => s?.isNotEmpty == true ? s! : '—';
 
-    // Rifle
-    if (items.isNotEmpty) items.add(const Divider(height: 1));
-    items.add(section('Rifle'));
-    items.add(row('Name', details.rifleName));
-    if (details.caliber != null) items.add(row('Caliber', details.caliber!));
-    if (details.twist != null) items.add(row('Twist', details.twist!));
-    if (details.zeroDist != null) {
-      items.add(row('Zero distance', details.zeroDist!));
-    }
+    final items = <Widget>[
+      // Rifle
+      section('Rifle'),
+      row('Name', v(details.rifleName.isNotEmpty ? details.rifleName : null)),
+      row('Caliber', v(details.caliber)),
+      row('Twist', v(details.twist)),
+      row('Zero distance', v(details.zeroDist)),
+      const Divider(height: 1),
 
-    // Cartridge
-    final hasCart = details.zeroMv != null || details.currentMv != null;
-    if (hasCart) {
-      if (items.isNotEmpty) items.add(const Divider(height: 1));
-      items.add(section('Cartridge'));
-      if (details.zeroMv != null) items.add(row('Zero MV', details.zeroMv!));
-      if (details.currentMv != null) {
-        items.add(row('Current MV', details.currentMv!));
-      }
-    }
+      // Cartridge
+      section('Cartridge'),
+      row('Zero MV', v(details.zeroMv)),
+      row('Current MV', v(details.currentMv)),
+      const Divider(height: 1),
 
-    // Projectile
-    final hasProj =
-        details.dragModel != null ||
-        details.bc != null ||
-        details.bulletLen != null ||
-        details.bulletDiam != null ||
-        details.bulletWeight != null ||
-        details.formFactor != null ||
-        details.sectionalDensity != null ||
-        details.gyroStability != null;
-    if (hasProj) {
-      if (items.isNotEmpty) items.add(const Divider(height: 1));
-      items.add(section('Projectile'));
-      if (details.dragModel != null) {
-        items.add(row('Drag model', details.dragModel!));
-      }
-      if (details.bc != null) items.add(row('BC', details.bc!));
-      if (details.bulletLen != null) {
-        items.add(row('Length', details.bulletLen!));
-      }
-      if (details.bulletDiam != null) {
-        items.add(row('Diameter', details.bulletDiam!));
-      }
-      if (details.bulletWeight != null) {
-        items.add(row('Weight', details.bulletWeight!));
-      }
-      if (details.formFactor != null) {
-        items.add(row('Form factor', details.formFactor!));
-      }
-      if (details.sectionalDensity != null) {
-        items.add(row('Sectional density', details.sectionalDensity!));
-      }
-      if (details.gyroStability != null) {
-        items.add(row('Gyrostability (Sg)', details.gyroStability!));
-      }
-    }
+      // Projectile
+      section('Projectile'),
+      row('Drag model', v(details.dragModel)),
+      row('BC', v(details.bc)),
+      row('Length', v(details.bulletLen)),
+      row('Diameter', v(details.bulletDiam)),
+      row('Weight', v(details.bulletWeight)),
+      row('Form factor', v(details.formFactor)),
+      row('Sectional density', v(details.sectionalDensity)),
+      row('Gyrostability (Sg)', v(details.gyroStability)),
+      const Divider(height: 1),
 
-    // Conditions
-    final hasCond =
-        details.temperature != null ||
-        details.humidity != null ||
-        details.pressure != null ||
-        details.windSpeed != null ||
-        details.windDir != null;
-    if (hasCond) {
-      if (items.isNotEmpty) items.add(const Divider(height: 1));
-      items.add(section('Conditions'));
-      if (details.temperature != null) {
-        items.add(row('Temperature', details.temperature!));
-      }
-      if (details.humidity != null) {
-        items.add(row('Humidity', details.humidity!));
-      }
-      if (details.pressure != null) {
-        items.add(row('Pressure', details.pressure!));
-      }
-      if (details.windSpeed != null) {
-        items.add(row('Wind speed', details.windSpeed!));
-      }
-      if (details.windDir != null) {
-        items.add(row('Wind direction', details.windDir!));
-      }
-    }
-
-    if (items.isEmpty) return const SizedBox.shrink();
+      // Conditions
+      section('Conditions'),
+      row('Temperature', v(details.temperature)),
+      row('Humidity', v(details.humidity)),
+      row('Pressure', v(details.pressure)),
+      row('Wind speed', v(details.windSpeed)),
+      row('Wind direction', v(details.windDir)),
+    ];
 
     return ListView(children: items);
   }

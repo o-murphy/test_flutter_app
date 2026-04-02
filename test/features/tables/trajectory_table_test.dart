@@ -197,7 +197,7 @@ void main() {
 
       expect(find.text('RIFLE'), findsOneWidget);
       expect(find.text('PROJECTILE'), findsOneWidget);
-      expect(find.text('ATMOSPHERE'), findsOneWidget);
+      expect(find.text('CONDITIONS'), findsOneWidget);
     });
 
     testWidgets('renders rifle details correctly', (tester) async {
@@ -233,8 +233,9 @@ void main() {
       expect(find.text('90°'), findsOneWidget);
     });
 
-    testWidgets('returns empty space if no data provided', (tester) async {
-      // Create an empty part object if your model allows it
+    testWidgets('shows all section headers even when fields are empty', (
+      tester,
+    ) async {
       const emptyDetails = DetailsTableData(rifleName: '');
 
       await tester.pumpWidget(
@@ -242,9 +243,11 @@ void main() {
       );
       await tester.pump();
 
-      // If your code has a check for items.isEmpty -> SizedBox.shrink()
-      expect(find.text('RIFLE'), findsNothing);
-      expect(find.text('ATMOSPHERE'), findsNothing);
+      // All sections always shown regardless of data
+      expect(find.text('RIFLE'), findsOneWidget);
+      expect(find.text('CARTRIDGE'), findsOneWidget);
+      expect(find.text('PROJECTILE'), findsOneWidget);
+      expect(find.text('CONDITIONS'), findsOneWidget);
     });
   });
 

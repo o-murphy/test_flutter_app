@@ -29,6 +29,12 @@ test: native
 format:
 	dart format lib/ && dart format test/
 
+run:
+	flutter run
+
+run-clean:
+	rm -rf ~/.eBalistyka && flutter run
+
 # Run only unit tests (no native dependency)
 unit:
 	dart test test/core/solver/unit_test.dart
