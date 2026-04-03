@@ -276,5 +276,19 @@ abstract final class FC {
     accuracy: 0,
   );
 
+  static const convertorDistance = FieldConstraints(
+    rawUnit: Unit.meter,
+    minRaw: 0.0,
+    maxRaw: 5000.0,
+    stepRaw: 1.0,
+    accuracy: 0,
+  );
   static const convertorTorque = torque;
+  static const convertorAngular = FieldConstraints(
+    rawUnit: Unit.mil,
+    minRaw: -90.0,
+    maxRaw: 90.0,
+    stepRaw: 1.0,
+    accuracy: 1,
+  );
 }

@@ -55,7 +55,7 @@ class PressureConvertorScreen extends ConsumerWidget {
 
   Widget _buildInfoTile(PressureField field) {
     return InfoListTile(
-      label: '${field.label} (${field.symbol})',
+      label: field.label,
       value: field.formattedValue,
     );
   }

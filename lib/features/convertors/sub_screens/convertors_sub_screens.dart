@@ -3,6 +3,7 @@ export 'package:eballistica/features/convertors/sub_screens/weight_convertor_scr
 export 'package:eballistica/features/convertors/sub_screens/pressure_convertor_screen.dart';
 export 'package:eballistica/features/convertors/sub_screens/temperature_convertor_screen.dart';
 export 'package:eballistica/features/convertors/sub_screens/torque_convertor_screen.dart';
+export 'package:eballistica/features/convertors/sub_screens/angular_convertor_screen.dart';
 
 import 'package:eballistica/shared/widgets/_stub_screen.dart';
 import 'package:flutter/material.dart';
@@ -19,11 +20,4 @@ class VelocityConvertorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       const StubScreen(title: 'Velocity Convertor');
-}
-
-class MilMoaConvertorScreen extends StatelessWidget {
-  const MilMoaConvertorScreen({super.key});
-  @override
-  Widget build(BuildContext context) =>
-      const StubScreen(title: 'MIL / MOA Convertor');
 }

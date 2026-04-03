@@ -42,9 +42,6 @@ class TemperatureConvertorScreen extends ConsumerWidget {
   }
 
   Widget _buildInfoTile(TemperatureField field) {
-    return InfoListTile(
-      label: '${field.label} (${field.symbol})',
-      value: field.formattedValue,
-    );
+    return InfoListTile(label: field.label, value: field.formattedValue);
   }
 }

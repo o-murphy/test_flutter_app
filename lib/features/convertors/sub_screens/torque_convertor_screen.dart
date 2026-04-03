@@ -47,9 +47,6 @@ class TorqueConvertorScreen extends ConsumerWidget {
   }
 
   Widget _buildInfoTile(TorqueField field) {
-    return InfoListTile(
-      label: '${field.label} (${field.symbol})',
-      value: field.formattedValue,
-    );
+    return InfoListTile(label: field.label, value: field.formattedValue);
   }
 }

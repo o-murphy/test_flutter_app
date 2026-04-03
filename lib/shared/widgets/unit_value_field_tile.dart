@@ -208,7 +208,7 @@ class NullableUnitValueFieldTile extends StatelessWidget {
     final isSet = rawValue != null;
 
     return ListTile(
-      leading: icon != null ? Icon(icon, size: 20) : null,
+      leading: icon != null ? Icon(icon) : null,
       title: Text(label),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -314,7 +314,7 @@ class UnitValueFieldTile extends StatelessWidget {
     final theme = Theme.of(context);
 
     return ListTile(
-      leading: icon != null ? Icon(icon, size: 20) : null,
+      leading: icon != null ? Icon(icon) : null,
       title: Text(label),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,

@@ -51,9 +51,6 @@ class LengthConvertorScreen extends ConsumerWidget {
   }
 
   Widget _buildInfoTile(LengthField field) {
-    return InfoListTile(
-      label: '${field.label} (${field.symbol})',
-      value: field.formattedValue,
-    );
+    return InfoListTile(label: field.label, value: field.formattedValue);
   }
 }

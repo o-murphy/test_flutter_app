@@ -52,9 +52,6 @@ class WeightConvertorScreen extends ConsumerWidget {
   }
 
   Widget _buildInfoTile(WeightField field) {
-    return InfoListTile(
-      label: '${field.label} (${field.symbol})',
-      value: field.formattedValue,
-    );
+    return InfoListTile(label: field.label, value: field.formattedValue);
   }
 }

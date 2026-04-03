@@ -73,6 +73,32 @@ class ConvertorsNotifier extends AsyncNotifier<ConvertorsState> {
     await _save(current.copyWith(torqueUnit: unit));
   }
 
+  Future<void> updateAnglesConvertorDistanceValue(double? valueInMeters) async {
+    if (valueInMeters != null && valueInMeters >= 0) {
+      final current = state.value ?? const ConvertorsState();
+      await _save(
+        current.copyWith(anglesConvertorDistanceValueMeter: valueInMeters),
+      );
+    }
+  }
+
+  Future<void> updateAnglesConvertorDistanceUnit(Unit unit) async {
+    final current = state.value ?? const ConvertorsState();
+    await _save(current.copyWith(anglesConvertorDistanceUnit: unit));
+  }
+
+  Future<void> updateAnglesConvertorAngularValue(double? valueInMil) async {
+    if (valueInMil != null && valueInMil >= 0) {
+      final current = state.value ?? const ConvertorsState();
+      await _save(current.copyWith(anglesConvertorAngularValueMil: valueInMil));
+    }
+  }
+
+  Future<void> updateAnglesConvertorAngularUnit(Unit unit) async {
+    final current = state.value ?? const ConvertorsState();
+    await _save(current.copyWith(anglesConvertorAngularUnit: unit));
+  }
+
   Future<void> _save(ConvertorsState newState) async {
     state = AsyncData(newState);
     await ref.read(appStorageProvider).saveConvertorsState(newState);

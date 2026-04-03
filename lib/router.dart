@@ -246,8 +246,8 @@ final appRouter = GoRouter(
                   builder: (_, _) => const TemperatureConvertorScreen(),
                 ),
                 GoRoute(
-                  path: 'mil-moa',
-                  builder: (_, _) => const MilMoaConvertorScreen(),
+                  path: 'angular',
+                  builder: (_, _) => const AnglesConvertorScreen(),
                 ),
                 GoRoute(
                   path: 'torque',
