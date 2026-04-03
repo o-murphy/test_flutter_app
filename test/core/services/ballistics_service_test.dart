@@ -41,7 +41,7 @@ ShotProfile _makeProfile({
     powderTemp: Temperature(15.0, Unit.celsius),
     powderSensitivity: Ratio(0.0, Unit.fraction),
     zeroDistance: Distance(zeroDistM, Unit.meter),
-    zeroConditions: zeroConditions,
+    conditions: zeroConditions,
   );
   final rifle = Rifle(
     name: 'Test Rifle',
@@ -395,7 +395,7 @@ void main() {
             1.0,
             Unit.fraction,
           ), // 1.0 m/s per °C (stored as %)
-          zeroUsePowderSensitivity: true,
+          usePowderSensitivity: true,
         ),
         conditions: AtmoData(
           temperature: Temperature(35, Unit.celsius), // 20°C above reference

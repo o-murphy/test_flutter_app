@@ -70,9 +70,9 @@ class A7pParser {
       powderTemp: Temperature(p.cZeroTemperature.toDouble(), Unit.celsius),
       powderSensitivity: Ratio(p.cTCoeff / 1000.0, Unit.fraction),
       zeroDistance: zeroDist,
-      zeroConditions: zeroConds,
-      zeroUsePowderSensitivity: hasPowderSens,
-      zeroUseDiffPowderTemp: zeroUseDiffPowderTemp,
+      conditions: zeroConds,
+      usePowderSensitivity: hasPowderSens,
+      useDiffPowderTemp: zeroUseDiffPowderTemp,
     );
 
     return ShotProfile(

@@ -517,10 +517,10 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
 
   List<double> _buildZeroKey(ShotProfile profile) {
     final c = profile.cartridge!;
-    final zeroAtmo = c.zeroConditions ?? profile.conditions;
+    final zeroAtmo = c.conditions ?? profile.conditions;
     final r = profile.rifle;
     final proj = c.projectile;
-    final zeroUsePowderSens = c.zeroUsePowderSensitivity;
+    final zeroUsePowderSens = c.usePowderSensitivity;
     return [
       r.sightHeight.in_(Unit.meter),
       r.twist.in_(Unit.inch),
@@ -540,7 +540,7 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
       c.zeroDistance.in_(Unit.meter),
       profile.lookAngle.in_(Unit.radian),
       zeroUsePowderSens ? 1.0 : 0.0,
-      c.zeroUseDiffPowderTemp ? 1.0 : 0.0,
+      c.useDiffPowderTemp ? 1.0 : 0.0,
     ];
   }
 }

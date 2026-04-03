@@ -38,7 +38,7 @@ ShotProfile _makeProfile() {
     mv: Velocity(800, Unit.mps),
     powderTemp: Temperature(15.0, Unit.celsius),
     powderSensitivity: Ratio(1.0, Unit.fraction),
-    zeroUseDiffPowderTemp: true,
+    useDiffPowderTemp: true,
   );
   final rifle = Rifle(
     name: 'Test Rifle',

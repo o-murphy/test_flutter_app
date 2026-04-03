@@ -109,8 +109,8 @@ abstract final class CollectionParser {
         (j['powderSensitivity'] as num? ?? 0.0).toDouble(),
         Unit.fraction,
       ),
-      zeroUsePowderSensitivity: j['zeroUsePowderSensitivity'] as bool? ?? false,
-      zeroUseDiffPowderTemp: j['zeroUseDiffPowderTemp'] as bool? ?? false,
+      usePowderSensitivity: j['zeroUsePowderSensitivity'] as bool? ?? false,
+      useDiffPowderTemp: j['zeroUseDiffPowderTemp'] as bool? ?? false,
     );
   }
 

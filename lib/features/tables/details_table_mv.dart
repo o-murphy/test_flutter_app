@@ -73,9 +73,9 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
 
   // Powder sensitivity — separate flags for zero and current
   final currentPowderSensOn = profile.usePowderSensitivity;
-  final zeroPowderSensOn = cart.zeroUsePowderSensitivity;
+  final zeroPowderSensOn = cart.usePowderSensitivity;
   final currentUseDiffTemp = currentPowderSensOn && profile.useDiffPowderTemp;
-  final zeroUseDiffTemp = zeroPowderSensOn && cart.zeroUseDiffPowderTemp;
+  final zeroUseDiffTemp = zeroPowderSensOn && cart.useDiffPowderTemp;
 
   final refMvMps = cart.mv.in_(Unit.mps);
   final refPowderTempC = cart.powderTemp.in_(Unit.celsius);
@@ -88,7 +88,7 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
   );
 
   // Zero MV
-  final zeroAtmo = cart.zeroConditions ?? conds;
+  final zeroAtmo = cart.conditions ?? conds;
   final zeroPowderTempC = zeroUseDiffTemp
       ? zeroAtmo.powderTemp.in_(Unit.celsius)
       : zeroAtmo.temperature.in_(Unit.celsius);

@@ -4,7 +4,6 @@ import 'package:eballistica/core/domain/ballistics_service.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
 import 'package:eballistica/core/solver/calculator.dart';
 import 'package:eballistica/core/solver/ffi/bclibc_bindings.g.dart';
-import 'package:eballistica/core/solver/munition.dart';
 import 'package:eballistica/core/solver/shot.dart';
 import 'package:eballistica/core/solver/trajectory_data.dart';
 import 'package:eballistica/core/solver/unit.dart';
@@ -16,32 +15,11 @@ typedef _TableCalcArgs = (ShotProfile, double, double?);
 // (hitResult, freshZeroElevationRad?)
 typedef _TableCalcResult = (HitResult?, double?);
 
-/// Builds an [Ammo] from [baseAmmo] with powder sensitivity enabled or not.
-Ammo _makeAmmo(Ammo baseAmmo, bool usePowderSens) => usePowderSens
-    ? baseAmmo
-    : Ammo(
-        dm: baseAmmo.dm,
-        mv: baseAmmo.mv,
-        powderTemp: baseAmmo.powderTemp,
-        tempModifier: baseAmmo.tempModifier,
-        usePowderSensitivity: false,
-      );
-
 _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
   final (profile, stepM, cachedZeroElevRad) = args;
   try {
     final calc = Calculator();
     final cartridge = profile.cartridge!;
-    final baseAmmo = cartridge.toAmmo();
-    final zeroAtmo = cartridge.zeroConditions ?? profile.conditions;
-
-    // Per-profile flag controls current-shot sensitivity.
-    // Per-cartridge flag controls zero sensitivity.
-    final currentUsePowderSens = profile.usePowderSensitivity;
-    final zeroUsePowderSens = cartridge.zeroUsePowderSensitivity;
-
-    final currentAmmo = _makeAmmo(baseAmmo, currentUsePowderSens);
-    final zeroAmmo = _makeAmmo(baseAmmo, zeroUsePowderSens);
 
     final weapon = profile.rifle.toWeapon();
     double? freshZeroElevRad;
@@ -51,39 +29,17 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
     } else {
       Shot zeroShot;
       try {
-        zeroShot = Shot(
-          weapon: weapon,
-          ammo: zeroAmmo,
-          lookAngle: profile.lookAngle,
-          atmo: zeroAtmo.toAtmo(),
-          winds: const [],
-        );
+        zeroShot = profile.toZeroShot(profile.lookAngle, weapon);
         calc.setWeaponZero(zeroShot, cartridge.zeroDistance);
       } catch (_) {
-        zeroShot = Shot(
-          weapon: weapon,
-          ammo: zeroAmmo,
-          lookAngle: Angular(0.0, Unit.radian),
-          atmo: zeroAtmo.toAtmo(),
-          winds: const [],
-        );
+        zeroShot = profile.toZeroShot(Angular(0.0, Unit.radian), weapon);
         calc.setWeaponZero(zeroShot, cartridge.zeroDistance);
       }
       freshZeroElevRad = weapon.zeroElevation.in_(Unit.radian);
     }
 
-    final shot = Shot(
-      weapon: weapon,
-      ammo: currentAmmo,
-      lookAngle: profile.lookAngle,
-      atmo: profile.conditions.toAtmo(),
-      winds: profile.winds.map((w) => w.toWind()).toList(),
-      latitudeDeg: profile.latitudeDeg,
-      azimuthDeg: profile.azimuthDeg,
-    );
-
     final result = calc.fire(
-      shot: shot,
+      shot: profile.toCurrentShot(),
       trajectoryRange: Distance(2000.0, Unit.meter),
       trajectoryStep: Distance(stepM, Unit.meter),
       filterFlags:
@@ -107,16 +63,6 @@ _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
   try {
     final calc = Calculator();
     final cartridge = profile.cartridge!;
-    final baseAmmo = cartridge.toAmmo();
-    final zeroAtmo = cartridge.zeroConditions ?? profile.conditions;
-
-    final currentUsePowderSens =
-        profile.usePowderSensitivity && baseAmmo.usePowderSensitivity;
-    final zeroUsePowderSens =
-        cartridge.zeroUsePowderSensitivity && baseAmmo.usePowderSensitivity;
-
-    final currentAmmo = _makeAmmo(baseAmmo, currentUsePowderSens);
-    final zeroAmmo = _makeAmmo(baseAmmo, zeroUsePowderSens);
 
     final weapon = profile.rifle.toWeapon();
     double? freshZeroElevRad;
@@ -124,38 +70,30 @@ _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
     if (cachedZeroElevRad != null) {
       weapon.zeroElevation = Angular(cachedZeroElevRad, Unit.radian);
     } else {
-      final zeroShot = Shot(
-        weapon: weapon,
-        ammo: zeroAmmo,
-        lookAngle: profile.lookAngle,
-        atmo: zeroAtmo.toAtmo(),
-        winds: const [],
-      );
-      calc.setWeaponZero(zeroShot, cartridge.zeroDistance);
+      Shot zeroShot;
+      try {
+        zeroShot = profile.toZeroShot(profile.lookAngle, weapon);
+        calc.setWeaponZero(zeroShot, cartridge.zeroDistance);
+      } catch (_) {
+        zeroShot = profile.toZeroShot(Angular(0.0, Unit.radian), weapon);
+        calc.setWeaponZero(zeroShot, cartridge.zeroDistance);
+      }
       freshZeroElevRad = weapon.zeroElevation.in_(Unit.radian);
     }
 
-    final newShot = Shot(
-      weapon: weapon,
-      ammo: currentAmmo,
-      lookAngle: profile.lookAngle,
-      atmo: profile.conditions.toAtmo(),
-      winds: profile.winds.map((w) => w.toWind()).toList(),
-      latitudeDeg: profile.latitudeDeg,
-      azimuthDeg: profile.azimuthDeg,
-    );
+    final shot = profile.toCurrentShot();
 
     final targetElev = calc.barrelElevationForTarget(
-      newShot,
+      shot,
       Distance(targetDistM, Unit.meter),
     );
     final holdRad =
         targetElev.in_(Unit.radian) -
-        newShot.weapon.zeroElevation.in_(Unit.radian);
-    newShot.relativeAngle = Angular(holdRad, Unit.radian);
+        shot.weapon.zeroElevation.in_(Unit.radian);
+    shot.relativeAngle = Angular(holdRad, Unit.radian);
 
     final result = calc.fire(
-      shot: newShot,
+      shot: shot,
       trajectoryRange: Distance(targetDistM, Unit.meter),
       trajectoryStep: Distance(internalStepM, Unit.meter),
       filterFlags:

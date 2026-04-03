@@ -19,9 +19,9 @@ class Cartridge {
 
   // ── Zero data (belongs to cartridge, not profile) ──────────────────────────
   final Distance zeroDistance;
-  final AtmoData? zeroConditions;
-  final bool zeroUsePowderSensitivity;
-  final bool zeroUseDiffPowderTemp;
+  final AtmoData? conditions;
+  final bool usePowderSensitivity;
+  final bool useDiffPowderTemp;
 
   final String? notes;
   final DateTime createdAt;
@@ -36,9 +36,9 @@ class Cartridge {
     required this.powderTemp,
     required this.powderSensitivity,
     Distance? zeroDistance,
-    this.zeroConditions,
-    this.zeroUsePowderSensitivity = false,
-    this.zeroUseDiffPowderTemp = false,
+    this.conditions,
+    this.usePowderSensitivity = false,
+    this.useDiffPowderTemp = false,
     this.notes,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -61,12 +61,10 @@ class Cartridge {
     Velocity? mv,
     Temperature? powderTemp,
     Ratio? powderSensitivity,
-    bool? usePowderSensitivity,
     Distance? zeroDistance,
-    AtmoData? zeroConditions,
-    bool clearZeroConditions = false,
-    bool? zeroUsePowderSensitivity,
-    bool? zeroUseDiffPowderTemp,
+    AtmoData? conditions,
+    bool? usePowderSensitivity,
+    bool? useDiffPowderTemp,
     String? notes,
   }) => Cartridge(
     id: id,
@@ -77,12 +75,9 @@ class Cartridge {
     powderTemp: powderTemp ?? this.powderTemp,
     powderSensitivity: powderSensitivity ?? this.powderSensitivity,
     zeroDistance: zeroDistance ?? this.zeroDistance,
-    zeroConditions: clearZeroConditions
-        ? null
-        : (zeroConditions ?? this.zeroConditions),
-    zeroUsePowderSensitivity:
-        zeroUsePowderSensitivity ?? this.zeroUsePowderSensitivity,
-    zeroUseDiffPowderTemp: zeroUseDiffPowderTemp ?? this.zeroUseDiffPowderTemp,
+    conditions: conditions ?? this.conditions,
+    usePowderSensitivity: usePowderSensitivity ?? this.usePowderSensitivity,
+    useDiffPowderTemp: useDiffPowderTemp ?? this.useDiffPowderTemp,
     notes: notes ?? this.notes,
     createdAt: createdAt,
     updatedAt: DateTime.now(),
@@ -99,9 +94,9 @@ class Cartridge {
       StorageUnits.cartridgePowderSensitivity,
     ),
     'zeroDistance': zeroDistance.in_(StorageUnits.cartridgeZeroDistance),
-    if (zeroConditions != null) 'zeroConditions': zeroConditions!.toJson(),
-    'zeroUsePowderSensitivity': zeroUsePowderSensitivity,
-    'zeroUseDiffPowderTemp': zeroUseDiffPowderTemp,
+    if (conditions != null) 'zeroConditions': conditions!.toJson(),
+    'zeroUsePowderSensitivity': usePowderSensitivity,
+    'zeroUseDiffPowderTemp': useDiffPowderTemp,
     if (notes != null) 'notes': notes,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
@@ -138,12 +133,11 @@ class Cartridge {
               StorageUnits.cartridgeZeroDistance,
             )
           : null,
-      zeroConditions: zeroCondJson != null
+      conditions: zeroCondJson != null
           ? AtmoData.fromJson(zeroCondJson as Map<String, dynamic>)
           : null,
-      zeroUsePowderSensitivity:
-          json['zeroUsePowderSensitivity'] as bool? ?? false,
-      zeroUseDiffPowderTemp: json['zeroUseDiffPowderTemp'] as bool? ?? false,
+      usePowderSensitivity: json['zeroUsePowderSensitivity'] as bool? ?? false,
+      useDiffPowderTemp: json['zeroUseDiffPowderTemp'] as bool? ?? false,
       notes: json['notes'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
