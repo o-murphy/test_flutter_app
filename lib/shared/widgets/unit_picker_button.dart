@@ -8,6 +8,7 @@ class UnitPickerButton extends StatelessWidget {
     required this.onChanged,
     required this.options,
     this.label = 'Select Unit',
+    this.width = 60, // додаємо параметр ширини
     super.key,
   });
 
@@ -15,26 +16,33 @@ class UnitPickerButton extends StatelessWidget {
   final ValueChanged<Unit> onChanged;
   final List<Unit> options;
   final String label;
+  final double width; // фіксована ширина
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => _showPicker(context),
-      borderRadius: BorderRadius.circular(4),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              current.symbol,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.w600,
+    return SizedBox(
+      width: width,
+      child: InkWell(
+        onTap: () => _showPicker(context),
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Expanded(
+                child: Text(
+                  current.symbol,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-            const Icon(Icons.arrow_drop_down, size: 20),
-          ],
+              const Icon(Icons.arrow_drop_down, size: 20),
+            ],
+          ),
         ),
       ),
     );

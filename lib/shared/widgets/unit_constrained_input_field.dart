@@ -1,20 +1,11 @@
-import 'dart:math';
-import 'package:flutter/material.dart';
+// ── Reusable input field ─────────────────────────────────────────────────────
+
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/solver/unit.dart';
+import 'package:eballistica/shared/helpers/unit_constrained_convertion_helper.dart';
+import 'package:flutter/material.dart';
 
-/// Просте поле вводу з валідацією за констрейнтами
-///
-/// Використання:
-/// ```dart
-/// ConstrainedUnitInputField(
-///   value: myValue,
-///   constraints: myConstraints,
-///   displayUnit: currentUnit,
-///   label: 'Швидкість',
-///   onChanged: (newValue) => setState(() => myValue = newValue),
-/// )
-/// ```
+/// Поле вводу з валідацією за констрейнтами
 class ConstrainedUnitInputField extends StatefulWidget {
   const ConstrainedUnitInputField({
     super.key,
@@ -51,104 +42,58 @@ class ConstrainedUnitInputField extends StatefulWidget {
 class _ConstrainedUnitInputFieldState extends State<ConstrainedUnitInputField> {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
+  late final UnitConversionHelper _helper;
 
   double? _currentRawValue;
   String? _errorText;
 
-  // Helper методи
-  double _toDisplay(double raw) {
-    if (widget.constraints.rawUnit == widget.displayUnit) return raw;
-    return Dimension.auto(
-      raw,
-      widget.constraints.rawUnit,
-    ).in_(widget.displayUnit);
-  }
-
-  double _toRaw(double display) {
-    if (widget.constraints.rawUnit == widget.displayUnit) return display;
-    return Dimension.auto(
-      display,
-      widget.displayUnit,
-    ).in_(widget.constraints.rawUnit);
-  }
-
-  int get _accuracy {
-    if (widget.constraints.rawUnit == widget.displayUnit) {
-      return widget.constraints.accuracy;
-    }
-    final stepDisplay =
-        (_toDisplay(widget.constraints.minRaw + widget.constraints.stepRaw) -
-                _toDisplay(widget.constraints.minRaw))
-            .abs();
-    if (stepDisplay <= 0) return widget.constraints.accuracy;
-    final digits = (-log(stepDisplay) / ln10).ceil();
-    return digits < 0 ? 0 : digits;
-  }
-
-  double get _dispMin => _toDisplay(widget.constraints.minRaw);
-  double get _dispMax => _toDisplay(widget.constraints.maxRaw);
   String get _sym => widget.symbol ?? widget.displayUnit.symbol;
-
-  String _formatDisplayValue(double value) {
-    return value.toStringAsFixed(_accuracy);
-  }
 
   void _updateControllerFromValue() {
     if (_currentRawValue != null) {
-      _controller.text = _formatDisplayValue(_toDisplay(_currentRawValue!));
+      _controller.text = _helper.formatDisplayValue(
+        _helper.toDisplay(_currentRawValue!),
+      );
     } else {
       _controller.clear();
     }
   }
 
-  void _validateAndSubmit() {
-    final text = _controller.text.trim();
-
-    // Порожнє поле = null
-    if (text.isEmpty) {
-      setState(() {
-        _currentRawValue = null;
-        _errorText = null;
-        widget.onChanged(null);
-      });
-      return;
-    }
-
-    // Парсинг числа
-    final parsed = double.tryParse(text.replaceAll(',', '.'));
-    if (parsed == null) {
-      setState(() {
-        _errorText = 'Invalid number';
-      });
-      return;
-    }
-
-    // Перевірка діапазону
-    if (parsed < _dispMin - 1e-10 || parsed > _dispMax + 1e-10) {
-      setState(() {
-        _errorText =
-            'Must be between ${_formatDisplayValue(_dispMin)} and ${_formatDisplayValue(_dispMax)}';
-      });
-      return;
-    }
-
-    // Валідне значення
-    final clampedRaw = _toRaw(
-      parsed,
-    ).clamp(widget.constraints.minRaw, widget.constraints.maxRaw);
+  void _validateAndUpdate() {
+    final (rawValue, errorText) = _helper.parseAndValidate(_controller.text);
 
     setState(() {
-      _currentRawValue = clampedRaw;
-      _updateControllerFromValue();
-      _errorText = null;
-      widget.onChanged(_currentRawValue);
-      _focusNode.unfocus();
+      _errorText = errorText;
+      if (errorText == null) {
+        _currentRawValue = rawValue;
+      }
+      // Не викликаємо onChanged поки що, тільки при submit
+    });
+  }
+
+  void _submit() {
+    final (rawValue, errorText) = _helper.parseAndValidate(_controller.text);
+
+    setState(() {
+      if (errorText == null) {
+        _currentRawValue = rawValue;
+        _updateControllerFromValue();
+        _errorText = null;
+        widget.onChanged(_currentRawValue);
+        _focusNode.unfocus();
+      } else {
+        _errorText = errorText;
+      }
     });
   }
 
   @override
   void initState() {
     super.initState();
+    _helper = UnitConversionHelper(
+      constraints: widget.constraints,
+      displayUnit: widget.displayUnit,
+    );
     _currentRawValue = widget.rawValue;
     _controller = TextEditingController();
     _focusNode = FocusNode();
@@ -156,7 +101,7 @@ class _ConstrainedUnitInputFieldState extends State<ConstrainedUnitInputField> {
 
     _focusNode.addListener(() {
       if (!_focusNode.hasFocus) {
-        _validateAndSubmit();
+        _submit();
       }
     });
   }
@@ -164,6 +109,13 @@ class _ConstrainedUnitInputFieldState extends State<ConstrainedUnitInputField> {
   @override
   void didUpdateWidget(ConstrainedUnitInputField oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.constraints != oldWidget.constraints ||
+        widget.displayUnit != oldWidget.displayUnit) {
+      _helper = UnitConversionHelper(
+        constraints: widget.constraints,
+        displayUnit: widget.displayUnit,
+      );
+    }
     if (widget.rawValue != oldWidget.rawValue) {
       _currentRawValue = widget.rawValue;
       _updateControllerFromValue();
@@ -204,7 +156,8 @@ class _ConstrainedUnitInputFieldState extends State<ConstrainedUnitInputField> {
           vertical: 12,
         ),
       ),
-      onSubmitted: (_) => _validateAndSubmit(),
+      onChanged: (_) => _validateAndUpdate(), // Валідація при кожній зміні
+      onSubmitted: (_) => _submit(),
     );
   }
 }

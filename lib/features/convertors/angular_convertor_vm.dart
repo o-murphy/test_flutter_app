@@ -210,10 +210,6 @@ class AnglesConvertorViewModel extends Notifier<AnglesConvertorUiState> {
 
     // Розрахунки на дистанції в обраній одиниці виводу
     final distanceInMeters = rawMeters;
-    final distanceInOutputUnit = distanceInMeters.convert(
-      Unit.meter,
-      outputUnit,
-    );
 
     // 1 MIL на дистанції
     final oneMilValue = (0.1 * distanceInMeters).convert(

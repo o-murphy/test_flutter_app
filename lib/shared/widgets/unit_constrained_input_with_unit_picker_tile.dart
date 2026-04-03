@@ -1,7 +1,7 @@
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/solver/unit.dart';
+import 'package:eballistica/shared/widgets/unit_constrained_input_field.dart';
 import 'package:eballistica/shared/widgets/unit_picker_button.dart';
-import 'package:eballistica/shared/widgets/unit_value_input.dart';
 import 'package:flutter/material.dart';
 
 /// Віджет для вводу значення з вибором одиниці виміру на базі ListTile
@@ -38,14 +38,11 @@ class UnitInputWithPicker extends StatelessWidget {
         hintText: hintText,
         hideSymbol: true,
       ),
-      trailing: SizedBox(
-        width: 60,
-        child: UnitPickerButton(
-          current: displayUnit,
-          onChanged: onUnitChanged,
-          options: options,
-          label: unitLabel,
-        ),
+      trailing: UnitPickerButton(
+        current: displayUnit,
+        onChanged: onUnitChanged,
+        options: options,
+        label: unitLabel,
       ),
       dense: true,
     );

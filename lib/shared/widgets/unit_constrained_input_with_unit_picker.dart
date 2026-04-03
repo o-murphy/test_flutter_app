@@ -1,7 +1,7 @@
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/solver/unit.dart';
+import 'package:eballistica/shared/widgets/unit_constrained_input_field.dart';
 import 'package:eballistica/shared/widgets/unit_picker_button.dart';
-import 'package:eballistica/shared/widgets/unit_value_input.dart';
 import 'package:flutter/material.dart';
 
 class ValueInputWithUnitPicker extends StatelessWidget {
@@ -50,14 +50,11 @@ class ValueInputWithUnitPicker extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          SizedBox(
-            width: 60,
-            child: UnitPickerButton(
-              current: displayUnit,
-              onChanged: onUnitChanged,
-              options: options,
-              label: unitLabel,
-            ),
+          UnitPickerButton(
+            current: displayUnit,
+            onChanged: onUnitChanged,
+            options: options,
+            label: unitLabel,
           ),
         ],
       ),

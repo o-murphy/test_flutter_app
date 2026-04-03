@@ -1,6 +1,6 @@
 import 'package:eballistica/shared/widgets/base_screen.dart';
 import 'package:eballistica/shared/widgets/list_section_tile.dart';
-import 'package:eballistica/shared/widgets/unit_value_field_tile.dart';
+import 'package:eballistica/shared/widgets/unit_constrained_input_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
