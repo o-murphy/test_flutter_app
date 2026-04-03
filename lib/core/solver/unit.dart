@@ -31,6 +31,7 @@ enum Unit {
   bar(42, "bar", "bar"),
   hPa(43, "hPa", "hPa"),
   psi(44, "psi", "psi"),
+  atm(45, "atmosphere", "atm"),
   fahrenheit(50, "fahrenheit", "°F"),
   celsius(51, "celsius", "°C"),
   kelvin(52, "kelvin", "°K"),
@@ -221,6 +222,7 @@ class Pressure extends Dimension<Pressure> {
     Unit.bar: 750.061683,
     Unit.hPa: 750.061683 / 1_000,
     Unit.psi: 51.714924102396,
+    Unit.atm: 760.0,
   };
 
   @override

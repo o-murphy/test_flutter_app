@@ -35,6 +35,18 @@ class ConvertorsNotifier extends AsyncNotifier<ConvertorsState> {
     await _save(current.copyWith(weightUnit: unit));
   }
 
+  Future<void> updatePressureValue(double? valueInMmHg) async {
+    if (valueInMmHg != null && valueInMmHg >= 0) {
+      final current = state.value ?? const ConvertorsState();
+      await _save(current.copyWith(pressureValueMmHg: valueInMmHg));
+    }
+  }
+
+  Future<void> updatePressureUnit(Unit unit) async {
+    final current = state.value ?? const ConvertorsState();
+    await _save(current.copyWith(pressureUnit: unit));
+  }
+
   Future<void> _save(ConvertorsState newState) async {
     state = AsyncData(newState);
     await ref.read(appStorageProvider).saveConvertorsState(newState);
