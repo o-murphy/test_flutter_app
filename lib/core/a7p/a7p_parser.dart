@@ -61,7 +61,7 @@ class A7pParser {
 
     final zeroDist = _zeroDistance(p);
     final hasPowderSens = p.cTCoeff != 0;
-    final zeroUseDiffPowderTemp = p.cZeroPTemperature != p.cZeroAirTemperature;
+    final useDiffPowderTemp = p.cZeroPTemperature != p.cZeroAirTemperature;
 
     final cartridge = Cartridge(
       name: p.cartridgeName,
@@ -72,7 +72,7 @@ class A7pParser {
       zeroDistance: zeroDist,
       conditions: zeroConds,
       usePowderSensitivity: hasPowderSens,
-      useDiffPowderTemp: zeroUseDiffPowderTemp,
+      useDiffPowderTemp: useDiffPowderTemp,
     );
 
     return ShotProfile(

@@ -95,8 +95,8 @@ class Cartridge {
     ),
     'zeroDistance': zeroDistance.in_(StorageUnits.cartridgeZeroDistance),
     if (conditions != null) 'zeroConditions': conditions!.toJson(),
-    'zeroUsePowderSensitivity': usePowderSensitivity,
-    'zeroUseDiffPowderTemp': useDiffPowderTemp,
+    'usePowderSensitivity': usePowderSensitivity,
+    'useDiffPowderTemp': useDiffPowderTemp,
     if (notes != null) 'notes': notes,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
@@ -136,8 +136,8 @@ class Cartridge {
       conditions: zeroCondJson != null
           ? AtmoData.fromJson(zeroCondJson as Map<String, dynamic>)
           : null,
-      usePowderSensitivity: json['zeroUsePowderSensitivity'] as bool? ?? false,
-      useDiffPowderTemp: json['zeroUseDiffPowderTemp'] as bool? ?? false,
+      usePowderSensitivity: json['usePowderSensitivity'] as bool? ?? false,
+      useDiffPowderTemp: json['useDiffPowderTemp'] as bool? ?? false,
       notes: json['notes'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),

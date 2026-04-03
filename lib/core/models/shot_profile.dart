@@ -215,9 +215,9 @@ class ShotProfile {
         final oldZeroDistJson = json['zeroDistance'] as num?;
         final oldZeroCondJson = json['zeroConditions'] as Map?;
         final oldZeroUsePowderSens =
-            json['zeroUsePowderSensitivity'] as bool? ?? false;
-        final oldZeroUseDiffPowderTemp =
-            json['zeroUseDiffPowderTemp'] as bool? ?? false;
+            json['usePowderSensitivity'] as bool? ?? false;
+        final olduseDiffPowderTemp =
+            json['useDiffPowderTemp'] as bool? ?? false;
 
         inlineCartridge = Cartridge(
           id: baseCartridge.id,
@@ -237,7 +237,7 @@ class ShotProfile {
               ? AtmoData.fromJson(oldZeroCondJson as Map<String, dynamic>)
               : baseCartridge.conditions,
           usePowderSensitivity: oldZeroUsePowderSens,
-          useDiffPowderTemp: oldZeroUseDiffPowderTemp,
+          useDiffPowderTemp: olduseDiffPowderTemp,
           notes: baseCartridge.notes,
           createdAt: baseCartridge.createdAt,
           updatedAt: baseCartridge.updatedAt,
