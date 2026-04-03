@@ -1,31 +1,16 @@
 import 'package:eballistica/core/providers/convertors_notifier.dart';
+import 'package:eballistica/features/convertors/generic_convertor_vm_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/solver/unit.dart';
 
-class PressureField {
-  final String label;
-  final String formattedValue;
-  final double value;
-  final String symbol;
-  final int decimals;
-
-  const PressureField({
-    required this.label,
-    required this.formattedValue,
-    required this.value,
-    required this.symbol,
-    required this.decimals,
-  });
-}
-
 class PressureConvertorUiState {
-  final PressureField mmHg;
-  final PressureField inHg;
-  final PressureField bar;
-  final PressureField hPa;
-  final PressureField psi;
-  final PressureField atm;
+  final GenericConvertorField mmHg;
+  final GenericConvertorField inHg;
+  final GenericConvertorField bar;
+  final GenericConvertorField hPa;
+  final GenericConvertorField psi;
+  final GenericConvertorField atm;
   final double? rawValue;
   final Unit inputUnit;
 
@@ -113,14 +98,14 @@ class PressureConvertorViewModel extends Notifier<PressureConvertorUiState> {
     return PressureConvertorUiState(
       rawValue: _getDisplayValue(rawMmHg, inputUnit),
       inputUnit: inputUnit,
-      mmHg: PressureField(
+      mmHg: GenericConvertorField(
         label: 'mmHg',
         formattedValue: _formatValue(mmHgRaw, mmHgAccuracy, Unit.mmHg.symbol),
         value: mmHgRaw,
         symbol: Unit.mmHg.symbol,
         decimals: mmHgAccuracy,
       ),
-      inHg: PressureField(
+      inHg: GenericConvertorField(
         label: 'inHg',
         formattedValue: _formatValue(
           mmHgRaw.convert(Unit.mmHg, Unit.inHg),
@@ -131,7 +116,7 @@ class PressureConvertorViewModel extends Notifier<PressureConvertorUiState> {
         symbol: Unit.inHg.symbol,
         decimals: inHgAccuracy,
       ),
-      bar: PressureField(
+      bar: GenericConvertorField(
         label: 'Bar',
         formattedValue: _formatValue(
           mmHgRaw.convert(Unit.mmHg, Unit.bar),
@@ -142,7 +127,7 @@ class PressureConvertorViewModel extends Notifier<PressureConvertorUiState> {
         symbol: Unit.bar.symbol,
         decimals: barAccuracy,
       ),
-      hPa: PressureField(
+      hPa: GenericConvertorField(
         label: 'hPa',
         formattedValue: _formatValue(
           mmHgRaw.convert(Unit.mmHg, Unit.hPa),
@@ -153,7 +138,7 @@ class PressureConvertorViewModel extends Notifier<PressureConvertorUiState> {
         symbol: Unit.hPa.symbol,
         decimals: hPaAccuracy,
       ),
-      psi: PressureField(
+      psi: GenericConvertorField(
         label: 'PSI',
         formattedValue: _formatValue(
           mmHgRaw.convert(Unit.mmHg, Unit.psi),
@@ -164,7 +149,7 @@ class PressureConvertorViewModel extends Notifier<PressureConvertorUiState> {
         symbol: Unit.psi.symbol,
         decimals: psiAccuracy,
       ),
-      atm: PressureField(
+      atm: GenericConvertorField(
         label: 'Atmosphere',
         formattedValue: _formatValue(
           mmHgRaw.convert(Unit.mmHg, Unit.atm),

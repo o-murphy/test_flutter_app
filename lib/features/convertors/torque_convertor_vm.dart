@@ -1,28 +1,13 @@
 import 'package:eballistica/core/providers/convertors_notifier.dart';
+import 'package:eballistica/features/convertors/generic_convertor_vm_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/solver/unit.dart';
 
-class TorqueField {
-  final String label;
-  final String formattedValue;
-  final double value;
-  final String symbol;
-  final int decimals;
-
-  const TorqueField({
-    required this.label,
-    required this.formattedValue,
-    required this.value,
-    required this.symbol,
-    required this.decimals,
-  });
-}
-
 class TorqueConvertorUiState {
-  final TorqueField newtonMeter;
-  final TorqueField footPound;
-  final TorqueField inchPound;
+  final GenericConvertorField newtonMeter;
+  final GenericConvertorField footPound;
+  final GenericConvertorField inchPound;
   final double? rawValue;
   final Unit inputUnit;
 
@@ -113,7 +98,7 @@ class TorqueConvertorViewModel extends Notifier<TorqueConvertorUiState> {
     return TorqueConvertorUiState(
       rawValue: _getDisplayValue(rawNewtonMeter, inputUnit),
       inputUnit: inputUnit,
-      newtonMeter: TorqueField(
+      newtonMeter: GenericConvertorField(
         label: 'Newton-meter',
         formattedValue: _formatValue(
           newtonMeterRaw,
@@ -124,7 +109,7 @@ class TorqueConvertorViewModel extends Notifier<TorqueConvertorUiState> {
         symbol: Unit.newtonMeter.symbol,
         decimals: nmAccuracy,
       ),
-      footPound: TorqueField(
+      footPound: GenericConvertorField(
         label: 'Foot-pound',
         formattedValue: _formatValue(
           footPoundRaw,
@@ -135,7 +120,7 @@ class TorqueConvertorViewModel extends Notifier<TorqueConvertorUiState> {
         symbol: Unit.footPoundTorque.symbol,
         decimals: ftLbAccuracy,
       ),
-      inchPound: TorqueField(
+      inchPound: GenericConvertorField(
         label: 'Inch-pound',
         formattedValue: _formatValue(
           inchPoundRaw,

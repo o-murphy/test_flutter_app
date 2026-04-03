@@ -1,32 +1,17 @@
 import 'package:eballistica/core/providers/convertors_notifier.dart';
+import 'package:eballistica/features/convertors/generic_convertor_vm_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/solver/unit.dart';
 
 // ── Data classes ─────────────────────────────────────────────────────────────
 
-class LengthField {
-  final String label;
-  final String formattedValue; // Вже відформатований рядок
-  final double value;
-  final String symbol;
-  final int decimals;
-
-  const LengthField({
-    required this.label,
-    required this.formattedValue,
-    required this.value,
-    required this.symbol,
-    required this.decimals,
-  });
-}
-
 class LengthConvertorUiState {
-  final LengthField centimeters;
-  final LengthField meters;
-  final LengthField inches;
-  final LengthField feet;
-  final LengthField yards;
+  final GenericConvertorField centimeters;
+  final GenericConvertorField meters;
+  final GenericConvertorField inches;
+  final GenericConvertorField feet;
+  final GenericConvertorField yards;
   final double? rawValue;
   final Unit inputUnit;
 
@@ -120,7 +105,7 @@ class LengthConvertorViewModel extends Notifier<LengthConvertorUiState> {
     return LengthConvertorUiState(
       rawValue: _getDisplayValue(rawInches, inputUnit),
       inputUnit: inputUnit,
-      centimeters: LengthField(
+      centimeters: GenericConvertorField(
         label: 'Centimeters',
         formattedValue: _formatValue(
           centimetersRaw,
@@ -131,14 +116,14 @@ class LengthConvertorViewModel extends Notifier<LengthConvertorUiState> {
         symbol: Unit.centimeter.symbol,
         decimals: cmAccuracy,
       ),
-      meters: LengthField(
+      meters: GenericConvertorField(
         label: 'Meters',
         formattedValue: _formatValue(metersRaw, mAccuracy, Unit.meter.symbol),
         value: metersRaw,
         symbol: Unit.meter.symbol,
         decimals: mAccuracy,
       ),
-      inches: LengthField(
+      inches: GenericConvertorField(
         label: 'Inches',
         formattedValue: _formatValue(
           inchesRawValue,
@@ -149,14 +134,14 @@ class LengthConvertorViewModel extends Notifier<LengthConvertorUiState> {
         symbol: Unit.inch.symbol,
         decimals: inAccuracy,
       ),
-      feet: LengthField(
+      feet: GenericConvertorField(
         label: 'Feet',
         formattedValue: _formatValue(feetRaw, ftAccuracy, Unit.foot.symbol),
         value: feetRaw,
         symbol: Unit.foot.symbol,
         decimals: ftAccuracy,
       ),
-      yards: LengthField(
+      yards: GenericConvertorField(
         label: 'Yards',
         formattedValue: _formatValue(yardsRaw, ydAccuracy, Unit.yard.symbol),
         value: yardsRaw,

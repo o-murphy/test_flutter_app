@@ -1,30 +1,15 @@
 import 'package:eballistica/core/providers/convertors_notifier.dart';
+import 'package:eballistica/features/convertors/generic_convertor_vm_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/solver/unit.dart';
 
-class WeightField {
-  final String label;
-  final String formattedValue;
-  final double value;
-  final String symbol;
-  final int decimals;
-
-  const WeightField({
-    required this.label,
-    required this.formattedValue,
-    required this.value,
-    required this.symbol,
-    required this.decimals,
-  });
-}
-
 class WeightConvertorUiState {
-  final WeightField grams;
-  final WeightField kilograms;
-  final WeightField grains;
-  final WeightField pounds;
-  final WeightField ounces;
+  final GenericConvertorField grams;
+  final GenericConvertorField kilograms;
+  final GenericConvertorField grains;
+  final GenericConvertorField pounds;
+  final GenericConvertorField ounces;
   final double? rawValue;
   final Unit inputUnit;
 
@@ -116,14 +101,14 @@ class WeightConvertorViewModel extends Notifier<WeightConvertorUiState> {
     return WeightConvertorUiState(
       rawValue: _getDisplayValue(rawGrains, inputUnit),
       inputUnit: inputUnit,
-      grams: WeightField(
+      grams: GenericConvertorField(
         label: 'Grams',
         formattedValue: _formatValue(gramsRaw, gramsAccuracy, Unit.gram.symbol),
         value: gramsRaw,
         symbol: Unit.gram.symbol,
         decimals: gramsAccuracy,
       ),
-      kilograms: WeightField(
+      kilograms: GenericConvertorField(
         label: 'Kilograms',
         formattedValue: _formatValue(
           kilogramsRaw,
@@ -134,7 +119,7 @@ class WeightConvertorViewModel extends Notifier<WeightConvertorUiState> {
         symbol: Unit.kilogram.symbol,
         decimals: kilogramsAccuracy,
       ),
-      grains: WeightField(
+      grains: GenericConvertorField(
         label: 'Grains',
         formattedValue: _formatValue(
           grainsRawValue,
@@ -145,7 +130,7 @@ class WeightConvertorViewModel extends Notifier<WeightConvertorUiState> {
         symbol: Unit.grain.symbol,
         decimals: grainsAccuracy,
       ),
-      pounds: WeightField(
+      pounds: GenericConvertorField(
         label: 'Pounds',
         formattedValue: _formatValue(
           poundsRaw,
@@ -156,7 +141,7 @@ class WeightConvertorViewModel extends Notifier<WeightConvertorUiState> {
         symbol: Unit.pound.symbol,
         decimals: poundsAccuracy,
       ),
-      ounces: WeightField(
+      ounces: GenericConvertorField(
         label: 'Ounces',
         formattedValue: _formatValue(
           ouncesRaw,

@@ -1,3 +1,4 @@
+import 'package:eballistica/features/convertors/generic_convertor_vm_field.dart';
 import 'package:eballistica/features/convertors/weight_convertor_vm.dart';
 import 'package:eballistica/shared/widgets/unit_input_with_unit_picker_tile.dart';
 import 'package:flutter/material.dart';
@@ -51,7 +52,7 @@ class WeightConvertorScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoTile(WeightField field) {
+  Widget _buildInfoTile(GenericConvertorField field) {
     return InfoListTile(label: field.label, value: field.formattedValue);
   }
 }

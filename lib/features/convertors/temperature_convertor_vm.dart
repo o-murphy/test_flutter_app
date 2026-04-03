@@ -1,27 +1,12 @@
 import 'package:eballistica/core/providers/convertors_notifier.dart';
+import 'package:eballistica/features/convertors/generic_convertor_vm_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/solver/unit.dart';
 
-class TemperatureField {
-  final String label;
-  final String formattedValue;
-  final double value;
-  final String symbol;
-  final int decimals;
-
-  const TemperatureField({
-    required this.label,
-    required this.formattedValue,
-    required this.value,
-    required this.symbol,
-    required this.decimals,
-  });
-}
-
 class TemperatureConvertorUiState {
-  final TemperatureField fahrenheit;
-  final TemperatureField celsius;
+  final GenericConvertorField fahrenheit;
+  final GenericConvertorField celsius;
   final double? rawValue;
   final Unit inputUnit;
 
@@ -123,7 +108,7 @@ class TemperatureConvertorViewModel
     return TemperatureConvertorUiState(
       rawValue: _getDisplayValue(rawFahrenheit, inputUnit),
       inputUnit: inputUnit,
-      fahrenheit: TemperatureField(
+      fahrenheit: GenericConvertorField(
         label: 'Fahrenheit',
         formattedValue: _formatValue(
           fahrenheitRaw,
@@ -134,7 +119,7 @@ class TemperatureConvertorViewModel
         symbol: Unit.fahrenheit.symbol,
         decimals: fahrenheitAccuracy,
       ),
-      celsius: TemperatureField(
+      celsius: GenericConvertorField(
         label: 'Celsius',
         formattedValue: _formatValue(
           celsiusRaw,
