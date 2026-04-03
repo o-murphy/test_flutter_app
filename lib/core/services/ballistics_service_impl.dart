@@ -37,10 +37,8 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
 
     // Per-profile flag controls current-shot sensitivity.
     // Per-cartridge flag controls zero sensitivity.
-    final currentUsePowderSens =
-        profile.usePowderSensitivity && baseAmmo.usePowderSensitivity;
-    final zeroUsePowderSens =
-        cartridge.zeroUsePowderSensitivity && baseAmmo.usePowderSensitivity;
+    final currentUsePowderSens = profile.usePowderSensitivity;
+    final zeroUsePowderSens = cartridge.zeroUsePowderSensitivity;
 
     final currentAmmo = _makeAmmo(baseAmmo, currentUsePowderSens);
     final zeroAmmo = _makeAmmo(baseAmmo, zeroUsePowderSens);

@@ -121,10 +121,8 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
     final refMvMps = cartridge.mv.in_(Unit.mps);
     final refPowderTempC = cartridge.powderTemp.in_(Unit.celsius);
 
-    final currentPowderSensOn =
-        profile.usePowderSensitivity && cartridge.usePowderSensitivity;
-    final zeroPowderSensOn =
-        cartridge.zeroUsePowderSensitivity && cartridge.usePowderSensitivity;
+    final currentPowderSensOn = profile.usePowderSensitivity;
+    final zeroPowderSensOn = cartridge.zeroUsePowderSensitivity;
     final currentUseDiffTemp = currentPowderSensOn && profile.useDiffPowderTemp;
     final zeroUseDiffTemp = zeroPowderSensOn && cartridge.zeroUseDiffPowderTemp;
 

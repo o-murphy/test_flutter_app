@@ -187,7 +187,6 @@ class ShotProfile {
           mv: baseCartridge.mv,
           powderTemp: baseCartridge.powderTemp,
           powderSensitivity: baseCartridge.powderSensitivity,
-          usePowderSensitivity: baseCartridge.usePowderSensitivity,
           zeroDistance: oldZeroDistJson != null
               ? Distance(
                   oldZeroDistJson.toDouble(),

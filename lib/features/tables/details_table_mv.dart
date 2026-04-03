@@ -72,10 +72,8 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
   final lenInch = proj.length.in_(Unit.inch);
 
   // Powder sensitivity — separate flags for zero and current
-  final currentPowderSensOn =
-      profile.usePowderSensitivity && cart.usePowderSensitivity;
-  final zeroPowderSensOn =
-      cart.zeroUsePowderSensitivity && cart.usePowderSensitivity;
+  final currentPowderSensOn = profile.usePowderSensitivity;
+  final zeroPowderSensOn = cart.zeroUsePowderSensitivity;
   final currentUseDiffTemp = currentPowderSensOn && profile.useDiffPowderTemp;
   final zeroUseDiffTemp = zeroPowderSensOn && cart.zeroUseDiffPowderTemp;
 

@@ -42,7 +42,7 @@ ShotProfile _makeProfile({double windMps = 3.0, double windDeg = 90.0}) {
     mv: Velocity(800, Unit.mps),
     powderTemp: Temperature(15.0, Unit.celsius),
     powderSensitivity: Ratio(1.0, Unit.fraction),
-    usePowderSensitivity: true,
+    zeroUsePowderSensitivity: true,
   );
   final rifle = Rifle(
     name: 'Test Rifle',

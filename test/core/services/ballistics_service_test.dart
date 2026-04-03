@@ -395,7 +395,7 @@ void main() {
             1.0,
             Unit.fraction,
           ), // 1.0 m/s per °C (stored as %)
-          usePowderSensitivity: true,
+          zeroUsePowderSensitivity: true,
         ),
         conditions: AtmoData(
           temperature: Temperature(35, Unit.celsius), // 20°C above reference

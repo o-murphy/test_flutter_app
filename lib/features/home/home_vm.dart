@@ -520,15 +520,13 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
     final zeroAtmo = c.zeroConditions ?? profile.conditions;
     final r = profile.rifle;
     final proj = c.projectile;
-    final zeroUsePowderSens =
-        c.zeroUsePowderSensitivity && c.usePowderSensitivity;
+    final zeroUsePowderSens = c.zeroUsePowderSensitivity;
     return [
       r.sightHeight.in_(Unit.meter),
       r.twist.in_(Unit.inch),
       c.mv.in_(Unit.mps),
       c.powderTemp.in_(Unit.celsius),
       c.powderSensitivity.in_(Unit.fraction),
-      c.usePowderSensitivity ? 1.0 : 0.0,
       proj.coefRows.isNotEmpty ? proj.coefRows.first.bcCd : 0.0,
       proj.weight.in_(Unit.gram),
       proj.diameter.in_(Unit.inch),

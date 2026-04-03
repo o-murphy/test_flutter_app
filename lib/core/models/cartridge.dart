@@ -16,7 +16,6 @@ class Cartridge {
   final Velocity mv;
   final Temperature powderTemp;
   final Ratio powderSensitivity;
-  final bool usePowderSensitivity;
 
   // ── Zero data (belongs to cartridge, not profile) ──────────────────────────
   final Distance zeroDistance;
@@ -36,7 +35,6 @@ class Cartridge {
     required this.mv,
     required this.powderTemp,
     required this.powderSensitivity,
-    this.usePowderSensitivity = false,
     Distance? zeroDistance,
     this.zeroConditions,
     this.zeroUsePowderSensitivity = false,
@@ -54,7 +52,6 @@ class Cartridge {
     mv: mv,
     powderTemp: powderTemp,
     tempModifier: powderSensitivity.in_(Unit.fraction),
-    usePowderSensitivity: usePowderSensitivity,
   );
 
   Cartridge copyWith({
@@ -79,7 +76,6 @@ class Cartridge {
     mv: mv ?? this.mv,
     powderTemp: powderTemp ?? this.powderTemp,
     powderSensitivity: powderSensitivity ?? this.powderSensitivity,
-    usePowderSensitivity: usePowderSensitivity ?? this.usePowderSensitivity,
     zeroDistance: zeroDistance ?? this.zeroDistance,
     zeroConditions: clearZeroConditions
         ? null
@@ -102,7 +98,6 @@ class Cartridge {
     'powderSensitivity': powderSensitivity.in_(
       StorageUnits.cartridgePowderSensitivity,
     ),
-    'usePowderSensitivity': usePowderSensitivity,
     'zeroDistance': zeroDistance.in_(StorageUnits.cartridgeZeroDistance),
     if (zeroConditions != null) 'zeroConditions': zeroConditions!.toJson(),
     'zeroUsePowderSensitivity': zeroUsePowderSensitivity,
@@ -136,7 +131,6 @@ class Cartridge {
         (json['powderSensitivity'] as num).toDouble(),
         StorageUnits.cartridgePowderSensitivity,
       ),
-      usePowderSensitivity: json['usePowderSensitivity'] as bool? ?? false,
       // zero fields — backward-compat: old cartridges without these get defaults
       zeroDistance: json['zeroDistance'] != null
           ? Distance(

@@ -69,7 +69,6 @@ class A7pParser {
       mv: Velocity(p.cMuzzleVelocity / 10.0, Unit.mps),
       powderTemp: Temperature(p.cZeroTemperature.toDouble(), Unit.celsius),
       powderSensitivity: Ratio(p.cTCoeff / 1000.0, Unit.fraction),
-      usePowderSensitivity: hasPowderSens,
       zeroDistance: zeroDist,
       zeroConditions: zeroConds,
       zeroUsePowderSensitivity: hasPowderSens,
