@@ -99,6 +99,11 @@ class ConvertorsNotifier extends AsyncNotifier<ConvertorsState> {
     await _save(current.copyWith(anglesConvertorAngularUnit: unit));
   }
 
+  Future<void> updateAnglesConvertorOutputUnit(Unit unit) async {
+    final current = state.value ?? const ConvertorsState();
+    await _save(current.copyWith(anglesConvertorOutputUnit: unit));
+  }
+
   Future<void> _save(ConvertorsState newState) async {
     state = AsyncData(newState);
     await ref.read(appStorageProvider).saveConvertorsState(newState);

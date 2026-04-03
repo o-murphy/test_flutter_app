@@ -15,6 +15,7 @@ class ConvertorsState {
   final Unit anglesConvertorDistanceUnit;
   final double anglesConvertorAngularValueMil; // Базова одиниця - mil
   final Unit anglesConvertorAngularUnit;
+  final Unit anglesConvertorOutputUnit; // Додати це поле
 
   const ConvertorsState({
     this.lengthValueInch = 100.0,
@@ -31,6 +32,7 @@ class ConvertorsState {
     this.anglesConvertorDistanceUnit = Unit.meter,
     this.anglesConvertorAngularValueMil = 1.0,
     this.anglesConvertorAngularUnit = Unit.mil,
+    this.anglesConvertorOutputUnit = Unit.centimeter,
   });
 
   ConvertorsState copyWith({
@@ -48,6 +50,7 @@ class ConvertorsState {
     Unit? anglesConvertorDistanceUnit,
     double? anglesConvertorAngularValueMil,
     Unit? anglesConvertorAngularUnit,
+    Unit? anglesConvertorOutputUnit,
   }) {
     return ConvertorsState(
       lengthValueInch: lengthValueInch ?? this.lengthValueInch,
@@ -71,6 +74,8 @@ class ConvertorsState {
           anglesConvertorAngularValueMil ?? this.anglesConvertorAngularValueMil,
       anglesConvertorAngularUnit:
           anglesConvertorAngularUnit ?? this.anglesConvertorAngularUnit,
+      anglesConvertorOutputUnit:
+          anglesConvertorOutputUnit ?? this.anglesConvertorOutputUnit,
     );
   }
 
@@ -89,6 +94,7 @@ class ConvertorsState {
     'anglesConvertorDistanceUnit': anglesConvertorDistanceUnit.name,
     'anglesConvertorAngularValue': anglesConvertorAngularValueMil,
     'anglesConvertorAngularUnit': anglesConvertorAngularUnit.name,
+    'anglesConvertorOutputUnit': anglesConvertorOutputUnit.name,
   };
 
   factory ConvertorsState.fromJson(Map<String, dynamic> json) {
@@ -127,6 +133,11 @@ class ConvertorsState {
         'anglesConvertorAngularUnit',
         Unit.mil,
         Angular.accepts,
+      ),
+      anglesConvertorOutputUnit: u(
+        'anglesConvertorOutputUnit',
+        Unit.centimeter,
+        Distance.accepts,
       ),
     );
   }

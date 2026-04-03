@@ -32,7 +32,7 @@ class AnglesConvertorUiState {
   final AnglesConvertorField meters;
   final AnglesConvertorField yards;
 
-  // Розрахунки на дистанції
+  // Розрахунки на дистанції в обраній одиниці
   final String oneMilAtDistance;
   final String angleInMoaAtDistance;
   final String oneMoaAtDistance;
@@ -42,6 +42,7 @@ class AnglesConvertorUiState {
   final double? rawAngularValue;
   final Unit distanceInputUnit;
   final Unit angularInputUnit;
+  final Unit distanceOutputUnit; // Нова одиниця для виводу
 
   const AnglesConvertorUiState({
     required this.mil,
@@ -60,6 +61,7 @@ class AnglesConvertorUiState {
     required this.rawAngularValue,
     required this.distanceInputUnit,
     required this.angularInputUnit,
+    required this.distanceOutputUnit,
   });
 }
 
@@ -72,6 +74,7 @@ class AnglesConvertorViewModel extends Notifier<AnglesConvertorUiState> {
       convertorsState.anglesConvertorDistanceUnit,
       convertorsState.anglesConvertorAngularValueMil,
       convertorsState.anglesConvertorAngularUnit,
+      convertorsState.anglesConvertorOutputUnit, // Новий параметр
     );
   }
 
@@ -125,6 +128,12 @@ class AnglesConvertorViewModel extends Notifier<AnglesConvertorUiState> {
         .updateAnglesConvertorAngularUnit(newUnit);
   }
 
+  void changeOutputUnit(Unit newUnit) {
+    ref
+        .read(convertorsProvider.notifier)
+        .updateAnglesConvertorOutputUnit(newUnit);
+  }
+
   FieldConstraints getDistanceConstraintsForUnit(Unit unit) {
     return FieldConstraints(
       minRaw: FC.convertorDistance.minRaw.convert(
@@ -163,6 +172,16 @@ class AnglesConvertorViewModel extends Notifier<AnglesConvertorUiState> {
     );
   }
 
+  FieldConstraints getOutputConstraintsForUnit(Unit unit) {
+    return FieldConstraints(
+      minRaw: 0.0,
+      maxRaw: 100000.0,
+      stepRaw: 1.0,
+      rawUnit: unit,
+      accuracy: 1,
+    );
+  }
+
   String _formatValue(double value, int decimals, String symbol) {
     if (value.isNaN || value.isInfinite) return '— $symbol';
     return '${value.toStringAsFixed(decimals)} $symbol';
@@ -173,6 +192,7 @@ class AnglesConvertorViewModel extends Notifier<AnglesConvertorUiState> {
     Unit distanceUnit,
     double rawMil,
     Unit angularUnit,
+    Unit outputUnit,
   ) {
     // Дистанція
     final metersRaw = rawMeters;
@@ -185,34 +205,38 @@ class AnglesConvertorViewModel extends Notifier<AnglesConvertorUiState> {
     final degreesRaw = milRaw.convert(Unit.mil, Unit.degree);
 
     // cm/100m та inch/100yd для кута
-    final cmPer100mRaw = milRaw * 10; // 1 MIL = 10 cm/100m
-    final inchPer100YdRaw = milRaw * 3.6; // 1 MIL ≈ 3.6 inch/100yd
+    final cmPer100mRaw = milRaw * 10;
+    final inchPer100YdRaw = milRaw * 3.6;
 
-    // Розрахунки на дистанції (в см)
+    // Розрахунки на дистанції в обраній одиниці виводу
     final distanceInMeters = rawMeters;
+    final distanceInOutputUnit = distanceInMeters.convert(
+      Unit.meter,
+      outputUnit,
+    );
 
     // 1 MIL на дистанції
-    final oneMilCm = (0.1 * distanceInMeters).convert(
+    final oneMilValue = (0.1 * distanceInMeters).convert(
       Unit.meter,
-      Unit.centimeter,
+      outputUnit,
     );
 
     // Кут в MOA на дистанції
-    final angleMoaCm = (moaRaw * 0.0291 * distanceInMeters).convert(
+    final angleMoaValue = (moaRaw * 0.0291 * distanceInMeters).convert(
       Unit.meter,
-      Unit.centimeter,
+      outputUnit,
     );
 
     // 1 MOA на дистанції
-    final oneMoaCm = (0.0291 * distanceInMeters).convert(
+    final oneMoaValue = (0.0291 * distanceInMeters).convert(
       Unit.meter,
-      Unit.centimeter,
+      outputUnit,
     );
 
     // Кут в MIL на дистанції
-    final angleMilCm = (rawMil * 0.1 * distanceInMeters).convert(
+    final angleMilValue = (rawMil * 0.1 * distanceInMeters).convert(
       Unit.meter,
-      Unit.centimeter,
+      outputUnit,
     );
 
     return AnglesConvertorUiState(
@@ -220,6 +244,7 @@ class AnglesConvertorViewModel extends Notifier<AnglesConvertorUiState> {
       rawAngularValue: rawMil.convert(Unit.mil, angularUnit),
       distanceInputUnit: distanceUnit,
       angularInputUnit: angularUnit,
+      distanceOutputUnit: outputUnit,
 
       // Дистанція
       meters: AnglesConvertorField(
@@ -281,11 +306,11 @@ class AnglesConvertorViewModel extends Notifier<AnglesConvertorUiState> {
         decimals: 2,
       ),
 
-      // Розрахунки на дистанції
-      oneMilAtDistance: _formatValue(oneMilCm, 1, 'cm'),
-      angleInMoaAtDistance: _formatValue(angleMoaCm, 1, 'cm'),
-      oneMoaAtDistance: _formatValue(oneMoaCm, 1, 'cm'),
-      angleInMilAtDistance: _formatValue(angleMilCm, 1, 'cm'),
+      // Розрахунки на дистанції в обраній одиниці
+      oneMilAtDistance: _formatValue(oneMilValue, 1, outputUnit.symbol),
+      angleInMoaAtDistance: _formatValue(angleMoaValue, 1, outputUnit.symbol),
+      oneMoaAtDistance: _formatValue(oneMoaValue, 1, outputUnit.symbol),
+      angleInMilAtDistance: _formatValue(angleMilValue, 1, outputUnit.symbol),
     );
   }
 }

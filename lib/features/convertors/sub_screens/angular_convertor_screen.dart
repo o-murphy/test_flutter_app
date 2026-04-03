@@ -3,6 +3,7 @@ import 'package:eballistica/features/convertors/angular_convertor_vm.dart';
 import 'package:eballistica/shared/widgets/base_screen.dart';
 import 'package:eballistica/shared/widgets/info_tile.dart';
 import 'package:eballistica/shared/widgets/list_section_tile.dart';
+import 'package:eballistica/shared/widgets/unit_picker_tile.dart';
 import 'package:eballistica/shared/widgets/value_input_with_unit_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,7 +24,7 @@ class AnglesConvertorScreen extends ConsumerWidget {
         : 0.0;
 
     return BaseScreen(
-      title: 'MIL / MOA Converter',
+      title: 'Angles Converter',
       isSubscreen: true,
       body: ListView(
         children: [
@@ -34,7 +35,7 @@ class AnglesConvertorScreen extends ConsumerWidget {
             onChanged: notifier.updateDistanceValue,
             onUnitChanged: notifier.changeDistanceUnit,
             options: const [Unit.meter, Unit.yard],
-            label: 'Distance',
+            label: 'Distance Input',
             icon: Icons.straighten_outlined,
           ),
           const SizedBox(height: 8),
@@ -52,12 +53,26 @@ class AnglesConvertorScreen extends ConsumerWidget {
               Unit.inPer100Yd,
               Unit.degree,
             ],
-            label: 'Angle',
+            label: 'Angle Input',
             icon: Icons.timeline_outlined,
+          ),
+          const SizedBox(height: 8),
+          // Тільки вибір одиниці, без поля вводу
+          UnitPickerListTile(
+            current: state.distanceOutputUnit,
+            onChanged: notifier.changeOutputUnit,
+            options: const [
+              Unit.millimeter,
+              Unit.centimeter,
+              Unit.inch,
+              Unit.foot,
+            ],
+            title: 'Output Unit',
+            icon: Icons.height_outlined,
           ),
           const Divider(height: 24),
 
-          ListSectionTile('Angle Conversion'),
+          ListSectionTile('Angles'),
           _buildInfoTile(state.mil),
           _buildInfoTile(state.moa),
           _buildInfoTile(state.mrad),
@@ -67,7 +82,7 @@ class AnglesConvertorScreen extends ConsumerWidget {
 
           const Divider(height: 24),
 
-          ListSectionTile('Distance Calculation'),
+          ListSectionTile('Adjustment Value at Distance'),
           InfoListTile(label: '1 MIL', value: state.oneMilAtDistance),
           InfoListTile(
             label: '${state.mil.value.toStringAsFixed(1)} MIL',
