@@ -1,4 +1,5 @@
 import 'package:eballistica/core/models/conditions_data.dart';
+import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:flutter/foundation.dart' show compute;
 
 import 'package:eballistica/core/domain/ballistics_service.dart';
@@ -44,7 +45,7 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
 
     final result = calc.fire(
       shot: profile.toCurrentShot(conditions, weapon),
-      trajectoryRange: Distance(3000.0, Unit.meter),
+      trajectoryRange: Distance(FC.targetDistance.maxRaw, Unit.meter),
       trajectoryStep: Distance(stepM, Unit.meter),
       filterFlags:
           BCTrajFlag.BC_TRAJ_FLAG_RANGE.value |
