@@ -28,6 +28,17 @@ class AtmoData {
     powderTemperature: powderTemp,
   );
 
+  static AtmoData icao() {
+    final atmo = Atmo.icao();
+    return AtmoData(
+      altitude: atmo.altitude,
+      pressure: atmo.pressure,
+      temperature: atmo.temperature,
+      humidity: atmo.humidity,
+      powderTemp: atmo.powderTemp,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'altitude': altitude.in_(StorageUnits.atmoAltitude),
     'pressure': pressure.in_(StorageUnits.atmoPressure),
@@ -96,4 +107,76 @@ class WindData {
       StorageUnits.windUntilDistance,
     ),
   );
+}
+
+class Conditions {
+  final AtmoData atmo;
+  final Distance distance;
+  final Angular lookAngle;
+  final List<WindData> winds;
+  final bool usePowderSensitivity;
+  final bool useDiffPowderTemp;
+  final bool useCoriolis;
+  final double? latitudeDeg;
+  final double? azimuthDeg;
+
+  Conditions({
+    this.winds = const [],
+    this.usePowderSensitivity = false,
+    this.useDiffPowderTemp = false,
+    this.useCoriolis = false,
+    this.latitudeDeg,
+    this.azimuthDeg,
+    AtmoData? atmo,
+    Distance? targetDistance,
+    Angular? lookAngle,
+  }) : atmo = atmo ?? AtmoData.icao(),
+       distance = targetDistance ?? Distance(100.0, Unit.meter),
+       lookAngle = lookAngle ?? Angular(0.0, Unit.radian);
+
+  Atmo toAtmo() => Atmo(
+    altitude: atmo.altitude,
+    pressure: atmo.pressure,
+    temperature: atmo.temperature,
+    humidity: atmo.humidity,
+    powderTemperature: useDiffPowderTemp ? atmo.powderTemp : atmo.temperature,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'atmo': atmo.toJson(),
+    'winds': winds.map((w) => w.toJson()).toList(),
+    'lookAngle': lookAngle.in_(StorageUnits.profileLookAngle),
+    'targetDistance': distance.in_(StorageUnits.profileTargetDistance),
+    'usePowderSensitivity': usePowderSensitivity,
+    'useDiffPowderTemp': useDiffPowderTemp,
+    'useCoriolis': useCoriolis,
+    if (latitudeDeg != null) 'latitudeDeg': latitudeDeg,
+    if (azimuthDeg != null) 'azimuthDeg': azimuthDeg,
+  };
+
+  static Conditions fromJson(Map<String, dynamic> json) {
+    final atmo = json['atmo'] as Map;
+
+    return Conditions(
+      atmo: AtmoData.fromJson(atmo),
+      winds: (json['winds'] as List)
+          .map((w) => WindData.fromJson(w as Map))
+          .toList(),
+      lookAngle: Angular(
+        (json['lookAngle'] as num).toDouble(),
+        StorageUnits.profileLookAngle,
+      ),
+      latitudeDeg: (json['latitudeDeg'] as num?)?.toDouble(),
+      azimuthDeg: (json['azimuthDeg'] as num?)?.toDouble(),
+      targetDistance: json['targetDistance'] != null
+          ? Distance(
+              (json['targetDistance'] as num).toDouble(),
+              StorageUnits.profileTargetDistance,
+            )
+          : null,
+      usePowderSensitivity: json['usePowderSensitivity'] as bool? ?? false,
+      useDiffPowderTemp: json['useDiffPowderTemp'] as bool? ?? false,
+      useCoriolis: json['useCoriolis'] as bool? ?? false,
+    );
+  }
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/models/convertors_state.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -134,6 +135,18 @@ class JsonFileStorage implements AppStorage {
 
   @override
   Future<void> saveSettings(AppSettings s) => _writeMap('settings', s.toJson());
+
+  // ── Conditions ─────────────────────────────────────────────────────────────
+
+  @override
+  Future<Conditions?> loadConditions() async {
+    final map = await _readMap('conditions');
+    return map == null ? null : Conditions.fromJson(map);
+  }
+
+  @override
+  Future<void> saveConditions(Conditions c) =>
+      _writeMap('conditions', c.toJson());
 
   // ── Cartridges ─────────────────────────────────────────────────────────────
 
@@ -316,6 +329,7 @@ class JsonFileStorage implements AppStorage {
     final (profilesList, activeProfileId) = await _readProfilesFile();
     return {
       'settings': await _readMap('settings') ?? {},
+      'conditions': await _readMap('conditions') ?? {},
       'cartridges': await _readList('cartridges'),
       'sights': await _readList('sights'),
       'activeProfileId': activeProfileId,
@@ -333,6 +347,16 @@ class JsonFileStorage implements AppStorage {
         if (s is! Map<String, dynamic>) {
           throw StorageException(
             'Invalid settings: expected Map, got ${s.runtimeType}',
+          );
+        }
+        await _writeMap('settings', s);
+      }
+
+      if (data.containsKey('conditions')) {
+        final s = data['conditions'];
+        if (s is! Map<String, dynamic>) {
+          throw StorageException(
+            'Invalid conditions: expected Map, got ${s.runtimeType}',
           );
         }
         await _writeMap('settings', s);
