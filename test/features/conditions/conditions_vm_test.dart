@@ -3,8 +3,6 @@
 // No FFI required — uses only Riverpod container with provider overrides.
 //   flutter test test/viewmodels/conditions_vm_test.dart
 
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -40,7 +38,7 @@ ShotProfile _makeProfile() {
     mv: Velocity(800, Unit.mps),
     powderTemp: Temperature(15.0, Unit.celsius),
     powderSensitivity: Ratio(1.0, Unit.fraction),
-    usePowderSensitivity: true,
+    zeroConditions: Conditions.withDefaults(usePowderSensitivity: true),
   );
   final rifle = Rifle(
     name: 'Test Rifle',
@@ -406,14 +404,14 @@ void main() {
   });
 }
 
-/// Profile notifier that never completes — simulates "still loading" state.
-class _PendingProfileNotifier extends ShotProfileNotifier {
-  @override
-  Future<ShotProfile> build() => Completer<ShotProfile>().future;
-}
+// /// Profile notifier that never completes — simulates "still loading" state.
+// class _PendingProfileNotifier extends ShotProfileNotifier {
+//   @override
+//   Future<ShotProfile> build() => Completer<ShotProfile>().future;
+// }
 
-/// Conditions notifier that never completes — simulates "still loading" state.
-class _PendingConditionsNotifier extends ShotConditionsNotifier {
-  @override
-  Future<Conditions> build() => Completer<Conditions>().future;
-}
+// /// Conditions notifier that never completes — simulates "still loading" state.
+// class _PendingConditionsNotifier extends ShotConditionsNotifier {
+//   @override
+//   Future<Conditions> build() => Completer<Conditions>().future;
+// }

@@ -39,7 +39,7 @@ ShotProfile _makeProfile() {
     mv: Velocity(800, Unit.mps),
     powderTemp: Temperature(15.0, Unit.celsius),
     powderSensitivity: Ratio(1.0, Unit.fraction),
-    useDiffPowderTemp: true,
+    zeroConditions: Conditions.withDefaults(useDiffPowderTemp: true),
   );
   final rifle = Rifle(
     name: 'Test Rifle',
@@ -167,7 +167,9 @@ _TestContext _createTestContext({
   final shotDetailsVM = _TrackingShotDetailsVM();
   final profileNotifier = _ControllableProfileNotifier(_makeProfile());
   final settingsNotifier = _ControllableSettingsNotifier(initialSettings);
-  final conditionsNotifier = _ControllableConditionsNotifier(Conditions());
+  final conditionsNotifier = _ControllableConditionsNotifier(
+    Conditions.withDefaults(),
+  );
 
   final container = ProviderContainer(
     overrides: [

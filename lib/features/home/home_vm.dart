@@ -13,7 +13,6 @@ import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/models/projectile.dart' show DragModelType;
 import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
-import 'package:eballistica/core/solver/conditions.dart';
 import 'package:eballistica/core/solver/trajectory_data.dart';
 import 'package:eballistica/core/solver/unit.dart';
 import 'package:eballistica/shared/models/adjustment_data.dart';

@@ -13,7 +13,6 @@ import 'package:eballistica/core/models/rifle.dart';
 import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
 import 'package:eballistica/core/models/sight.dart';
-import 'package:eballistica/core/solver/conditions.dart';
 import 'package:eballistica/core/solver/unit.dart';
 
 // ── Test fixtures ────────────────────────────────────────────────────────────
@@ -34,7 +33,9 @@ ShotProfile _makeProfile() {
     mv: Velocity(800.0, Unit.mps),
     powderTemp: Temperature(15.0, Unit.celsius),
     powderSensitivity: Ratio(0.0, Unit.fraction),
-    zeroDistance: Distance(100.0, Unit.meter),
+    zeroConditions: Conditions.withDefaults(
+      distance: Distance(100.0, Unit.meter),
+    ),
   );
   final rifle = Rifle(
     name: 'Test Rifle',
@@ -378,7 +379,9 @@ void main() {
         mv: Velocity(10.0, Unit.mps), // extremely low velocity
         powderTemp: Temperature(15.0, Unit.celsius),
         powderSensitivity: Ratio(0.0, Unit.fraction),
-        zeroDistance: Distance(3000.0, Unit.meter), // impossible zero
+        zeroConditions: Conditions.withDefaults(
+          distance: Distance(3000.0, Unit.meter), // impossible zero
+        ),
       );
       final rifle = Rifle(
         name: 'Bad',
@@ -429,10 +432,12 @@ void main() {
         mv: Velocity(800, Unit.mps),
         powderTemp: Temperature(15, Unit.celsius),
         powderSensitivity: Ratio(1.0, Unit.fraction), // 1% per 15°C
-        usePowderSensitivity: true,
-        zeroDistance: Distance(100, Unit.meter),
-        atmo: zeroConditions,
-        useDiffPowderTemp: true, // ← додаємо умови обнулення
+        zeroConditions: Conditions.withDefaults(
+          usePowderSensitivity: true,
+          distance: Distance(100, Unit.meter),
+          atmo: zeroConditions,
+          useDiffPowderTemp: true, // ← додаємо умови обнулення
+        ),
       );
 
       final sensitiveProfile = ShotProfile(
@@ -447,7 +452,11 @@ void main() {
 
       final withSens = await service.calculateTable(
         sensitiveProfile.copyWith(
-          cartridge: sensitiveCartridge.copyWith(usePowderSensitivity: true),
+          cartridge: sensitiveCartridge.copyWith(
+            zeroConditions: sensitiveCartridge.zeroConditions.copyWith(
+              usePowderSensitivity: true,
+            ),
+          ),
         ),
         hotConditions,
         const TableCalcOptions(stepM: 100),
@@ -455,7 +464,11 @@ void main() {
 
       final withoutSens = await service.calculateTable(
         sensitiveProfile.copyWith(
-          cartridge: sensitiveCartridge.copyWith(usePowderSensitivity: false),
+          cartridge: sensitiveCartridge.copyWith(
+            zeroConditions: sensitiveCartridge.zeroConditions.copyWith(
+              usePowderSensitivity: false,
+            ),
+          ),
         ),
         hotConditions,
         const TableCalcOptions(stepM: 100),
