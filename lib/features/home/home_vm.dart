@@ -6,13 +6,14 @@ import 'package:eballistica/core/formatting/unit_formatter.dart';
 import 'package:eballistica/core/providers/formatter_provider.dart';
 import 'package:eballistica/core/providers/service_providers.dart';
 import 'package:eballistica/core/providers/settings_provider.dart';
-import 'package:eballistica/core/providers/shot_conditions_provider.dart'; // ← додати
+import 'package:eballistica/core/providers/shot_conditions_provider.dart';
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/models/projectile.dart' show DragModelType;
 import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
+import 'package:eballistica/core/solver/conditions.dart';
 import 'package:eballistica/core/solver/trajectory_data.dart';
 import 'package:eballistica/core/solver/unit.dart';
 import 'package:eballistica/shared/models/adjustment_data.dart';
@@ -124,24 +125,20 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
 
   Future<void> recalculate() async {
     final profile = ref.read(shotProfileProvider).value;
-    final conditions = ref
-        .read(shotConditionsProvider)
-        .value; // ← додаємо conditions
+    final conditions = ref.read(shotConditionsProvider).value;
     final settings = ref.read(settingsProvider).value;
     final formatter = ref.read(unitFormatterProvider);
 
     if (profile == null || conditions == null || settings == null) return;
-    if (profile.cartridge == null) return; // Не готово
+    if (profile.cartridge == null) return;
 
-    // Keep previous Ready state visible while recalculating — no flicker.
-    // Only show Loading on first calculation (when state is still Loading).
     if (state.value is! HomeUiReady) {
       state = const AsyncData(HomeUiLoading());
     }
 
     try {
       final opts = TargetCalcOptions(
-        targetDistM: conditions.distance.in_(Unit.meter), // ← з conditions!
+        targetDistM: conditions.distance.in_(Unit.meter),
         chartStepM: settings.chartDistanceStep,
       );
 
@@ -245,60 +242,44 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
 
   HomeUiReady _buildReadyState({
     required ShotProfile profile,
-    required Conditions conditions, // ← додаємо conditions
+    required Conditions conditions,
     required AppSettings settings,
     required UnitFormatter formatter,
     required BallisticsResult result,
   }) {
     final hit = result.hitResult;
     final traj = hit.trajectory;
-    final targetM = conditions.distance.in_(Unit.meter); // ← з conditions!
+    final targetM = conditions.distance.in_(Unit.meter);
 
-    // ── Top block ──
-    final windDirDeg =
-        conditions
-            .winds
-            .isNotEmpty // ← з conditions!
+    final windDirDeg = conditions.winds.isNotEmpty
         ? conditions.winds.first.directionFrom.in_(Unit.degree)
         : 0.0;
 
-    final atmo = conditions.atmo; // ← з conditions!
+    final atmo = conditions.atmo;
     final tempStr = formatter.temperature(atmo.temperature);
     final altStr = formatter.distance(atmo.altitude);
     final pressStr = formatter.pressure(atmo.pressure);
     final humidStr = formatter.humidity(Ratio(atmo.humidity, Unit.fraction));
 
-    // ── Quick actions ──
-    final windMps =
-        conditions
-            .winds
-            .isNotEmpty // ← з conditions!
+    final windMps = conditions.winds.isNotEmpty
         ? conditions.winds.first.velocity.in_(Unit.mps)
         : 0.0;
     final windSpeedDisplay = formatter.velocity(Velocity(windMps, Unit.mps));
 
-    final lookDeg = conditions.lookAngle.in_(Unit.degree); // ← з conditions!
+    final lookDeg = conditions.lookAngle.in_(Unit.degree);
     final lookAngleDisplay =
         '${lookDeg.toStringAsFixed(FC.lookAngle.accuracy)}°';
 
-    final targetDistanceDisplay = formatter.distance(
-      conditions.distance,
-    ); // ← з conditions!
+    final targetDistanceDisplay = formatter.distance(conditions.distance);
 
-    // ── Cartridge info line ──
     final cartridgeInfoLine = _buildCartridgeInfoLine(
       profile,
       conditions,
       formatter,
-    ); // ← передаємо conditions
+    );
 
-    // ── Adjustment data ──
     final adjustment = _buildAdjustment(hit, targetM, settings);
-
-    // ── Table data (5 distances around target) ──
     final tableData = _buildHomeTable(hit, targetM, settings, formatter);
-
-    // ── Chart data + auto-select target point ──
     final chartData = _buildChartData(traj, settings);
     final autoIndex = _closestIndex(chartData.points, targetM);
     final autoInfo = autoIndex != null
@@ -331,7 +312,7 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
 
   String _buildCartridgeInfoLine(
     ShotProfile profile,
-    Conditions conditions, // ← додаємо conditions
+    Conditions conditions,
     UnitFormatter fmt,
   ) {
     final proj = profile.cartridge!.projectile;
@@ -346,7 +327,6 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
       DragModelType.custom => 'CUSTOM',
     };
 
-    // Gyroscopic stability factor Sg (Miller) - використовуємо поточний shot
     String? sgStr;
     final twistInch = profile.rifle.twist.in_(Unit.inch);
     final weightGr = proj.weight.in_(Unit.grain);
@@ -542,14 +522,15 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
   }
 
   // ── Zero key (logic for detecting zero-relevant changes) ───────────────────
-  // Тепер використовує Conditions замість profile.conditions
+  // Використовує нову структуру cartridge.zeroConditions
 
   List<double> _buildZeroKey(ShotProfile profile, Conditions conditions) {
     final c = profile.cartridge!;
-    final zeroAtmo = c.atmo ?? conditions.atmo;
+    // Використовуємо умови обнулення з картриджа
+    final zeroConditions = c.zeroConditions;
+    final zeroAtmo = zeroConditions.atmo;
     final r = profile.rifle;
     final proj = c.projectile;
-    final zeroUsePowderSens = c.usePowderSensitivity;
 
     return [
       r.sightHeight.in_(Unit.meter),
@@ -567,10 +548,10 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
       zeroAtmo.temperature.in_(Unit.celsius),
       zeroAtmo.humidity,
       zeroAtmo.powderTemp.in_(Unit.celsius),
-      c.zeroDistance.in_(Unit.meter),
-      conditions.lookAngle.in_(Unit.radian), // ← з conditions!
-      zeroUsePowderSens ? 1.0 : 0.0,
-      c.useDiffPowderTemp ? 1.0 : 0.0,
+      zeroConditions.distance.in_(Unit.meter), // ← zeroDistance з conditions
+      conditions.lookAngle.in_(Unit.radian),
+      zeroConditions.usePowderSensitivity ? 1.0 : 0.0, // ← з zeroConditions
+      zeroConditions.useDiffPowderTemp ? 1.0 : 0.0, // ← з zeroConditions
     ];
   }
 }

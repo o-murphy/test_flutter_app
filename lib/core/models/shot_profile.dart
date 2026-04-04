@@ -1,10 +1,8 @@
-import 'package:eballistica/core/solver/conditions.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:eballistica/core/solver/shot.dart';
 import 'package:eballistica/core/solver/unit.dart';
 import 'package:eballistica/core/solver/munition.dart';
-import '_storage.dart';
 import 'cartridge.dart';
 import 'conditions_data.dart';
 import 'rifle.dart';
@@ -63,15 +61,16 @@ class ShotProfile {
       mv: cartridge!.mv,
       powderTemp: cartridge!.powderTemp,
       tempModifier: cartridge!.powderSensitivity.in_(Unit.fraction),
-      usePowderSensitivity: cartridge!.usePowderSensitivity,
+      usePowderSensitivity: cartridge!.zeroConditions.usePowderSensitivity,
     );
-    final zeroAtmo = cartridge!.atmo;
+
+    final zeroAtmo = cartridge!.zeroConditions.atmo;
 
     return Shot(
       weapon: weapon,
       ammo: zeroAmmo,
       lookAngle: lookAngle,
-      atmo: zeroAtmo?.toAtmo() ?? Atmo.icao(),
+      atmo: zeroAtmo.toAtmo(),
       winds: const [],
     );
   }
@@ -149,38 +148,7 @@ class ShotProfile {
     if (cartridgeIdNew == null) {
       final cartridgeJson = json['cartridge'] as Map<String, dynamic>?;
       if (cartridgeJson != null) {
-        final baseCartridge = Cartridge.fromJson(cartridgeJson);
-
-        final oldZeroDistJson = json['zeroDistance'] as num?;
-        final oldZeroCondJson = json['zeroConditions'] as Map?;
-        final oldZeroUsePowderSens =
-            json['usePowderSensitivity'] as bool? ?? false;
-        final olduseDiffPowderTemp =
-            json['useDiffPowderTemp'] as bool? ?? false;
-
-        inlineCartridge = Cartridge(
-          id: baseCartridge.id,
-          name: baseCartridge.name,
-          type: baseCartridge.type,
-          projectile: baseCartridge.projectile,
-          mv: baseCartridge.mv,
-          powderTemp: baseCartridge.powderTemp,
-          powderSensitivity: baseCartridge.powderSensitivity,
-          zeroDistance: oldZeroDistJson != null
-              ? Distance(
-                  oldZeroDistJson.toDouble(),
-                  StorageUnits.profileZeroDistance,
-                )
-              : baseCartridge.zeroDistance,
-          atmo: oldZeroCondJson != null
-              ? AtmoData.fromJson(oldZeroCondJson as Map<String, dynamic>)
-              : baseCartridge.atmo,
-          usePowderSensitivity: oldZeroUsePowderSens,
-          useDiffPowderTemp: olduseDiffPowderTemp,
-          notes: baseCartridge.notes,
-          createdAt: baseCartridge.createdAt,
-          updatedAt: baseCartridge.updatedAt,
-        );
+        inlineCartridge = Cartridge.fromJson(cartridgeJson);
         resolvedCartridgeId = inlineCartridge.id;
       }
     }

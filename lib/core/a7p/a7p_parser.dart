@@ -43,7 +43,8 @@ class A7pParser {
       coefRows: _parseCoefRows(p),
     );
 
-    final zeroConds = _buildAtmoData(
+    // Будуємо zeroConditions
+    final zeroAtmo = _buildAtmoData(
       altitudeM: 0,
       pressureHPa: p.cZeroAirPressure / 10.0,
       tempC: p.cZeroAirTemperature.toDouble(),
@@ -51,9 +52,17 @@ class A7pParser {
       powderTempC: p.cZeroPTemperature.toDouble(),
     );
 
-    final zeroDist = _zeroDistance(p);
+    final zeroDistance = _zeroDistance(p);
     final hasPowderSens = p.cTCoeff != 0;
     final useDiffPowderTemp = p.cZeroPTemperature != p.cZeroAirTemperature;
+
+    final zeroConditions = Conditions.withDefaults(
+      atmo: zeroAtmo,
+      distance: zeroDistance,
+      lookAngle: Angular(0.0, Unit.degree),
+      usePowderSensitivity: hasPowderSens,
+      useDiffPowderTemp: useDiffPowderTemp,
+    );
 
     final cartridge = Cartridge(
       name: p.cartridgeName,
@@ -61,10 +70,7 @@ class A7pParser {
       mv: Velocity(p.cMuzzleVelocity / 10.0, Unit.mps),
       powderTemp: Temperature(p.cZeroTemperature.toDouble(), Unit.celsius),
       powderSensitivity: Ratio(p.cTCoeff / 1000.0, Unit.fraction),
-      zeroDistance: zeroDist,
-      atmo: zeroConds,
-      usePowderSensitivity: hasPowderSens,
-      useDiffPowderTemp: useDiffPowderTemp,
+      zeroConditions: zeroConditions,
     );
 
     return ShotProfile(

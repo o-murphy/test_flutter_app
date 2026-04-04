@@ -18,10 +18,7 @@ class Cartridge {
   final Ratio powderSensitivity;
 
   // ── Zero data (belongs to cartridge, not profile) ──────────────────────────
-  final Distance zeroDistance;
-  final AtmoData? atmo;
-  final bool usePowderSensitivity;
-  final bool useDiffPowderTemp;
+  final Conditions zeroConditions;
 
   final String? notes;
   final DateTime createdAt;
@@ -35,15 +32,12 @@ class Cartridge {
     required this.mv,
     required this.powderTemp,
     required this.powderSensitivity,
-    Distance? zeroDistance,
-    this.atmo,
-    this.usePowderSensitivity = false,
-    this.useDiffPowderTemp = false,
+    Conditions? zeroConditions,
     this.notes,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : id = id ?? const Uuid().v4(),
-       zeroDistance = zeroDistance ?? Distance(100.0, Unit.meter),
+       zeroConditions = zeroConditions ?? Conditions.withDefaults(),
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
@@ -61,10 +55,7 @@ class Cartridge {
     Velocity? mv,
     Temperature? powderTemp,
     Ratio? powderSensitivity,
-    Distance? zeroDistance,
-    AtmoData? conditions,
-    bool? usePowderSensitivity,
-    bool? useDiffPowderTemp,
+    Conditions? zeroConditions,
     String? notes,
   }) => Cartridge(
     id: id,
@@ -74,10 +65,7 @@ class Cartridge {
     mv: mv ?? this.mv,
     powderTemp: powderTemp ?? this.powderTemp,
     powderSensitivity: powderSensitivity ?? this.powderSensitivity,
-    zeroDistance: zeroDistance ?? this.zeroDistance,
-    atmo: conditions ?? this.atmo,
-    usePowderSensitivity: usePowderSensitivity ?? this.usePowderSensitivity,
-    useDiffPowderTemp: useDiffPowderTemp ?? this.useDiffPowderTemp,
+    zeroConditions: zeroConditions ?? this.zeroConditions,
     notes: notes ?? this.notes,
     createdAt: createdAt,
     updatedAt: DateTime.now(),
@@ -93,10 +81,7 @@ class Cartridge {
     'powderSensitivity': powderSensitivity.in_(
       StorageUnits.cartridgePowderSensitivity,
     ),
-    'zeroDistance': zeroDistance.in_(StorageUnits.cartridgeZeroDistance),
-    if (atmo != null) 'zeroConditions': atmo!.toJson(),
-    'usePowderSensitivity': usePowderSensitivity,
-    'useDiffPowderTemp': useDiffPowderTemp,
+    'zeroConditions': zeroConditions.toJson(),
     if (notes != null) 'notes': notes,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
@@ -108,7 +93,37 @@ class Cartridge {
         ? CartridgeType.bullet
         : CartridgeType.cartridge;
 
-    final zeroCondJson = json['zeroConditions'] as Map?;
+    Conditions zeroConditions;
+
+    if (json['zeroConditions'] != null) {
+      zeroConditions = Conditions.fromJson(
+        json['zeroConditions'] as Map<String, dynamic>,
+      );
+    } else {
+      // Старий формат: створюємо Conditions з окремих полів
+      final zeroDistance = json['zeroDistance'] != null
+          ? Distance(
+              (json['zeroDistance'] as num).toDouble(),
+              StorageUnits.cartridgeZeroDistance,
+            )
+          : Distance(100.0, Unit.meter);
+
+      final zeroAtmoJson = json['zeroConditions_legacy'] as Map?;
+      final zeroAtmo = zeroAtmoJson != null
+          ? AtmoData.fromJson(zeroAtmoJson)
+          : null;
+
+      final usePowderSensitivity =
+          json['usePowderSensitivity'] as bool? ?? false;
+      final useDiffPowderTemp = json['useDiffPowderTemp'] as bool? ?? false;
+
+      zeroConditions = Conditions.withDefaults(
+        atmo: zeroAtmo,
+        distance: zeroDistance,
+        usePowderSensitivity: usePowderSensitivity,
+        useDiffPowderTemp: useDiffPowderTemp,
+      );
+    }
 
     return Cartridge(
       id: json['id'] as String,
@@ -126,18 +141,7 @@ class Cartridge {
         (json['powderSensitivity'] as num).toDouble(),
         StorageUnits.cartridgePowderSensitivity,
       ),
-      // zero fields — backward-compat: old cartridges without these get defaults
-      zeroDistance: json['zeroDistance'] != null
-          ? Distance(
-              (json['zeroDistance'] as num).toDouble(),
-              StorageUnits.cartridgeZeroDistance,
-            )
-          : null,
-      atmo: zeroCondJson != null
-          ? AtmoData.fromJson(zeroCondJson as Map<String, dynamic>)
-          : null,
-      usePowderSensitivity: json['usePowderSensitivity'] as bool? ?? false,
-      useDiffPowderTemp: json['useDiffPowderTemp'] as bool? ?? false,
+      zeroConditions: zeroConditions,
       notes: json['notes'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),

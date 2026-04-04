@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:eballistica/core/models/cartridge.dart';
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/models/projectile.dart';
 import 'package:eballistica/core/models/rifle.dart';
 import 'package:eballistica/core/models/sight.dart';
@@ -32,7 +33,6 @@ abstract final class CollectionParser {
     final map = jsonDecode(jsonString) as Map<String, dynamic>;
 
     // calibers lookup: id → diameter in inches
-    // collection.json uses both "diameter" and "caliber" keys (inconsistency in dev file)
     final calibers = <int, double>{};
     for (final c in (map['calibers'] as List? ?? [])) {
       final cm = c as Map<String, dynamic>;
@@ -66,7 +66,6 @@ abstract final class CollectionParser {
     return Rifle(
       name: j['name'] as String,
       description: j['vendor'] as String?,
-      // sightHeight is not in the collection — default to 0, user sets it in wizard
       sightHeight: Distance(0.0, Unit.millimeter),
       twist: Distance((j['rTwist'] as num).toDouble(), Unit.inch),
       caliberDiameter: diameterInch != null
@@ -90,6 +89,12 @@ abstract final class CollectionParser {
     final dType = _dragType(j['dType'] as String? ?? 'G1');
     final name = j['name'] as String;
 
+    // Використовуємо Conditions.fromJson для парсингу zeroConditions
+    final zeroConditionsJson = j['zeroConditions'] as Map<String, dynamic>?;
+    final zeroConditions = zeroConditionsJson != null
+        ? Conditions.fromJson(zeroConditionsJson)
+        : Conditions.withDefaults();
+
     return Cartridge(
       name: name,
       type: CartridgeType.cartridge,
@@ -109,8 +114,7 @@ abstract final class CollectionParser {
         (j['powderSensitivity'] as num? ?? 0.0).toDouble(),
         Unit.fraction,
       ),
-      usePowderSensitivity: j['usePowderSensitivity'] as bool? ?? false,
-      useDiffPowderTemp: j['useDiffPowderTemp'] as bool? ?? false,
+      zeroConditions: zeroConditions,
     );
   }
 
@@ -138,7 +142,6 @@ abstract final class CollectionParser {
   static Sight _parseSight(Map<String, dynamic> j) => Sight(
     name: j['name'] as String,
     manufacturer: j['vendor'] as String?,
-    // collection stores sightHeight in inches
     sightHeight: Distance(
       (j['sightHeight'] as num? ?? 0.0).toDouble(),
       Unit.inch,
@@ -188,7 +191,7 @@ abstract final class CollectionParser {
     final row = r as Map<String, dynamic>;
     return CoeficientRow(
       bcCd: (row['bc'] as num).toDouble(),
-      mv: (row['v'] as num).toDouble(), // m/s
+      mv: (row['v'] as num).toDouble(),
     );
   }).toList();
 

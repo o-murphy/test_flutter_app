@@ -13,7 +13,8 @@
         "powderSensitivityTable": "[{t: celsius (double), v: mps (double), }, ...]",
         "multiBCtable": "[{bc: double, v: mps (double), }, ...]",
         "cusomDragTable": "[{cd: double, v: mach (double), }, ...]",
-        "zeroDistance": "meter (double)",
+        "distance": "meter (double)",
+        "lookAngle": "degree (double)",
         "bulletLength": "inch (double)",
         "bulletWeight": "grain (double)",
         "focalPlane": "ffc/sfc/lwir (enum)",
@@ -96,8 +97,9 @@
             "caliberId": 0,
             "bulletLength": 1.7,
             "bulletWeight": 300.0,
-            "conditions": {
+            "zeroConditions": {
                 "distance": 100.0,
+                "lookAngle": 0.0,
                 "atmo": {
                     "temperature": 22.0,
                     "pressure": 1000,
@@ -105,7 +107,10 @@
                     "powderTemperature": 22.0
                 },
                 "usePowderSensitivity": false,
-                "useDiffPowderTemperature": false
+                "useDiffPowderTemperature": false,
+                "useCoriolis": false,
+                "latitudeDeg": null,
+                "azimuthDeg": null
             },
             "zeroOffset": {},
             "extra": {}
@@ -132,8 +137,9 @@
             "caliberId": 0,
             "bulletLength": 1.7,
             "bulletWeight": 300.0,
-            "conditions": {
+            "zeroConditions": {
                 "distance": 100.0,
+                "lookAngle": 0.0,
                 "atmo": {
                     "temperature": 22.0,
                     "pressure": 1000,
@@ -141,7 +147,10 @@
                     "powderTemperature": 22.0
                 },
                 "usePowderSensitivity": false,
-                "useDiffPowderTemperature": false
+                "useDiffPowderTemperature": false,
+                "useCoriolis": false,
+                "latitudeDeg": null,
+                "azimuthDeg": null
             },
             "zeroOffset": {},
             "extra": {}

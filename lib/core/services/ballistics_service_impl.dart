@@ -22,6 +22,9 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
     final calc = Calculator();
     final cartridge = profile.cartridge!;
 
+    // Отримуємо дистанцію обнулення з умов картриджа
+    final zeroDistance = cartridge.zeroConditions.distance;
+
     final weapon = profile.rifle.toWeapon();
     double? freshZeroElevRad;
 
@@ -31,16 +34,16 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
       Shot zeroShot;
       try {
         zeroShot = profile.toZeroShot(conditions.lookAngle, weapon);
-        calc.setWeaponZero(zeroShot, cartridge.zeroDistance);
+        calc.setWeaponZero(zeroShot, zeroDistance);
       } catch (_) {
         zeroShot = profile.toZeroShot(Angular(0.0, Unit.radian), weapon);
-        calc.setWeaponZero(zeroShot, cartridge.zeroDistance);
+        calc.setWeaponZero(zeroShot, zeroDistance);
       }
       freshZeroElevRad = weapon.zeroElevation.in_(Unit.radian);
     }
 
     final result = calc.fire(
-      shot: profile.toCurrentShot(conditions), // ← передаємо conditions
+      shot: profile.toCurrentShot(conditions),
       trajectoryRange: Distance(2000.0, Unit.meter),
       trajectoryStep: Distance(stepM, Unit.meter),
       filterFlags:
@@ -66,6 +69,9 @@ _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
     final calc = Calculator();
     final cartridge = profile.cartridge!;
 
+    // Отримуємо дистанцію обнулення з умов картриджа
+    final zeroDistance = cartridge.zeroConditions.distance;
+
     final weapon = profile.rifle.toWeapon();
     double? freshZeroElevRad;
 
@@ -75,10 +81,10 @@ _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
       Shot zeroShot;
       try {
         zeroShot = profile.toZeroShot(conditions.lookAngle, weapon);
-        calc.setWeaponZero(zeroShot, cartridge.zeroDistance);
+        calc.setWeaponZero(zeroShot, zeroDistance);
       } catch (_) {
         zeroShot = profile.toZeroShot(Angular(0.0, Unit.radian), weapon);
-        calc.setWeaponZero(zeroShot, cartridge.zeroDistance);
+        calc.setWeaponZero(zeroShot, zeroDistance);
       }
       freshZeroElevRad = weapon.zeroElevation.in_(Unit.radian);
     }
@@ -128,7 +134,7 @@ class BallisticsServiceImpl implements BallisticsService {
   @override
   Future<BallisticsResult> calculateTable(
     ShotProfile profile,
-    Conditions conditions, // ← додаємо параметр conditions
+    Conditions conditions,
     TableCalcOptions opts, {
     double? cachedZeroElevRad,
   }) async {
@@ -148,7 +154,7 @@ class BallisticsServiceImpl implements BallisticsService {
   @override
   Future<BallisticsResult> calculateForTarget(
     ShotProfile profile,
-    Conditions conditions, // ← додаємо параметр conditions
+    Conditions conditions,
     TargetCalcOptions opts, {
     double? cachedZeroElevRad,
   }) async {

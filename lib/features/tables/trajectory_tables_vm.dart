@@ -8,12 +8,12 @@ import 'package:eballistica/core/formatting/unit_formatter.dart';
 import 'package:eballistica/core/providers/formatter_provider.dart';
 import 'package:eballistica/core/providers/service_providers.dart';
 import 'package:eballistica/core/providers/settings_provider.dart';
-import 'package:eballistica/core/providers/shot_conditions_provider.dart'; // ← додати
+import 'package:eballistica/core/providers/shot_conditions_provider.dart';
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
-import 'package:eballistica/core/solver/conditions.dart'; // ← додати
+import 'package:eballistica/core/solver/conditions.dart';
 import 'package:eballistica/core/solver/trajectory_data.dart';
 import 'package:eballistica/core/solver/unit.dart';
 import 'package:eballistica/shared/models/formatted_row.dart';
@@ -56,9 +56,7 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
 
   Future<void> recalculate() async {
     final profile = ref.read(shotProfileProvider).value;
-    final conditions = ref
-        .read(shotConditionsProvider)
-        .value; // ← додаємо conditions
+    final conditions = ref.read(shotConditionsProvider).value;
     final settings = ref.read(settingsProvider).value;
     final formatter = ref.read(unitFormatterProvider);
 
@@ -84,17 +82,14 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
         stepM: cfg.stepM < 1.0 ? cfg.stepM : 1.0,
       );
 
-      final zeroKey = _buildZeroKey(
-        profile,
-        conditions,
-      ); // ← передаємо conditions
+      final zeroKey = _buildZeroKey(profile, conditions);
       final useCache = listEquals(zeroKey, _lastZeroKey);
 
       final result = await ref
           .read(ballisticsServiceProvider)
           .calculateTable(
             profile,
-            conditions, // ← передаємо conditions!
+            conditions,
             opts,
             cachedZeroElevRad: useCache ? _cachedZeroElevRad : null,
           );
@@ -106,7 +101,7 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
 
       final uiState = _buildReadyState(
         profile: profile,
-        conditions: conditions, // ← передаємо conditions
+        conditions: conditions,
         settings: settings,
         formatter: formatter,
         result: result,
@@ -122,7 +117,7 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
 
   TrajectoryTablesUiReady _buildReadyState({
     required ShotProfile profile,
-    required Conditions conditions, // ← додаємо conditions
+    required Conditions conditions,
     required AppSettings settings,
     required UnitFormatter formatter,
     required BallisticsResult result,
@@ -130,8 +125,6 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
     final cfg = settings.tableConfig;
     final units = settings.units;
     final hit = result.hitResult;
-
-    // Drop/Windage and all other units come from global AppSettings.units.
 
     // Filter trajectory to display step
     final filtered = _filterTraj(
@@ -141,7 +134,10 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
       cfg.stepM,
     );
 
-    final zeroDistM = profile.cartridge!.zeroDistance.in_(Unit.meter);
+    // Використовуємо zeroConditions з картриджа
+    final zeroDistM = profile.cartridge!.zeroConditions.distance.in_(
+      Unit.meter,
+    );
     final mainTable = _buildTable(filtered, units, cfg, zeroDistM: zeroDistM);
 
     // Zero crossings
@@ -345,14 +341,15 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
   }
 
   // ── Zero key ───────────────────────────────────────────────────────────────
+  // Використовує нову структуру cartridge.zeroConditions
 
   List<double> _buildZeroKey(ShotProfile profile, Conditions conditions) {
     final c = profile.cartridge!;
-    // Використовуємо умови з набою або глобальні умови
-    final zeroAtmo = c.atmo ?? conditions.atmo;
+    // Використовуємо zeroConditions з картриджа
+    final zeroConditions = c.zeroConditions;
+    final zeroAtmo = zeroConditions.atmo;
     final r = profile.rifle;
     final proj = c.projectile;
-    final zeroUsePowderSens = c.usePowderSensitivity;
 
     return [
       r.sightHeight.in_(Unit.meter),
@@ -370,10 +367,10 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
       zeroAtmo.temperature.in_(Unit.celsius),
       zeroAtmo.humidity,
       zeroAtmo.powderTemp.in_(Unit.celsius),
-      c.zeroDistance.in_(Unit.meter),
-      conditions.lookAngle.in_(Unit.radian), // ← беремо з conditions!
-      zeroUsePowderSens ? 1.0 : 0.0,
-      c.useDiffPowderTemp ? 1.0 : 0.0,
+      zeroConditions.distance.in_(Unit.meter), // ← з zeroConditions
+      conditions.lookAngle.in_(Unit.radian),
+      zeroConditions.usePowderSensitivity ? 1.0 : 0.0, // ← з zeroConditions
+      zeroConditions.useDiffPowderTemp ? 1.0 : 0.0, // ← з zeroConditions
     ];
   }
 }

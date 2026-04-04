@@ -47,9 +47,9 @@ final _seedZeroAtmo = AtmoData(
   powderTemp: Temperature(15.0, Unit.celsius),
 );
 
-final _seedZeroConditions = Conditions(
+final _seedZeroConditions = Conditions.withDefaults(
   atmo: _seedZeroAtmo,
-  winds: [],
+  winds: const [],
   lookAngle: Angular(0.0, Unit.degree),
   usePowderSensitivity: false,
   useDiffPowderTemp: false,
@@ -113,6 +113,7 @@ final _projSts285EldM = Projectile(
 );
 
 // ── Cartridges ────────────────────────────────────────────────────────────────
+// Тепер використовуємо zeroConditions замість окремих полів
 
 final seedCartridgeUkrop250 = Cartridge(
   id: 'seed-cart-ukrop-250-smk',
@@ -121,10 +122,7 @@ final seedCartridgeUkrop250 = Cartridge(
   mv: Velocity(888.0, Unit.mps),
   powderTemp: Temperature(29.0, Unit.celsius),
   powderSensitivity: Ratio(0.02, Unit.fraction),
-  zeroDistance: Distance(100.0, Unit.meter),
-  atmo: _seedZeroAtmo,
-  usePowderSensitivity: true,
-  useDiffPowderTemp: false,
+  zeroConditions: _seedZeroConditions, // ← використовуємо Conditions
 );
 
 final seedCartridgeHornady250 = Cartridge(
@@ -134,10 +132,7 @@ final seedCartridgeHornady250 = Cartridge(
   mv: Velocity(885.0, Unit.mps),
   powderTemp: Temperature(15.0, Unit.celsius),
   powderSensitivity: Ratio(0.02, Unit.fraction),
-  zeroDistance: Distance(100.0, Unit.meter),
-  atmo: _seedZeroAtmo,
-  usePowderSensitivity: true,
-  useDiffPowderTemp: false,
+  zeroConditions: _seedZeroConditions,
 );
 
 final seedCartridgeLapua300 = Cartridge(
@@ -147,10 +142,7 @@ final seedCartridgeLapua300 = Cartridge(
   mv: Velocity(825.0, Unit.mps),
   powderTemp: Temperature(15.0, Unit.celsius),
   powderSensitivity: Ratio(0.123, Unit.fraction),
-  zeroDistance: Distance(100.0, Unit.meter),
-  atmo: _seedZeroAtmo,
-  usePowderSensitivity: true,
-  useDiffPowderTemp: false,
+  zeroConditions: _seedZeroConditions,
 );
 
 final seedCartridgeSts285EldM = Cartridge(
@@ -160,10 +152,7 @@ final seedCartridgeSts285EldM = Cartridge(
   mv: Velocity(810.0, Unit.mps),
   powderTemp: Temperature(15.0, Unit.celsius),
   powderSensitivity: Ratio(0.02, Unit.fraction),
-  zeroDistance: Distance(100.0, Unit.meter),
-  atmo: _seedZeroAtmo,
-  usePowderSensitivity: true,
-  useDiffPowderTemp: false,
+  zeroConditions: _seedZeroConditions,
 );
 
 final seedCartridges = [
@@ -174,8 +163,7 @@ final seedCartridges = [
 ];
 
 // ── Default Shot Profiles ─────────────────────────────────────────────────────
-// Профілі посилаються на картриджі та приціл через IDs.
-// Resolved об'єкти передаються inline для shotProfileProvider fallback.
+// Профілі тепер не містять умов (вони в окремому провайдері)
 
 final seedShotProfile = ShotProfile(
   id: 'seed-profile-default',
@@ -212,3 +200,27 @@ final seedShotProfiles = [
   seedShotProfileHornady,
   seedShotProfileLapua300,
 ];
+
+// ── Default Conditions (для початкового стану) ─────────────────────────────────
+
+final seedConditions = Conditions.withDefaults(
+  atmo: AtmoData(
+    altitude: Distance(150.0, Unit.meter),
+    temperature: Temperature(20.0, Unit.celsius),
+    pressure: Pressure(1013.25, Unit.hPa),
+    humidity: 0.50,
+    powderTemp: Temperature(20.0, Unit.celsius),
+  ),
+  winds: [
+    WindData(
+      velocity: Velocity(3.0, Unit.mps),
+      directionFrom: Angular(90.0, Unit.degree),
+      untilDistance: Distance(9999.0, Unit.meter),
+    ),
+  ],
+  lookAngle: Angular(0.0, Unit.degree),
+  distance: Distance(300.0, Unit.meter),
+  usePowderSensitivity: false,
+  useDiffPowderTemp: false,
+  useCoriolis: false,
+);

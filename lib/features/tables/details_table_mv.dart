@@ -79,10 +79,12 @@ DetailsTableData _buildDetails(
 
   // Powder sensitivity — separate flags for zero and current
   final currentPowderSensOn = conditions.usePowderSensitivity;
-  final zeroPowderSensOn = cart.usePowderSensitivity;
+  // Zero conditions from cartridge
+  final zeroConditions = cart.zeroConditions;
+  final zeroPowderSensOn = zeroConditions.usePowderSensitivity;
   final currentUseDiffTemp =
       currentPowderSensOn && conditions.useDiffPowderTemp;
-  final zeroUseDiffTemp = zeroPowderSensOn && cart.useDiffPowderTemp;
+  final zeroUseDiffTemp = zeroPowderSensOn && zeroConditions.useDiffPowderTemp;
 
   final refMvMps = cart.mv.in_(Unit.mps);
   final refPowderTempC = cart.powderTemp.in_(Unit.celsius);
@@ -94,8 +96,8 @@ DetailsTableData _buildDetails(
     cart.powderSensitivity.in_(Unit.fraction),
   );
 
-  // Zero MV
-  final zeroAtmo = cart.atmo ?? atmo;
+  // Zero MV - використовуємо zeroConditions замість cart.atmo
+  final zeroAtmo = zeroConditions.atmo;
   final zeroPowderTempC = zeroUseDiffTemp
       ? zeroAtmo.powderTemp.in_(Unit.celsius)
       : zeroAtmo.temperature.in_(Unit.celsius);
@@ -150,7 +152,11 @@ DetailsTableData _buildDetails(
         : null,
     zeroMv: fmtV(zeroMvMps),
     currentMv: fmtV(currentMvMps),
-    zeroDist: fmtWithAcc(cart.zeroDistance, units.distance, FC.zeroDistance),
+    zeroDist: fmtWithAcc(
+      zeroConditions.distance,
+      units.distance,
+      FC.zeroDistance,
+    ),
     bulletLen: lenInch > 0
         ? fmtWithAcc(proj.length, units.length, FC.bulletLength)
         : null,

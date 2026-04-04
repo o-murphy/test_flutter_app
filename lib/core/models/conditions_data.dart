@@ -136,19 +136,39 @@ class Conditions {
   final double? latitudeDeg;
   final double? azimuthDeg;
 
-  Conditions({
-    this.winds = const [],
-    this.usePowderSensitivity = false,
-    this.useDiffPowderTemp = false,
-    this.useCoriolis = false,
+  const Conditions({
+    required this.atmo,
+    required this.distance,
+    required this.lookAngle,
+    required this.winds,
+    required this.usePowderSensitivity,
+    required this.useDiffPowderTemp,
+    required this.useCoriolis,
     this.latitudeDeg,
     this.azimuthDeg,
+  });
+
+  factory Conditions.withDefaults({
+    List<WindData> winds = const [],
+    bool usePowderSensitivity = false,
+    bool useDiffPowderTemp = false,
+    bool useCoriolis = false,
+    double? latitudeDeg,
+    double? azimuthDeg,
     AtmoData? atmo,
     Distance? distance,
     Angular? lookAngle,
-  }) : atmo = atmo ?? AtmoData.icao(),
-       distance = distance ?? Distance(300.0, Unit.meter),
-       lookAngle = lookAngle ?? Angular(0.0, Unit.radian);
+  }) {
+    return Conditions(
+      winds: winds,
+      useCoriolis: useCoriolis,
+      usePowderSensitivity: usePowderSensitivity,
+      useDiffPowderTemp: useDiffPowderTemp,
+      atmo: atmo ?? AtmoData.icao(),
+      distance: distance ?? Distance(100.0, Unit.meter),
+      lookAngle: lookAngle ?? Angular(0.0, Unit.radian),
+    );
+  }
 
   Atmo toAtmo() => Atmo(
     altitude: atmo.altitude,
@@ -197,7 +217,7 @@ class Conditions {
   static Conditions fromJson(Map<String, dynamic> json) {
     final atmo = json['atmo'] as Map;
 
-    return Conditions(
+    return Conditions.withDefaults(
       atmo: AtmoData.fromJson(atmo),
       winds: (json['winds'] as List)
           .map((w) => WindData.fromJson(w as Map))

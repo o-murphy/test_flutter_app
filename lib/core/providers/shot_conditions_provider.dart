@@ -9,7 +9,7 @@ class ShotConditionsNotifier extends AsyncNotifier<Conditions> {
     final storage = ref.read(appStorageProvider);
     final conditions = await storage.loadConditions();
 
-    Conditions loaded = conditions ?? Conditions();
+    Conditions loaded = conditions ?? Conditions.withDefaults();
     final laDeg = loaded.lookAngle.in_(Unit.degree);
     if (laDeg.abs() > 45) {
       loaded = loaded.copyWith(lookAngle: Angular(0.0, Unit.degree));
