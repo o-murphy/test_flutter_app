@@ -1,3 +1,4 @@
+import 'package:eballistica/core/solver/conditions.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:eballistica/core/solver/shot.dart';
@@ -15,18 +16,6 @@ class ShotProfile {
 
   // ── Embedded у JSON профілю ───────────────────────────────────────────────
   final Rifle rifle;
-  final AtmoData conditions;
-  final List<WindData> winds;
-  final Angular lookAngle;
-  final double? latitudeDeg;
-  final double? azimuthDeg;
-  final Distance targetDistance;
-
-  /// Whether to apply powder sensitivity correction to the current shot.
-  final bool usePowderSensitivity;
-
-  /// Whether the current shot uses a separately-entered powder temperature.
-  final bool useDiffPowderTemp;
 
   // ── References до бібліотек (тільки id у JSON) ────────────────────────────
   final String? cartridgeId;
@@ -48,18 +37,9 @@ class ShotProfile {
     this.sightId,
     this.cartridge,
     this.sight,
-    required this.conditions,
-    this.winds = const [],
-    required this.lookAngle,
-    this.latitudeDeg,
-    this.azimuthDeg,
-    this.usePowderSensitivity = false,
-    this.useDiffPowderTemp = false,
-    Distance? targetDistance,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : id = id ?? const Uuid().v4(),
-       targetDistance = targetDistance ?? Distance(300.0, Unit.meter),
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
@@ -75,15 +55,7 @@ class ShotProfile {
 
   // ── toShot ────────────────────────────────────────────────────────────────
 
-  Shot toShot() => Shot(
-    weapon: rifle.toWeapon(),
-    ammo: cartridge!.toAmmo(),
-    lookAngle: lookAngle,
-    atmo: conditions.toAtmo(),
-    winds: winds.map((w) => w.toWind()).toList(),
-    latitudeDeg: latitudeDeg,
-    azimuthDeg: azimuthDeg,
-  );
+  Shot toShot() => Shot(weapon: rifle.toWeapon(), ammo: cartridge!.toAmmo());
 
   Shot toZeroShot(Angular lookAngle, Weapon weapon) {
     final zeroAmmo = Ammo(
@@ -93,57 +65,45 @@ class ShotProfile {
       tempModifier: cartridge!.powderSensitivity.in_(Unit.fraction),
       usePowderSensitivity: cartridge!.usePowderSensitivity,
     );
-    final zeroAtmo = cartridge!.conditions ?? conditions;
+    final zeroAtmo = cartridge!.conditions;
 
     return Shot(
       weapon: weapon,
       ammo: zeroAmmo,
       lookAngle: lookAngle,
-      atmo: zeroAtmo.toAtmo(),
+      atmo: zeroAtmo?.toAtmo() ?? Atmo.icao(),
       winds: const [],
     );
   }
 
-  Shot toCurrentShot() {
+  Shot toCurrentShot(Conditions conditions) {
     final currentAmmo = Ammo(
       dm: cartridge!.projectile.toDragModel(),
       mv: cartridge!.mv,
-      powderTemp: conditions.powderTemp,
+      powderTemp: conditions.atmo.powderTemp,
       tempModifier: cartridge!.powderSensitivity.in_(Unit.fraction),
-      usePowderSensitivity: usePowderSensitivity,
+      usePowderSensitivity: conditions.usePowderSensitivity,
     );
 
     return Shot(
       weapon: rifle.toWeapon(),
       ammo: currentAmmo,
-      lookAngle: lookAngle,
+      lookAngle: conditions.lookAngle,
       atmo: conditions.toAtmo(),
-      winds: winds.map((w) => w.toWind()).toList(),
-      latitudeDeg: latitudeDeg,
-      azimuthDeg: azimuthDeg,
+      winds: conditions.winds.map((w) => w.toWind()).toList(),
+      latitudeDeg: conditions.latitudeDeg,
+      azimuthDeg: conditions.azimuthDeg,
     );
   }
 
   // ── copyWith ──────────────────────────────────────────────────────────────
-
   ShotProfile copyWith({
     String? name,
     Rifle? rifle,
-    // Cartridge: передаємо об'єкт — cartridgeId оновлюється автоматично.
-    // clearCartridge: true — обнуляє і cartridge, і cartridgeId.
     Cartridge? cartridge,
     bool clearCartridge = false,
-    // Sight: аналогічно.
     Sight? sight,
     bool clearSight = false,
-    AtmoData? conditions,
-    List<WindData>? winds,
-    Angular? lookAngle,
-    double? latitudeDeg,
-    double? azimuthDeg,
-    bool? usePowderSensitivity,
-    bool? useDiffPowderTemp,
-    Distance? targetDistance,
   }) => ShotProfile(
     id: id,
     name: name ?? this.name,
@@ -152,41 +112,22 @@ class ShotProfile {
     cartridge: clearCartridge ? null : (cartridge ?? this.cartridge),
     sightId: clearSight ? null : (sight?.id ?? sightId),
     sight: clearSight ? null : (sight ?? this.sight),
-    conditions: conditions ?? this.conditions,
-    winds: winds ?? this.winds,
-    lookAngle: lookAngle ?? this.lookAngle,
-    latitudeDeg: latitudeDeg ?? this.latitudeDeg,
-    azimuthDeg: azimuthDeg ?? this.azimuthDeg,
-    usePowderSensitivity: usePowderSensitivity ?? this.usePowderSensitivity,
-    useDiffPowderTemp: useDiffPowderTemp ?? this.useDiffPowderTemp,
-    targetDistance: targetDistance ?? this.targetDistance,
     createdAt: createdAt,
     updatedAt: DateTime.now(),
   );
 
   // ── JSON ──────────────────────────────────────────────────────────────────
-
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
     'rifle': rifle.toJson(),
     if (cartridgeId != null) 'cartridgeId': cartridgeId,
     if (sightId != null) 'sightId': sightId,
-    'conditions': conditions.toJson(),
-    'winds': winds.map((w) => w.toJson()).toList(),
-    'lookAngle': lookAngle.in_(StorageUnits.profileLookAngle),
-    if (latitudeDeg != null) 'latitudeDeg': latitudeDeg,
-    if (azimuthDeg != null) 'azimuthDeg': azimuthDeg,
-    'targetDistance': targetDistance.in_(StorageUnits.profileTargetDistance),
-    'usePowderSensitivity': usePowderSensitivity,
-    'useDiffPowderTemp': useDiffPowderTemp,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
   };
 
   factory ShotProfile.fromJson(Map<String, dynamic> json) {
-    final c = json['conditions'] as Map;
-
     // ── Sight: new format (sightId) або backward-compat (embedded sight) ────
     final sightIdNew = json['sightId'] as String?;
     Sight? inlineSight;
@@ -208,8 +149,6 @@ class ShotProfile {
     if (cartridgeIdNew == null) {
       final cartridgeJson = json['cartridge'] as Map<String, dynamic>?;
       if (cartridgeJson != null) {
-        // Старий формат: cartridge embedded + zero дані на рівні профілю.
-        // Переносимо zero поля на cartridge під час міграції.
         final baseCartridge = Cartridge.fromJson(cartridgeJson);
 
         final oldZeroDistJson = json['zeroDistance'] as num?;
@@ -254,24 +193,6 @@ class ShotProfile {
       cartridge: inlineCartridge,
       sightId: resolvedSightId,
       sight: inlineSight,
-      conditions: AtmoData.fromJson(c),
-      winds: (json['winds'] as List)
-          .map((w) => WindData.fromJson(w as Map))
-          .toList(),
-      lookAngle: Angular(
-        (json['lookAngle'] as num).toDouble(),
-        StorageUnits.profileLookAngle,
-      ),
-      latitudeDeg: (json['latitudeDeg'] as num?)?.toDouble(),
-      azimuthDeg: (json['azimuthDeg'] as num?)?.toDouble(),
-      targetDistance: json['targetDistance'] != null
-          ? Distance(
-              (json['targetDistance'] as num).toDouble(),
-              StorageUnits.profileTargetDistance,
-            )
-          : null,
-      usePowderSensitivity: json['usePowderSensitivity'] as bool? ?? false,
-      useDiffPowderTemp: json['useDiffPowderTemp'] as bool? ?? false,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );

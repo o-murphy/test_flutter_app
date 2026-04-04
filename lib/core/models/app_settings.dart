@@ -15,7 +15,6 @@ class AppSettings {
   final double homeTableStep;
   final TableConfig tableConfig;
   final bool showSubsonicTransition;
-  final bool enableCoriolis;
   final bool enableDerivation;
   final bool enableAerodynamicJump;
   final bool pressureDependsOnAltitude;
@@ -34,7 +33,6 @@ class AppSettings {
     this.homeTableStep = 100,
     this.tableConfig = const TableConfig(),
     this.showSubsonicTransition = false,
-    this.enableCoriolis = false,
     this.enableDerivation = false,
     this.enableAerodynamicJump = false,
     this.pressureDependsOnAltitude = false,
@@ -73,7 +71,6 @@ class AppSettings {
     tableConfig: tableConfig ?? this.tableConfig,
     showSubsonicTransition:
         showSubsonicTransition ?? this.showSubsonicTransition,
-    enableCoriolis: enableCoriolis ?? this.enableCoriolis,
     enableDerivation: enableDerivation ?? this.enableDerivation,
     enableAerodynamicJump: enableAerodynamicJump ?? this.enableAerodynamicJump,
     pressureDependsOnAltitude:
@@ -114,7 +111,6 @@ class AppSettings {
     'chartDistanceStep': chartDistanceStep,
     'homeTableStep': homeTableStep,
     'showSubsonicTransition': showSubsonicTransition,
-    'enableCoriolis': enableCoriolis,
     'enableDerivation': enableDerivation,
     'enableAerodynamicJump': enableAerodynamicJump,
     'pressureDependsOnAltitude': pressureDependsOnAltitude,
@@ -145,7 +141,6 @@ class AppSettings {
       chartDistanceStep: d('chartDistanceStep', 100),
       homeTableStep: d('homeTableStep', 100),
       showSubsonicTransition: b('showSubsonicTransition', true),
-      enableCoriolis: b('enableCoriolis', false),
       enableDerivation: b('enableDerivation', false),
       enableAerodynamicJump: b('enableAerodynamicJump', false),
       pressureDependsOnAltitude: b('pressureDependsOnAltitude', false),

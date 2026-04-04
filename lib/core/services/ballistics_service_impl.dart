@@ -1,3 +1,4 @@
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:flutter/foundation.dart' show compute;
 
 import 'package:eballistica/core/domain/ballistics_service.dart';
@@ -10,13 +11,13 @@ import 'package:eballistica/core/solver/unit.dart';
 
 // ── Isolate top-level functions ──────────────────────────────────────────────
 
-// (profile, stepM, cachedZeroElevationRad?)
-typedef _TableCalcArgs = (ShotProfile, double, double?);
+// (profile, conditions, stepM, cachedZeroElevationRad?)
+typedef _TableCalcArgs = (ShotProfile, Conditions, double, double?);
 // (hitResult, freshZeroElevationRad?)
 typedef _TableCalcResult = (HitResult?, double?);
 
 _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
-  final (profile, stepM, cachedZeroElevRad) = args;
+  final (profile, conditions, stepM, cachedZeroElevRad) = args;
   try {
     final calc = Calculator();
     final cartridge = profile.cartridge!;
@@ -29,7 +30,7 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
     } else {
       Shot zeroShot;
       try {
-        zeroShot = profile.toZeroShot(profile.lookAngle, weapon);
+        zeroShot = profile.toZeroShot(conditions.lookAngle, weapon);
         calc.setWeaponZero(zeroShot, cartridge.zeroDistance);
       } catch (_) {
         zeroShot = profile.toZeroShot(Angular(0.0, Unit.radian), weapon);
@@ -39,7 +40,7 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
     }
 
     final result = calc.fire(
-      shot: profile.toCurrentShot(),
+      shot: profile.toCurrentShot(conditions), // ← передаємо conditions
       trajectoryRange: Distance(2000.0, Unit.meter),
       trajectoryStep: Distance(stepM, Unit.meter),
       filterFlags:
@@ -52,13 +53,14 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
   }
 }
 
-// (profile, targetDistM, chartStepM, cachedZeroElevationRad?)
-typedef _HomeCalcArgs = (ShotProfile, double, double, double?);
+// (profile, conditions, targetDistM, chartStepM, cachedZeroElevationRad?)
+typedef _HomeCalcArgs = (ShotProfile, Conditions, double, double, double?);
 // (hitResult, freshZeroElevationRad?)
 typedef _HomeCalcResult = (HitResult?, double?);
 
 _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
-  final (profile, targetDistM, chartStepM, cachedZeroElevRad) = args;
+  final (profile, conditions, targetDistM, chartStepM, cachedZeroElevRad) =
+      args;
   final internalStepM = chartStepM < 1.0 ? chartStepM : 1.0;
   try {
     final calc = Calculator();
@@ -72,7 +74,7 @@ _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
     } else {
       Shot zeroShot;
       try {
-        zeroShot = profile.toZeroShot(profile.lookAngle, weapon);
+        zeroShot = profile.toZeroShot(conditions.lookAngle, weapon);
         calc.setWeaponZero(zeroShot, cartridge.zeroDistance);
       } catch (_) {
         zeroShot = profile.toZeroShot(Angular(0.0, Unit.radian), weapon);
@@ -81,7 +83,7 @@ _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
       freshZeroElevRad = weapon.zeroElevation.in_(Unit.radian);
     }
 
-    final shot = profile.toCurrentShot();
+    final shot = profile.toCurrentShot(conditions);
 
     final targetElev = calc.barrelElevationForTarget(
       shot,
@@ -126,11 +128,13 @@ class BallisticsServiceImpl implements BallisticsService {
   @override
   Future<BallisticsResult> calculateTable(
     ShotProfile profile,
+    Conditions conditions, // ← додаємо параметр conditions
     TableCalcOptions opts, {
     double? cachedZeroElevRad,
   }) async {
     final (hit, freshZero) = await compute(_runTableCalculation, (
       profile,
+      conditions,
       opts.stepM,
       cachedZeroElevRad,
     ));
@@ -144,11 +148,13 @@ class BallisticsServiceImpl implements BallisticsService {
   @override
   Future<BallisticsResult> calculateForTarget(
     ShotProfile profile,
+    Conditions conditions, // ← додаємо параметр conditions
     TargetCalcOptions opts, {
     double? cachedZeroElevRad,
   }) async {
     final (hit, freshZero) = await compute(_runHomeCalculation, (
       profile,
+      conditions,
       opts.targetDistM,
       opts.chartStepM,
       cachedZeroElevRad,

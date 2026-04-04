@@ -1,12 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/core/models/cartridge.dart';
-import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/models/rifle.dart';
 import 'package:eballistica/core/models/seed_data.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
 import 'package:eballistica/core/models/sight.dart';
-import 'package:eballistica/core/solver/unit.dart';
 import 'library_provider.dart';
 import 'profile_library_provider.dart';
 import 'storage_provider.dart';
@@ -26,12 +24,6 @@ class ShotProfileNotifier extends AsyncNotifier<ShotProfile> {
           : (profiles.isNotEmpty ? profiles.first : seedShotProfile);
     } else {
       loaded = profiles.isNotEmpty ? profiles.first : seedShotProfile;
-    }
-
-    // Clamp look angle to ±45° — corrupted values cause zero-finding to fail.
-    final laDeg = loaded.lookAngle.in_(Unit.degree);
-    if (laDeg.abs() > 45) {
-      loaded = loaded.copyWith(lookAngle: Angular(0.0, Unit.degree));
     }
 
     return _resolve(loaded);
@@ -94,14 +86,6 @@ class ShotProfileNotifier extends AsyncNotifier<ShotProfile> {
         cartridge: cartridge,
         sightId: sightId,
         sight: sight,
-        conditions: profile.conditions,
-        winds: profile.winds,
-        lookAngle: profile.lookAngle,
-        latitudeDeg: profile.latitudeDeg,
-        azimuthDeg: profile.azimuthDeg,
-        usePowderSensitivity: profile.usePowderSensitivity,
-        useDiffPowderTemp: profile.useDiffPowderTemp,
-        targetDistance: profile.targetDistance,
         createdAt: profile.createdAt,
         updatedAt: profile.updatedAt,
       );
@@ -118,14 +102,6 @@ class ShotProfileNotifier extends AsyncNotifier<ShotProfile> {
       cartridge: cartridge,
       sightId: sightId,
       sight: sight,
-      conditions: profile.conditions,
-      winds: profile.winds,
-      lookAngle: profile.lookAngle,
-      latitudeDeg: profile.latitudeDeg,
-      azimuthDeg: profile.azimuthDeg,
-      usePowderSensitivity: profile.usePowderSensitivity,
-      useDiffPowderTemp: profile.useDiffPowderTemp,
-      targetDistance: profile.targetDistance,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,
     );
@@ -139,43 +115,6 @@ class ShotProfileNotifier extends AsyncNotifier<ShotProfile> {
 
   Future<void> selectCartridge(Cartridge c) =>
       _update((p) => p.copyWith(cartridge: c));
-
-  Future<void> updateConditions(AtmoData atmo) =>
-      _update((p) => p.copyWith(conditions: atmo));
-
-  Future<void> updateWinds(List<WindData> winds) =>
-      _update((p) => p.copyWith(winds: winds));
-
-  Future<void> updateLookAngle(double degrees) =>
-      _update((p) => p.copyWith(lookAngle: Angular(degrees, Unit.degree)));
-
-  Future<void> updateTargetDistance(double meters) =>
-      _update((p) => p.copyWith(targetDistance: Distance(meters, Unit.meter)));
-
-  Future<void> updateUsePowderSensitivity(bool value) =>
-      _update((p) => p.copyWith(usePowderSensitivity: value));
-
-  Future<void> updateUseDiffPowderTemp(bool value) =>
-      _update((p) => p.copyWith(useDiffPowderTemp: value));
-
-  Future<void> updateWindSpeed(double mps) => _update((p) {
-    final existing = p.winds;
-    final dir = existing.isNotEmpty
-        ? existing.first.directionFrom
-        : Angular(0.0, Unit.degree);
-    final until = existing.isNotEmpty
-        ? existing.first.untilDistance
-        : Distance(9999.0, Unit.meter);
-    return p.copyWith(
-      winds: [
-        WindData(
-          velocity: Velocity(mps, Unit.mps),
-          directionFrom: dir,
-          untilDistance: until,
-        ),
-      ],
-    );
-  });
 
   /// Switches to [profile], restoring its own stored runtime state.
   Future<void> selectProfile(ShotProfile profile) async {

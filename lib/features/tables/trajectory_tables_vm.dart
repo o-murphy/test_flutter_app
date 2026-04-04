@@ -1,3 +1,4 @@
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/models/unit_settings.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,10 +8,12 @@ import 'package:eballistica/core/formatting/unit_formatter.dart';
 import 'package:eballistica/core/providers/formatter_provider.dart';
 import 'package:eballistica/core/providers/service_providers.dart';
 import 'package:eballistica/core/providers/settings_provider.dart';
+import 'package:eballistica/core/providers/shot_conditions_provider.dart'; // ← додати
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
+import 'package:eballistica/core/solver/conditions.dart'; // ← додати
 import 'package:eballistica/core/solver/trajectory_data.dart';
 import 'package:eballistica/core/solver/unit.dart';
 import 'package:eballistica/shared/models/formatted_row.dart';
@@ -53,10 +56,18 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
 
   Future<void> recalculate() async {
     final profile = ref.read(shotProfileProvider).value;
+    final conditions = ref
+        .read(shotConditionsProvider)
+        .value; // ← додаємо conditions
     final settings = ref.read(settingsProvider).value;
     final formatter = ref.read(unitFormatterProvider);
 
-    if (profile == null || settings == null) {
+    if (profile == null || conditions == null || settings == null) {
+      state = const AsyncData(TrajectoryTablesUiEmpty());
+      return;
+    }
+
+    if (profile.cartridge == null) {
       state = const AsyncData(TrajectoryTablesUiEmpty());
       return;
     }
@@ -73,13 +84,17 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
         stepM: cfg.stepM < 1.0 ? cfg.stepM : 1.0,
       );
 
-      final zeroKey = _buildZeroKey(profile);
+      final zeroKey = _buildZeroKey(
+        profile,
+        conditions,
+      ); // ← передаємо conditions
       final useCache = listEquals(zeroKey, _lastZeroKey);
 
       final result = await ref
           .read(ballisticsServiceProvider)
           .calculateTable(
             profile,
+            conditions, // ← передаємо conditions!
             opts,
             cachedZeroElevRad: useCache ? _cachedZeroElevRad : null,
           );
@@ -91,6 +106,7 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
 
       final uiState = _buildReadyState(
         profile: profile,
+        conditions: conditions, // ← передаємо conditions
         settings: settings,
         formatter: formatter,
         result: result,
@@ -106,6 +122,7 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
 
   TrajectoryTablesUiReady _buildReadyState({
     required ShotProfile profile,
+    required Conditions conditions, // ← додаємо conditions
     required AppSettings settings,
     required UnitFormatter formatter,
     required BallisticsResult result,
@@ -329,12 +346,14 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
 
   // ── Zero key ───────────────────────────────────────────────────────────────
 
-  List<double> _buildZeroKey(ShotProfile profile) {
+  List<double> _buildZeroKey(ShotProfile profile, Conditions conditions) {
     final c = profile.cartridge!;
-    final zeroAtmo = c.conditions ?? profile.conditions;
+    // Використовуємо умови з набою або глобальні умови
+    final zeroAtmo = c.conditions ?? conditions.atmo;
     final r = profile.rifle;
     final proj = c.projectile;
     final zeroUsePowderSens = c.usePowderSensitivity;
+
     return [
       r.sightHeight.in_(Unit.meter),
       r.twist.in_(Unit.inch),
@@ -352,7 +371,7 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
       zeroAtmo.humidity,
       zeroAtmo.powderTemp.in_(Unit.celsius),
       c.zeroDistance.in_(Unit.meter),
-      profile.lookAngle.in_(Unit.radian),
+      conditions.lookAngle.in_(Unit.radian), // ← беремо з conditions!
       zeroUsePowderSens ? 1.0 : 0.0,
       c.useDiffPowderTemp ? 1.0 : 0.0,
     ];

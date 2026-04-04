@@ -39,12 +39,20 @@ final seedSight = Sight(
 
 // ── Seed zero conditions ───────────────────────────────────────────────────────
 
-final _seedZeroConditions = AtmoData(
+final _seedZeroAtmo = AtmoData(
   altitude: Distance(0.0, Unit.meter),
   temperature: Temperature(15.0, Unit.celsius),
   pressure: Pressure(1000.0, Unit.hPa),
   humidity: 0.02,
   powderTemp: Temperature(15.0, Unit.celsius),
+);
+
+final _seedZeroConditions = Conditions(
+  atmo: _seedZeroAtmo,
+  winds: [],
+  lookAngle: Angular(0.0, Unit.degree),
+  usePowderSensitivity: false,
+  useDiffPowderTemp: false,
 );
 
 // ── Projectiles ───────────────────────────────────────────────────────────────
@@ -114,7 +122,7 @@ final seedCartridgeUkrop250 = Cartridge(
   powderTemp: Temperature(29.0, Unit.celsius),
   powderSensitivity: Ratio(0.02, Unit.fraction),
   zeroDistance: Distance(100.0, Unit.meter),
-  conditions: _seedZeroConditions,
+  conditions: _seedZeroAtmo,
   usePowderSensitivity: true,
   useDiffPowderTemp: false,
 );
@@ -127,7 +135,7 @@ final seedCartridgeHornady250 = Cartridge(
   powderTemp: Temperature(15.0, Unit.celsius),
   powderSensitivity: Ratio(0.02, Unit.fraction),
   zeroDistance: Distance(100.0, Unit.meter),
-  conditions: _seedZeroConditions,
+  conditions: _seedZeroAtmo,
   usePowderSensitivity: true,
   useDiffPowderTemp: false,
 );
@@ -140,7 +148,7 @@ final seedCartridgeLapua300 = Cartridge(
   powderTemp: Temperature(15.0, Unit.celsius),
   powderSensitivity: Ratio(0.123, Unit.fraction),
   zeroDistance: Distance(100.0, Unit.meter),
-  conditions: _seedZeroConditions,
+  conditions: _seedZeroAtmo,
   usePowderSensitivity: true,
   useDiffPowderTemp: false,
 );
@@ -153,7 +161,7 @@ final seedCartridgeSts285EldM = Cartridge(
   powderTemp: Temperature(15.0, Unit.celsius),
   powderSensitivity: Ratio(0.02, Unit.fraction),
   zeroDistance: Distance(100.0, Unit.meter),
-  conditions: _seedZeroConditions,
+  conditions: _seedZeroAtmo,
   usePowderSensitivity: true,
   useDiffPowderTemp: false,
 );
@@ -177,11 +185,6 @@ final seedShotProfile = ShotProfile(
   cartridge: seedCartridgeUkrop250,
   sightId: seedSight.id,
   sight: seedSight,
-  conditions: _seedZeroConditions,
-  winds: [],
-  lookAngle: Angular(0.0, Unit.degree),
-  usePowderSensitivity: true,
-  useDiffPowderTemp: false,
 );
 
 final seedShotProfileHornady = ShotProfile(
@@ -192,11 +195,6 @@ final seedShotProfileHornady = ShotProfile(
   cartridge: seedCartridgeHornady250,
   sightId: seedSight.id,
   sight: seedSight,
-  conditions: _seedZeroConditions,
-  winds: [],
-  lookAngle: Angular(0.0, Unit.degree),
-  usePowderSensitivity: true,
-  useDiffPowderTemp: false,
 );
 
 final seedShotProfileLapua300 = ShotProfile(
@@ -207,11 +205,6 @@ final seedShotProfileLapua300 = ShotProfile(
   cartridge: seedCartridgeLapua300,
   sightId: seedSight.id,
   sight: seedSight,
-  conditions: _seedZeroConditions,
-  winds: [],
-  lookAngle: Angular(0.0, Unit.degree),
-  usePowderSensitivity: true,
-  useDiffPowderTemp: false,
 );
 
 final seedShotProfiles = [

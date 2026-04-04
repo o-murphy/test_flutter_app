@@ -1,6 +1,8 @@
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/core/providers/settings_provider.dart';
+import 'package:eballistica/core/providers/shot_conditions_provider.dart';
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
@@ -58,13 +60,17 @@ class DetailsTableData {
 
 // ── Private builder ──────────────────────────────────────────────────────────
 
-DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
+DetailsTableData _buildDetails(
+  ShotProfile profile,
+  Conditions conditions,
+  AppSettings settings,
+) {
   final units = settings.units;
   final rifle = profile.rifle;
   final cart = profile.cartridge!;
   final proj = cart.projectile;
-  final conds = profile.conditions;
-  final winds = profile.winds;
+  final atmo = conditions.atmo;
+  final winds = conditions.winds;
 
   final twistInch = rifle.twist.in_(Unit.inch);
   final weightGr = proj.weight.in_(Unit.grain);
@@ -72,9 +78,10 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
   final lenInch = proj.length.in_(Unit.inch);
 
   // Powder sensitivity — separate flags for zero and current
-  final currentPowderSensOn = profile.usePowderSensitivity;
+  final currentPowderSensOn = conditions.usePowderSensitivity;
   final zeroPowderSensOn = cart.usePowderSensitivity;
-  final currentUseDiffTemp = currentPowderSensOn && profile.useDiffPowderTemp;
+  final currentUseDiffTemp =
+      currentPowderSensOn && conditions.useDiffPowderTemp;
   final zeroUseDiffTemp = zeroPowderSensOn && cart.useDiffPowderTemp;
 
   final refMvMps = cart.mv.in_(Unit.mps);
@@ -88,7 +95,7 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
   );
 
   // Zero MV
-  final zeroAtmo = cart.conditions ?? conds;
+  final zeroAtmo = cart.conditions ?? atmo;
   final zeroPowderTempC = zeroUseDiffTemp
       ? zeroAtmo.powderTemp.in_(Unit.celsius)
       : zeroAtmo.temperature.in_(Unit.celsius);
@@ -96,12 +103,13 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
 
   // Current MV
   final currTempC = currentUseDiffTemp
-      ? conds.powderTemp.in_(Unit.celsius)
-      : conds.temperature.in_(Unit.celsius);
+      ? atmo.powderTemp.in_(Unit.celsius)
+      : atmo.temperature.in_(Unit.celsius);
   final currentMvMps = currentPowderSensOn ? mvAtTempC(currTempC) : refMvMps;
 
   // Gyrostability (Miller)
-  double sg = profile.toCurrentShot().calculateStabilityCoefficient();
+  final currentShot = profile.toCurrentShot(conditions);
+  double sg = currentShot.calculateStabilityCoefficient();
 
   // Sectional density + form factor
   final sd = (weightGr > 0 && diamInch > 0)
@@ -159,13 +167,13 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
     sectionalDensity: sd?.toStringAsFixed(3),
     gyroStability: sg.toStringAsFixed(2),
     temperature: () {
-      final t = conds.temperature.in_(units.temperature);
+      final t = atmo.temperature.in_(units.temperature);
       return '${t.toStringAsFixed(FC.temperature.accuracyFor(units.temperature))} ${units.temperature.symbol}';
     }(),
     humidity:
-        '${(conds.humidity.convert(Unit.fraction, Unit.percent)).toStringAsFixed(0)} %',
+        '${(atmo.humidity.convert(Unit.fraction, Unit.percent)).toStringAsFixed(0)} %',
     pressure: () {
-      final p = conds.pressure.in_(units.pressure);
+      final p = atmo.pressure.in_(units.pressure);
       return '${p.toStringAsFixed(FC.pressure.accuracyFor(units.pressure))} ${units.pressure.symbol}';
     }(),
     windSpeed: winds.isNotEmpty
@@ -184,9 +192,11 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
 
 final detailsTableMvProvider = Provider<DetailsTableData?>((ref) {
   final profile = ref.watch(shotProfileProvider).value;
+  final conditions = ref.watch(shotConditionsProvider).value;
   final settings = ref.watch(settingsProvider).value;
 
-  if (profile == null || settings == null) return null;
+  if (profile == null || conditions == null || settings == null) return null;
+  if (profile.cartridge == null) return null;
 
-  return _buildDetails(profile, settings);
+  return _buildDetails(profile, conditions, settings);
 });

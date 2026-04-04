@@ -1,6 +1,7 @@
 // ignore_for_file: unnecessary_null_comparison
 
 import 'dart:async';
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/solver/munition.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +10,7 @@ import 'package:eballistica/core/formatting/unit_formatter.dart';
 import 'package:eballistica/core/providers/formatter_provider.dart';
 import 'package:eballistica/core/providers/service_providers.dart';
 import 'package:eballistica/core/providers/settings_provider.dart';
+import 'package:eballistica/core/providers/shot_conditions_provider.dart'; // ← додати
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
@@ -66,6 +68,8 @@ class ShotDetailsReady extends ShotDetailsUiState {
 }
 
 class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
+  double? _cachedZeroElevRad;
+
   @override
   Future<ShotDetailsUiState> build() async {
     return _calculate();
@@ -87,20 +91,40 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
   Future<ShotDetailsUiState> _calculate() async {
     try {
       final profile = await ref.read(shotProfileProvider.future);
+      final conditions = await ref.read(
+        shotConditionsProvider.future,
+      ); // ← додаємо conditions
       final settings = await ref.read(settingsProvider.future);
       final formatter = ref.read(unitFormatterProvider);
 
+      if (profile.cartridge == null) {
+        return ShotDetailsError('No cartridge selected');
+      }
+
       final opts = TargetCalcOptions(
-        targetDistM: profile.targetDistance.in_(Unit.meter),
+        targetDistM: conditions.distance.in_(Unit.meter), // ← з conditions!
         chartStepM: settings.chartDistanceStep,
       );
 
       final result = await ref
           .read(ballisticsServiceProvider)
-          .calculateForTarget(profile, opts);
+          .calculateForTarget(
+            profile,
+            conditions, // ← передаємо conditions!
+            opts,
+            cachedZeroElevRad: _cachedZeroElevRad,
+          );
+
+      _cachedZeroElevRad = result.zeroElevationRad;
       final hit = result.hitResult;
 
-      return _buildReadyState(profile, settings, formatter, hit);
+      return _buildReadyState(
+        profile,
+        conditions, // ← передаємо conditions
+        settings,
+        formatter,
+        hit,
+      );
     } catch (e) {
       return ShotDetailsError(e.toString());
     }
@@ -108,12 +132,13 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
 
   ShotDetailsReady _buildReadyState(
     ShotProfile profile,
+    Conditions conditions, // ← додаємо conditions
     AppSettings settings,
     UnitFormatter formatter,
     HitResult hit,
   ) {
     final cartridge = profile.cartridge!;
-    final targetDistM = profile.targetDistance.in_(Unit.meter);
+    final targetDistM = conditions.distance.in_(Unit.meter); // ← з conditions!
     final traj = hit.trajectory;
     final atTarget = hit.getAtDistance(Distance(targetDistM, Unit.meter));
 
@@ -121,9 +146,10 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
     final refMvMps = cartridge.mv.in_(Unit.mps);
     final refPowderTempC = cartridge.powderTemp.in_(Unit.celsius);
 
-    final currentPowderSensOn = profile.usePowderSensitivity;
+    final currentPowderSensOn = conditions.usePowderSensitivity;
     final zeroPowderSensOn = cartridge.usePowderSensitivity;
-    final currentUseDiffTemp = currentPowderSensOn && profile.useDiffPowderTemp;
+    final currentUseDiffTemp =
+        currentPowderSensOn && conditions.useDiffPowderTemp;
     final zeroUseDiffTemp = zeroPowderSensOn && cartridge.useDiffPowderTemp;
 
     double mvAtTempC(double tCurC) => velocityForPowderTemp(
@@ -133,15 +159,15 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
       cartridge.powderSensitivity.in_(Unit.fraction),
     );
 
-    final conditions = profile.conditions;
+    final atmo = conditions.atmo;
     final currentPowderTempC = currentUseDiffTemp
-        ? conditions.powderTemp.in_(Unit.celsius)
-        : conditions.temperature.in_(Unit.celsius);
+        ? atmo.powderTemp.in_(Unit.celsius)
+        : atmo.temperature.in_(Unit.celsius);
     final currentMvMps = currentPowderSensOn
         ? mvAtTempC(currentPowderTempC)
         : refMvMps;
 
-    final zeroAtmo = cartridge.conditions ?? conditions;
+    final zeroAtmo = cartridge.conditions ?? atmo;
     final zeroPowderTempC = zeroUseDiffTemp
         ? zeroAtmo.powderTemp.in_(Unit.celsius)
         : zeroAtmo.temperature.in_(Unit.celsius);
@@ -153,7 +179,8 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
         : null;
 
     // Gyroscopic stability
-    final sg = profile.toCurrentShot().calculateStabilityCoefficient();
+    final currentShot = profile.toCurrentShot(conditions);
+    final sg = currentShot.calculateStabilityCoefficient();
 
     // Trajectory markers
     final firstPoint = traj.isNotEmpty ? traj[0] : null;
@@ -176,7 +203,7 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
           : formatter.energy(firstPoint.energy),
       energyAtTarget: formatter.energy(atTarget.energy),
       gyroscopicStability: sg.toStringAsFixed(2),
-      shotDistance: formatter.distance(profile.targetDistance),
+      shotDistance: formatter.distance(conditions.distance), // ← з conditions!
       heightAtTarget: formatter.drop(atTarget.height),
       maxHeightDistance: apexPoint == null
           ? '—'

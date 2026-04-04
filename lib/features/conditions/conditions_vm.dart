@@ -1,16 +1,15 @@
+import 'package:eballistica/core/providers/settings_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/core/formatting/unit_formatter.dart';
 import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/providers/formatter_provider.dart';
-import 'package:eballistica/core/providers/settings_provider.dart';
+import 'package:eballistica/core/providers/shot_conditions_provider.dart';
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
-import 'package:eballistica/core/models/unit_settings.dart';
-import 'package:eballistica/core/solver/munition.dart'
-    show velocityForPowderTemp;
+import 'package:eballistica/core/solver/munition.dart';
 import 'package:eballistica/core/solver/unit.dart';
 
 // ── Data classes ─────────────────────────────────────────────────────────────
@@ -48,11 +47,15 @@ class ConditionsUiState {
   final ConditionsField pressure;
   final ConditionsField? powderTemperature;
 
-  // Switches
+  // Switches (тепер з Conditions, не з Settings!)
   final bool powderSensOn;
   final bool useDiffPowderTemp;
   final bool coriolisOn;
   final bool derivationOn;
+
+  // Latitude/Azimuth для Coriolis
+  final double? latitudeDeg;
+  final double? azimuthDeg;
 
   // Readonly computed
   final String? mvAtPowderTemp;
@@ -68,6 +71,8 @@ class ConditionsUiState {
     required this.useDiffPowderTemp,
     required this.coriolisOn,
     required this.derivationOn,
+    this.latitudeDeg,
+    this.azimuthDeg,
     this.mvAtPowderTemp,
     this.powderSensitivity,
   });
@@ -78,105 +83,115 @@ class ConditionsUiState {
 class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
   @override
   Future<ConditionsUiState> build() async {
-    final profile = ref.watch(shotProfileProvider).value;
-    final settings = ref.watch(settingsProvider).value;
+    final conditions = await ref.watch(shotConditionsProvider.future);
+    final profile = await ref.watch(shotProfileProvider.future);
+    final settings = await ref.watch(settingsProvider.future);
     final formatter = ref.watch(unitFormatterProvider);
 
-    if (profile == null || settings == null) {
-      return _emptyState(formatter, settings);
-    }
-
-    return _buildState(profile, settings, formatter);
+    return _buildState(profile, conditions, settings, formatter);
   }
 
+  // Оновлення окремих полів
   Future<void> updateTemperature(double rawCelsius) async {
-    _updateAtmo(tempC: rawCelsius);
+    await _updateAtmo(tempC: rawCelsius);
   }
 
   Future<void> updateAltitude(double rawMeters) async {
-    _updateAtmo(altM: rawMeters);
+    await _updateAtmo(altM: rawMeters);
   }
 
   Future<void> updateHumidity(double rawPercent) async {
-    _updateAtmo(humFrac: rawPercent.convert(Unit.percent, Unit.fraction));
+    await _updateAtmo(humFrac: rawPercent.convert(Unit.percent, Unit.fraction));
   }
 
   Future<void> updatePressure(double rawHPa) async {
-    _updateAtmo(pressHPa: rawHPa);
+    await _updateAtmo(pressHPa: rawHPa);
   }
 
   Future<void> updatePowderTemp(double rawCelsius) async {
-    _updateAtmo(powderTempC: rawCelsius);
+    await _updateAtmo(powderTempC: rawCelsius);
   }
 
+  // Оновлення перемикачів (тепер з shotConditionsProvider)
   Future<void> setPowderSensitivity(bool value) async {
     await ref
-        .read(shotProfileProvider.notifier)
+        .read(shotConditionsProvider.notifier)
         .updateUsePowderSensitivity(value);
   }
 
   Future<void> setDiffPowderTemp(bool value) async {
-    await ref.read(shotProfileProvider.notifier).updateUseDiffPowderTemp(value);
+    await ref
+        .read(shotConditionsProvider.notifier)
+        .updateUseDiffPowderTemp(value);
   }
 
   Future<void> setCoriolis(bool value) async {
-    await ref.read(settingsProvider.notifier).setSwitch('coriolis', value);
+    await ref.read(shotConditionsProvider.notifier).updateUseCoriolis(value);
   }
 
   Future<void> setDerivation(bool value) async {
+    // Derivation поки що немає в Conditions, можна додати пізніше
+    // або залишити в settings
     await ref.read(settingsProvider.notifier).setSwitch('derivation', value);
   }
 
-  // ── Private ────────────────────────────────────────────────────────────────
+  Future<void> updateLatitude(double? degrees) async {
+    await ref.read(shotConditionsProvider.notifier).updateLatitude(degrees);
+  }
 
-  void _updateAtmo({
+  Future<void> updateAzimuth(double? degrees) async {
+    await ref.read(shotConditionsProvider.notifier).updateAzimuth(degrees);
+  }
+
+  // ── Private методи ─────────────────────────────────────────────────────────
+
+  Future<void> _updateAtmo({
     double? tempC,
     double? altM,
     double? humFrac,
     double? pressHPa,
     double? powderTempC,
-  }) {
-    final profile = ref.read(shotProfileProvider).value;
-    if (profile == null) return;
+  }) async {
+    final current = ref.read(shotConditionsProvider).value;
+    if (current == null) return;
 
-    final atmo = profile.conditions;
+    final atmo = current.atmo;
+    final useDiffPowderTemp = current.useDiffPowderTemp;
+    final powderSensOn = current.usePowderSensitivity;
 
     final currentTempC = atmo.temperature.in_(Unit.celsius);
     final currentAltM = atmo.altitude.in_(Unit.meter);
     final currentPressHPa = atmo.pressure.in_(Unit.hPa);
     final currentHumFrac = atmo.humidity;
-
-    final powderSensOn = profile.usePowderSensitivity;
-    final useDiffTemp = powderSensOn && profile.useDiffPowderTemp;
-
-    final currentPowderTempC = useDiffTemp
-        ? atmo.powderTemp.in_(Unit.celsius)
-        : currentTempC;
+    final currentPowderTempC = atmo.powderTemp.in_(Unit.celsius);
 
     final newTempC = tempC ?? currentTempC;
+    final newAltM = altM ?? currentAltM;
+    final newPressHPa = pressHPa ?? currentPressHPa;
+    final newHumFrac = humFrac ?? currentHumFrac;
 
-    ref
-        .read(shotProfileProvider.notifier)
-        .updateConditions(
-          AtmoData(
-            temperature: Temperature(newTempC, Unit.celsius),
-            altitude: Distance(altM ?? currentAltM, Unit.meter),
-            pressure: Pressure(pressHPa ?? currentPressHPa, Unit.hPa),
-            humidity: humFrac ?? currentHumFrac,
-            powderTemp: Temperature(
-              useDiffTemp ? (powderTempC ?? currentPowderTempC) : newTempC,
-              Unit.celsius,
-            ),
-          ),
-        );
+    final newPowderTempC =
+        powderTempC ??
+        (useDiffPowderTemp && powderSensOn ? currentPowderTempC : newTempC);
+
+    final newAtmo = AtmoData(
+      temperature: Temperature(newTempC, Unit.celsius),
+      altitude: Distance(newAltM, Unit.meter),
+      pressure: Pressure(newPressHPa, Unit.hPa),
+      humidity: newHumFrac,
+      powderTemp: Temperature(newPowderTempC, Unit.celsius),
+    );
+
+    await ref.read(shotConditionsProvider.notifier).updateAtmo(newAtmo);
   }
 
   ConditionsUiState _buildState(
     ShotProfile profile,
+    Conditions conditions,
     AppSettings settings,
     UnitFormatter formatter,
   ) {
-    final atmo = profile.conditions;
+    final atmo = conditions.atmo;
     final units = settings.units;
 
     final tempRaw = atmo.temperature.in_(Unit.celsius);
@@ -184,8 +199,8 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
     final pressRaw = atmo.pressure.in_(Unit.hPa);
     final humRaw = atmo.humidity;
 
-    final powderSensOn = profile.usePowderSensitivity;
-    final useDiffPowderTemp = powderSensOn && profile.useDiffPowderTemp;
+    final powderSensOn = conditions.usePowderSensitivity;
+    final useDiffPowderTemp = powderSensOn && conditions.useDiffPowderTemp;
 
     final powderTempRaw = useDiffPowderTemp
         ? atmo.powderTemp.in_(Unit.celsius)
@@ -256,8 +271,10 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
           : null,
       powderSensOn: powderSensOn,
       useDiffPowderTemp: useDiffPowderTemp,
-      coriolisOn: settings.enableCoriolis,
-      derivationOn: settings.enableDerivation,
+      coriolisOn: conditions.useCoriolis, // ← з Conditions!
+      derivationOn: settings.enableDerivation, // ← поки з settings
+      latitudeDeg: conditions.latitudeDeg, // ← з Conditions
+      azimuthDeg: conditions.azimuthDeg, // ← з Conditions
       mvAtPowderTemp: powderSensOn ? mvStr : null,
       powderSensitivity: powderSensOn ? sensStr : null,
     );
@@ -299,67 +316,6 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
     final lo = (0.0).convert(rawUnit, dispUnit);
     final hi = rawStep.convert(rawUnit, dispUnit);
     return (hi - lo).abs();
-  }
-
-  ConditionsUiState _emptyState(
-    UnitFormatter? formatter,
-    AppSettings? settings,
-  ) {
-    final units = settings?.units ?? const UnitSettings();
-    return ConditionsUiState(
-      temperature: ConditionsField(
-        label: 'Temperature',
-        displayValue: 15,
-        rawValue: 15,
-        symbol: units.temperature.symbol,
-        displayMin: -100,
-        displayMax: 100,
-        displayStep: 1,
-        decimals: 0,
-        inputField: InputField.temperature,
-        displayUnit: units.temperature,
-      ),
-      altitude: ConditionsField(
-        label: 'Altitude',
-        displayValue: 0,
-        rawValue: 0,
-        symbol: units.distance.symbol,
-        displayMin: -500,
-        displayMax: 15000,
-        displayStep: 10,
-        decimals: 0,
-        inputField: InputField.distance,
-        displayUnit: units.distance,
-      ),
-      humidity: ConditionsField(
-        label: 'Humidity',
-        displayValue: 50,
-        rawValue: 0.5,
-        symbol: '%',
-        displayMin: 0,
-        displayMax: 100,
-        displayStep: 1,
-        decimals: 0,
-        inputField: InputField.humidity,
-        displayUnit: Unit.percent,
-      ),
-      pressure: ConditionsField(
-        label: 'Pressure',
-        displayValue: 1013,
-        rawValue: 1013,
-        symbol: units.pressure.symbol,
-        displayMin: 300,
-        displayMax: 1500,
-        displayStep: 1,
-        decimals: 0,
-        inputField: InputField.pressure,
-        displayUnit: units.pressure,
-      ),
-      powderSensOn: false,
-      useDiffPowderTemp: false,
-      coriolisOn: false,
-      derivationOn: false,
-    );
   }
 }
 

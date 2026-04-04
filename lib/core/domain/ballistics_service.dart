@@ -1,3 +1,4 @@
+import 'package:eballistica/core/models/conditions_data.dart';
 import 'package:eballistica/core/models/shot_profile.dart';
 import 'package:eballistica/core/solver/trajectory_data.dart';
 
@@ -29,12 +30,14 @@ class BallisticsResult {
 abstract interface class BallisticsService {
   Future<BallisticsResult> calculateTable(
     ShotProfile profile,
+    Conditions conditions,
     TableCalcOptions opts, {
     double? cachedZeroElevRad,
   });
 
   Future<BallisticsResult> calculateForTarget(
     ShotProfile profile,
+    Conditions conditions,
     TargetCalcOptions opts, {
     double? cachedZeroElevRad,
   });

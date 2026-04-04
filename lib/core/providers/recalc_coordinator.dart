@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:eballistica/core/providers/settings_provider.dart';
+import 'package:eballistica/core/providers/shot_conditions_provider.dart'; // ← додати
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/features/home/home_vm.dart';
@@ -9,15 +10,22 @@ import 'package:eballistica/features/tables/trajectory_tables_vm.dart';
 
 /// Centralises all recalculation triggers.
 ///
-/// Listens to [shotProfileProvider] and [settingsProvider] and triggers
-/// the ViewModels for the active features.
+/// Listens to [shotProfileProvider], [shotConditionsProvider] and [settingsProvider]
+/// and triggers the ViewModels for the active features.
 class RecalcCoordinator extends Notifier<void> {
   @override
   void build() {
+    // Слухаємо зміни профілю
     ref.listen(shotProfileProvider, (_, next) {
       if (next.hasValue) _triggerAll();
     });
 
+    // Слухаємо зміни умов (це те, чого не вистачало!)
+    ref.listen(shotConditionsProvider, (_, next) {
+      if (next.hasValue) _triggerAll();
+    });
+
+    // Слухаємо зміни налаштувань
     ref.listen<AsyncValue<AppSettings>>(settingsProvider, (prev, next) {
       if (!next.hasValue) return;
       if (_needsRecalc(prev?.value, next.value!)) _triggerAll();
@@ -28,8 +36,6 @@ class RecalcCoordinator extends Notifier<void> {
   void onTabActivated(int tabIndex) {
     if (tabIndex == 0) {
       ref.read(homeVmProvider.notifier).recalculate();
-      // Shot details is a sub-screen of Home, so we should ensure
-      // it's fresh when Home branch is active.
       ref.read(shotDetailsVmProvider.notifier).recalculate();
     }
     if (tabIndex == 2) {
@@ -53,9 +59,6 @@ class RecalcCoordinator extends Notifier<void> {
         prev.showMil != next.showMil ||
         prev.showCmPer100m != next.showCmPer100m ||
         prev.showInPer100yd != next.showInPer100yd ||
-        // Any tableConfig change — identity check works because
-        // AppSettings.copyWith reuses the same reference when tableConfig
-        // is not passed.
         !identical(prev.tableConfig, next.tableConfig);
   }
 }

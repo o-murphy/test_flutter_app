@@ -6,6 +6,7 @@ import 'package:eballistica/core/formatting/unit_formatter.dart';
 import 'package:eballistica/core/providers/formatter_provider.dart';
 import 'package:eballistica/core/providers/service_providers.dart';
 import 'package:eballistica/core/providers/settings_provider.dart';
+import 'package:eballistica/core/providers/shot_conditions_provider.dart'; // ← додати
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/field_constraints.dart';
@@ -123,10 +124,14 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
 
   Future<void> recalculate() async {
     final profile = ref.read(shotProfileProvider).value;
+    final conditions = ref
+        .read(shotConditionsProvider)
+        .value; // ← додаємо conditions
     final settings = ref.read(settingsProvider).value;
     final formatter = ref.read(unitFormatterProvider);
 
-    if (profile == null || settings == null) return;
+    if (profile == null || conditions == null || settings == null) return;
+    if (profile.cartridge == null) return; // Не готово
 
     // Keep previous Ready state visible while recalculating — no flicker.
     // Only show Loading on first calculation (when state is still Loading).
@@ -136,17 +141,18 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
 
     try {
       final opts = TargetCalcOptions(
-        targetDistM: profile.targetDistance.in_(Unit.meter),
+        targetDistM: conditions.distance.in_(Unit.meter), // ← з conditions!
         chartStepM: settings.chartDistanceStep,
       );
 
-      final zeroKey = _buildZeroKey(profile);
+      final zeroKey = _buildZeroKey(profile, conditions);
       final useCache = listEquals(zeroKey, _lastZeroKey);
 
       final result = await ref
           .read(ballisticsServiceProvider)
           .calculateForTarget(
             profile,
+            conditions,
             opts,
             cachedZeroElevRad: useCache ? _cachedZeroElevRad : null,
           );
@@ -156,6 +162,7 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
 
       final uiState = _buildReadyState(
         profile: profile,
+        conditions: conditions,
         settings: settings,
         formatter: formatter,
         result: result,
@@ -202,7 +209,10 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
   }
 
   Future<void> updateWindDirection(double degrees) async {
-    ref.read(shotProfileProvider.notifier).updateWinds([
+    final current = ref.read(shotConditionsProvider).value;
+    if (current == null) return;
+
+    await ref.read(shotConditionsProvider.notifier).updateWinds([
       WindData(
         velocity: _currentWindVelocity(),
         directionFrom: Angular(degrees, Unit.degree),
@@ -212,62 +222,75 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
   }
 
   Future<void> updateWindSpeed(double rawMps) async {
-    ref.read(shotProfileProvider.notifier).updateWindSpeed(rawMps);
+    await ref.read(shotConditionsProvider.notifier).updateWindSpeed(rawMps);
   }
 
   Future<void> updateLookAngle(double degrees) async {
-    ref.read(shotProfileProvider.notifier).updateLookAngle(degrees);
+    await ref.read(shotConditionsProvider.notifier).updateLookAngle(degrees);
   }
 
   Future<void> updateTargetDistance(double meters) async {
-    ref.read(shotProfileProvider.notifier).updateTargetDistance(meters);
+    await ref
+        .read(shotConditionsProvider.notifier)
+        .updateTargetDistance(meters);
   }
 
   // ── Private builders ───────────────────────────────────────────────────────
 
   Velocity _currentWindVelocity() {
-    final winds =
-        ref.read(shotProfileProvider).value?.winds ?? const <WindData>[];
+    final conditions = ref.read(shotConditionsProvider).value;
+    final winds = conditions?.winds ?? const <WindData>[];
     return winds.isNotEmpty ? winds.first.velocity : Velocity(0, Unit.mps);
   }
 
   HomeUiReady _buildReadyState({
     required ShotProfile profile,
+    required Conditions conditions, // ← додаємо conditions
     required AppSettings settings,
     required UnitFormatter formatter,
     required BallisticsResult result,
   }) {
     final hit = result.hitResult;
     final traj = hit.trajectory;
-    final targetM = profile.targetDistance.in_(Unit.meter);
+    final targetM = conditions.distance.in_(Unit.meter); // ← з conditions!
 
     // ── Top block ──
-    final windDirDeg = profile.winds.isNotEmpty
-        ? profile.winds.first.directionFrom.in_(Unit.degree)
+    final windDirDeg =
+        conditions
+            .winds
+            .isNotEmpty // ← з conditions!
+        ? conditions.winds.first.directionFrom.in_(Unit.degree)
         : 0.0;
 
-    final conditions = profile.conditions;
-    final tempStr = formatter.temperature(conditions.temperature);
-    final altStr = formatter.distance(conditions.altitude);
-    final pressStr = formatter.pressure(conditions.pressure);
-    final humidStr = formatter.humidity(
-      Ratio(conditions.humidity, Unit.fraction),
-    );
+    final atmo = conditions.atmo; // ← з conditions!
+    final tempStr = formatter.temperature(atmo.temperature);
+    final altStr = formatter.distance(atmo.altitude);
+    final pressStr = formatter.pressure(atmo.pressure);
+    final humidStr = formatter.humidity(Ratio(atmo.humidity, Unit.fraction));
 
     // ── Quick actions ──
-    final windMps = profile.winds.isNotEmpty
-        ? profile.winds.first.velocity.in_(Unit.mps)
+    final windMps =
+        conditions
+            .winds
+            .isNotEmpty // ← з conditions!
+        ? conditions.winds.first.velocity.in_(Unit.mps)
         : 0.0;
     final windSpeedDisplay = formatter.velocity(Velocity(windMps, Unit.mps));
 
-    final lookDeg = profile.lookAngle.in_(Unit.degree);
+    final lookDeg = conditions.lookAngle.in_(Unit.degree); // ← з conditions!
     final lookAngleDisplay =
         '${lookDeg.toStringAsFixed(FC.lookAngle.accuracy)}°';
 
-    final targetDistanceDisplay = formatter.distance(profile.targetDistance);
+    final targetDistanceDisplay = formatter.distance(
+      conditions.distance,
+    ); // ← з conditions!
 
     // ── Cartridge info line ──
-    final cartridgeInfoLine = _buildCartridgeInfoLine(profile, formatter);
+    final cartridgeInfoLine = _buildCartridgeInfoLine(
+      profile,
+      conditions,
+      formatter,
+    ); // ← передаємо conditions
 
     // ── Adjustment data ──
     final adjustment = _buildAdjustment(hit, targetM, settings);
@@ -306,7 +329,11 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
     );
   }
 
-  String _buildCartridgeInfoLine(ShotProfile profile, UnitFormatter fmt) {
+  String _buildCartridgeInfoLine(
+    ShotProfile profile,
+    Conditions conditions, // ← додаємо conditions
+    UnitFormatter fmt,
+  ) {
     final proj = profile.cartridge!.projectile;
     final mvStr = fmt.velocity(profile.cartridge!.mv);
     final bcAcc = FC.ballisticCoefficient.accuracy;
@@ -319,14 +346,15 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
       DragModelType.custom => 'CUSTOM',
     };
 
-    // Gyroscopic stability factor Sg (Miller)
+    // Gyroscopic stability factor Sg (Miller) - використовуємо поточний shot
     String? sgStr;
     final twistInch = profile.rifle.twist.in_(Unit.inch);
     final weightGr = proj.weight.in_(Unit.grain);
     final diamInch = proj.diameter.in_(Unit.inch);
     final lenInch = proj.length.in_(Unit.inch);
     if (weightGr > 0 && diamInch > 0 && lenInch > 0 && twistInch > 0) {
-      final sg = profile.toCurrentShot().calculateStabilityCoefficient();
+      final currentShot = profile.toCurrentShot(conditions);
+      final sg = currentShot.calculateStabilityCoefficient();
       sgStr = 'Sg ${sg.toStringAsFixed(2)}';
     }
 
@@ -514,13 +542,15 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
   }
 
   // ── Zero key (logic for detecting zero-relevant changes) ───────────────────
+  // Тепер використовує Conditions замість profile.conditions
 
-  List<double> _buildZeroKey(ShotProfile profile) {
+  List<double> _buildZeroKey(ShotProfile profile, Conditions conditions) {
     final c = profile.cartridge!;
-    final zeroAtmo = c.conditions ?? profile.conditions;
+    final zeroAtmo = c.conditions ?? conditions.atmo;
     final r = profile.rifle;
     final proj = c.projectile;
     final zeroUsePowderSens = c.usePowderSensitivity;
+
     return [
       r.sightHeight.in_(Unit.meter),
       r.twist.in_(Unit.inch),
@@ -538,7 +568,7 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
       zeroAtmo.humidity,
       zeroAtmo.powderTemp.in_(Unit.celsius),
       c.zeroDistance.in_(Unit.meter),
-      profile.lookAngle.in_(Unit.radian),
+      conditions.lookAngle.in_(Unit.radian), // ← з conditions!
       zeroUsePowderSens ? 1.0 : 0.0,
       c.useDiffPowderTemp ? 1.0 : 0.0,
     ];
