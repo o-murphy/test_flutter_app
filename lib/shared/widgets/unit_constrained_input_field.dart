@@ -42,7 +42,7 @@ class ConstrainedUnitInputField extends StatefulWidget {
 class _ConstrainedUnitInputFieldState extends State<ConstrainedUnitInputField> {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
-  late final UnitConversionHelper _helper;
+  late UnitConversionHelper _helper;
 
   double? _currentRawValue;
   String? _errorText;
