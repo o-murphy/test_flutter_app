@@ -250,7 +250,6 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
     required BallisticsResult result,
   }) {
     final hit = result.hitResult;
-    final traj = hit.trajectory;
     final targetM = conditions.distance.in_(Unit.meter);
 
     final windDirDeg = conditions.winds.isNotEmpty
@@ -282,7 +281,7 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
 
     final adjustment = _buildAdjustment(hit, targetM, settings);
     final tableData = _buildHomeTable(hit, targetM, settings, formatter);
-    final chartData = _buildChartData(traj, targetM, settings);
+    final chartData = _buildChartData(hit, targetM, settings);
     final autoIndex = _closestIndex(chartData.points, targetM);
     final autoInfo = autoIndex != null
         ? _buildPointInfo(chartData.points[autoIndex], formatter)
@@ -492,15 +491,21 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
   }
 
   ChartData _buildChartData(
-    List<TrajectoryData> traj,
+    HitResult hit,
     double targetM,
     AppSettings settings,
   ) {
-    final points = traj
-        .where((td) => td.distance.in_(Unit.meter) <= targetM)
-        .map((td) {
+    final step = settings.chartDistanceStep;
+
+    // Генеруємо всі точки по кроках до targetM
+    final points = List.generate((targetM / step).ceil() + 1, (i) => i * step)
+        .where((d) => d <= targetM) // фільтр по цілі
+        .map((d) {
+          final td = hit.getAtDistance(Distance(d, Unit.meter));
+
           final isZero = (td.flag & TrajFlag.zero.value) != 0;
           final isMach = (td.flag & TrajFlag.mach.value) != 0;
+
           return ChartPoint(
             distanceM: td.distance.in_(Unit.meter),
             heightCm: td.height.in_(Unit.centimeter),
@@ -514,9 +519,10 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
             isSubsonic: isMach || td.mach < 1.0,
           );
         })
+        .whereType<ChartPoint>() // прибираємо null
         .toList();
 
-    return ChartData(points: points, snapDistM: settings.chartDistanceStep);
+    return ChartData(points: points, snapDistM: step);
   }
 
   HomeChartPointInfo _buildPointInfo(ChartPoint point, UnitFormatter fmt) {

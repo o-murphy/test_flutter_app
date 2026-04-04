@@ -63,9 +63,8 @@ typedef _HomeCalcArgs = (ShotProfile, Conditions, double, double, double?);
 typedef _HomeCalcResult = (HitResult?, double?);
 
 _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
-  final (profile, conditions, targetDistM, chartStepM, cachedZeroElevRad) =
-      args;
-  final internalStepM = chartStepM < 1.0 ? chartStepM : 1.0;
+  final (profile, conditions, targetDistM, stepM, cachedZeroElevRad) = args;
+  final internalStepM = stepM < 1.0 ? stepM : 1.0;
   try {
     final calc = Calculator();
     final cartridge = profile.cartridge!;
