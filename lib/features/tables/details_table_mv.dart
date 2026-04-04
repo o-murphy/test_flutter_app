@@ -182,15 +182,14 @@ DetailsTableData _buildDetails(
       final p = atmo.pressure.in_(units.pressure);
       return '${p.toStringAsFixed(FC.pressure.accuracyFor(units.pressure))} ${units.pressure.symbol}';
     }(),
-    windSpeed: winds.isNotEmpty
-        ? () {
-            final ws = winds.first.velocity.in_(units.velocity);
-            return '${ws.toStringAsFixed(FC.windVelocity.accuracyFor(units.velocity))} ${units.velocity.symbol}';
-          }()
-        : null,
-    windDir: winds.isNotEmpty
-        ? '${winds.first.directionFrom.in_(Unit.degree).toStringAsFixed(0)}°'
-        : null,
+    windSpeed: () {
+      final ws =
+          (winds.isNotEmpty ? winds.first.velocity : Velocity(0.0, Unit.mps))
+              .in_(units.velocity);
+      return '${ws.toStringAsFixed(FC.windVelocity.accuracyFor(units.velocity))} ${units.velocity.symbol}';
+    }(),
+    windDir:
+        '${(winds.isNotEmpty ? winds.first.directionFrom : Angular(0.0, Unit.degree)).in_(Unit.degree).toStringAsFixed(0)}°',
   );
 }
 
