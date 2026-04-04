@@ -53,8 +53,6 @@ class ShotProfile {
 
   // ── toShot ────────────────────────────────────────────────────────────────
 
-  Shot toShot() => Shot(weapon: rifle.toWeapon(), ammo: cartridge!.toAmmo());
-
   Shot toZeroShot(Angular lookAngle, Weapon weapon) {
     final zeroAmmo = Ammo(
       dm: cartridge!.projectile.toDragModel(),
@@ -75,7 +73,7 @@ class ShotProfile {
     );
   }
 
-  Shot toCurrentShot(Conditions conditions) {
+  Shot toCurrentShot(Conditions conditions, Weapon weapon) {
     final currentAmmo = Ammo(
       dm: cartridge!.projectile.toDragModel(),
       mv: cartridge!.mv,
@@ -85,7 +83,7 @@ class ShotProfile {
     );
 
     return Shot(
-      weapon: rifle.toWeapon(),
+      weapon: weapon,
       ammo: currentAmmo,
       lookAngle: conditions.lookAngle,
       atmo: conditions.toAtmo(),

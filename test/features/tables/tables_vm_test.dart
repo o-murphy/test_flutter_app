@@ -145,7 +145,7 @@ List<TrajectoryData> _makeTraj({
 BallisticsResult _makeResult() {
   final profile = _makeProfile();
   final conditions = _makeConditions();
-  final shot = profile.toCurrentShot(conditions);
+  final shot = profile.toCurrentShot(conditions, profile.rifle.toWeapon());
   shot.relativeAngle = Angular(0.002, Unit.radian);
   final traj = _makeTraj();
   final hit = HitResult(shot, traj);

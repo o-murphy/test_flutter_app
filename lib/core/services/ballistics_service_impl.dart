@@ -43,8 +43,8 @@ _TableCalcResult _runTableCalculation(_TableCalcArgs args) {
     }
 
     final result = calc.fire(
-      shot: profile.toCurrentShot(conditions),
-      trajectoryRange: Distance(2000.0, Unit.meter),
+      shot: profile.toCurrentShot(conditions, weapon),
+      trajectoryRange: Distance(3000.0, Unit.meter),
       trajectoryStep: Distance(stepM, Unit.meter),
       filterFlags:
           BCTrajFlag.BC_TRAJ_FLAG_RANGE.value |
@@ -89,7 +89,7 @@ _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
       freshZeroElevRad = weapon.zeroElevation.in_(Unit.radian);
     }
 
-    final shot = profile.toCurrentShot(conditions);
+    final shot = profile.toCurrentShot(conditions, weapon);
 
     final targetElev = calc.barrelElevationForTarget(
       shot,
@@ -162,7 +162,7 @@ class BallisticsServiceImpl implements BallisticsService {
       profile,
       conditions,
       opts.targetDistM,
-      opts.chartStepM,
+      opts.stepM,
       cachedZeroElevRad,
     ));
     if (hit == null) throw StateError('Target calculation returned null');

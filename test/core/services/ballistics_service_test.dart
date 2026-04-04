@@ -222,7 +222,7 @@ void main() {
       final result = await service.calculateForTarget(
         profile,
         conditions,
-        const TargetCalcOptions(targetDistM: 300.0, chartStepM: 10.0),
+        const TargetCalcOptions(targetDistM: 300.0, stepM: 10.0),
       );
 
       expect(result.hitResult.trajectory, isNotEmpty);
@@ -235,7 +235,7 @@ void main() {
       final result = await service.calculateForTarget(
         profile,
         conditions,
-        const TargetCalcOptions(targetDistM: 500.0, chartStepM: 10.0),
+        const TargetCalcOptions(targetDistM: 500.0, stepM: 10.0),
       );
 
       final lastPoint = result.hitResult.trajectory.last;
@@ -248,7 +248,7 @@ void main() {
       final result = await service.calculateForTarget(
         profile,
         conditions,
-        const TargetCalcOptions(targetDistM: 300.0, chartStepM: 10.0),
+        const TargetCalcOptions(targetDistM: 300.0, stepM: 10.0),
       );
 
       // The shot should have a relative angle set (hold for target)
@@ -261,10 +261,7 @@ void main() {
     test('cached zero elevation gives same results', () async {
       final profile = _makeProfile();
       final conditions = _makeConditions(targetM: 300.0);
-      final opts = const TargetCalcOptions(
-        targetDistM: 300.0,
-        chartStepM: 10.0,
-      );
+      final opts = const TargetCalcOptions(targetDistM: 300.0, stepM: 10.0);
 
       final first = await service.calculateForTarget(profile, conditions, opts);
       final second = await service.calculateForTarget(
@@ -287,12 +284,12 @@ void main() {
       final short = await service.calculateForTarget(
         profile,
         _makeConditions(targetM: 200.0),
-        const TargetCalcOptions(targetDistM: 200.0, chartStepM: 10.0),
+        const TargetCalcOptions(targetDistM: 200.0, stepM: 10.0),
       );
       final long = await service.calculateForTarget(
         profile,
         _makeConditions(targetM: 800.0),
-        const TargetCalcOptions(targetDistM: 800.0, chartStepM: 10.0),
+        const TargetCalcOptions(targetDistM: 800.0, stepM: 10.0),
       );
 
       expect(
@@ -514,7 +511,7 @@ void main() {
     test('TargetCalcOptions required targetDistM', () {
       const opts = TargetCalcOptions(targetDistM: 500.0);
       expect(opts.targetDistM, 500.0);
-      expect(opts.chartStepM, 10.0);
+      expect(opts.stepM, 10.0);
     });
   });
 }

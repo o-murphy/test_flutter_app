@@ -110,7 +110,10 @@ DetailsTableData _buildDetails(
   final currentMvMps = currentPowderSensOn ? mvAtTempC(currTempC) : refMvMps;
 
   // Gyrostability (Miller)
-  final currentShot = profile.toCurrentShot(conditions);
+  final currentShot = profile.toCurrentShot(
+    conditions,
+    profile.rifle.toWeapon(),
+  );
   double sg = currentShot.calculateStabilityCoefficient();
 
   // Sectional density + form factor

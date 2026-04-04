@@ -12,9 +12,9 @@ class TableCalcOptions {
 
 class TargetCalcOptions {
   final double targetDistM;
-  final double chartStepM;
+  final double stepM;
 
-  const TargetCalcOptions({required this.targetDistM, this.chartStepM = 10});
+  const TargetCalcOptions({required this.targetDistM, this.stepM = 10});
 }
 
 class BallisticsResult {

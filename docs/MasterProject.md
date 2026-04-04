@@ -682,7 +682,6 @@ class ShotProfile {
   final double?    latitudeDeg;
   final double?    azimuthDeg;
 
-  Shot toShot();
 }
 ```
 

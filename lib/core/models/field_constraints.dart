@@ -194,9 +194,9 @@ abstract final class FC {
 
   /// Bullet height / windage offset (linear). Raw stored in feet.
   static const drop = FieldConstraints(
-    rawUnit: Unit.foot,
-    minRaw: -500.0,
-    maxRaw: 500.0,
+    rawUnit: Unit.inch,
+    minRaw: -1500.0,
+    maxRaw: 1500.0,
     stepRaw: 0.1,
     accuracy: 1, // suitable for cm (default unit)
   );

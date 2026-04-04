@@ -99,7 +99,7 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
 
       final opts = TargetCalcOptions(
         targetDistM: conditions.distance.in_(Unit.meter),
-        chartStepM: settings.chartDistanceStep,
+        stepM: settings.chartDistanceStep,
       );
 
       final result = await ref
@@ -175,7 +175,10 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
         : null;
 
     // Gyroscopic stability
-    final currentShot = profile.toCurrentShot(conditions);
+    final currentShot = profile.toCurrentShot(
+      conditions,
+      profile.rifle.toWeapon(),
+    );
     final sg = currentShot.calculateStabilityCoefficient();
 
     // Trajectory markers
