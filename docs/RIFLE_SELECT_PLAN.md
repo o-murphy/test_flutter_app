@@ -95,19 +95,19 @@ Backward-compat: при читанні старого формату (`profiles.
 
 ## Data Ownership
 
-| Дані                                            | Належить                             | Редагується де                    |
-| ----------------------------------------------- | ------------------------------------ | --------------------------------- |
-| name, rifle                                     | `ShotProfile`                        | Profile wizard                    |
-| cartridgeId, sightId                            | `ShotProfile`                        | Profile card (вибір з бібліотеки) |
-| conditions (Atmo)                               | `ShotProfile` (runtime, per-profile) | Conditions screen                 |
-| usePowderSensitivity, useDiffPowderTemp         | `ShotProfile` (runtime, per-profile) | Conditions screen                 |
-| winds, lookAngle, targetDistance                | `ShotProfile` (runtime, per-profile) | Home screen                       |
-| zeroDistance, zeroConditions                    | `Cartridge`                          | Cartridge wizard                  |
-| zeroUsePowderSensitivity, zeroUseDiffPowderTemp | `Cartridge`                          | Cartridge wizard                  |
-| Rifle (вся модель)                              | embedded у `ShotProfile`             | Rifle wizard (з profile card)     |
-| Cartridge (вся модель)                          | `cartridges.json`                    | Cartridge wizard                  |
-| Sight (вся модель)                              | `sights.json`                        | Sight wizard                      |
-| AppSettings                                     | Global                               | Settings screen                   |
+| Дані                                            | Належить                         | Редагується де                    |
+| ----------------------------------------------- | -------------------------------- | --------------------------------- |
+| name, rifle                                     | `ShotProfile`                    | Profile wizard                    |
+| cartridgeId, sightId                            | `ShotProfile`                    | Profile card (вибір з бібліотеки) |
+| conditions (Atmo)                               | `ShotProfile` (runtime, per-app) | Conditions screen                 |
+| usePowderSensitivity, useDiffPowderTemp         | `ShotProfile` (runtime, per-app) | Conditions screen                 |
+| winds, lookAngle, targetDistance                | `ShotProfile` (runtime, per-app) | Home screen                       |
+| zeroDistance, zeroConditions                    | `Cartridge`                      | Cartridge wizard                  |
+| zeroUsePowderSensitivity, zeroUseDiffPowderTemp | `Cartridge`                      | Cartridge wizard                  |
+| Rifle (вся модель)                              | embedded у `ShotProfile`         | Rifle wizard (з profile card)     |
+| Cartridge (вся модель)                          | `cartridges.json`                | Cartridge wizard                  |
+| Sight (вся модель)                              | `sights.json`                    | Sight wizard                      |
+| AppSettings                                     | Global                           | Settings screen                   |
 
 ---
 
