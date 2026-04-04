@@ -34,8 +34,13 @@ class TrajectoryTablesUiEmpty extends TrajectoryTablesUiState {
 class TrajectoryTablesUiReady extends TrajectoryTablesUiState {
   final FormattedTableData? zeroCrossings;
   final FormattedTableData mainTable;
+  final bool zeroCrossingEnabled;
 
-  const TrajectoryTablesUiReady({this.zeroCrossings, required this.mainTable});
+  const TrajectoryTablesUiReady({
+    this.zeroCrossings,
+    required this.mainTable,
+    this.zeroCrossingEnabled = false,
+  });
 }
 
 class TrajectoryTablesUiError extends TrajectoryTablesUiState {
@@ -151,6 +156,7 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
     return TrajectoryTablesUiReady(
       zeroCrossings: zeroCrossings,
       mainTable: mainTable,
+      zeroCrossingEnabled: cfg.showZeros,
     );
   }
 

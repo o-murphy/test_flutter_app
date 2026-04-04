@@ -42,10 +42,12 @@ class TrajectoryTable extends ConsumerWidget {
 class TrajectoryTableContent extends StatefulWidget {
   final FormattedTableData mainTable;
   final FormattedTableData? zeroCrossings;
+  final bool zeroCrossingEnabled;
 
   const TrajectoryTableContent({
     required this.mainTable,
     this.zeroCrossings,
+    this.zeroCrossingEnabled = false,
     super.key,
   });
 
@@ -318,7 +320,28 @@ class _TrajectoryTableContentState extends State<TrajectoryTableContent> {
       children: [
         if (widget.zeroCrossings != null &&
             widget.zeroCrossings!.distanceHeaders.isNotEmpty)
-          buildZeroTable(),
+          buildZeroTable()
+        else if (widget.zeroCrossingEnabled)
+          Container(
+            width: double.infinity,
+            color: Colors.redAccent.withValues(alpha: 0.2),
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: const [
+                Icon(Icons.warning, color: Colors.red),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Zero crossings not found in the current trajectory range!',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         Expanded(child: buildMainTable()),
       ],
     );
