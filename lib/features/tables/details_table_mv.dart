@@ -95,7 +95,7 @@ DetailsTableData _buildDetails(
   );
 
   // Zero MV
-  final zeroAtmo = cart.conditions ?? atmo;
+  final zeroAtmo = cart.atmo ?? atmo;
   final zeroPowderTempC = zeroUseDiffTemp
       ? zeroAtmo.powderTemp.in_(Unit.celsius)
       : zeroAtmo.temperature.in_(Unit.celsius);

@@ -65,7 +65,7 @@ class ShotProfile {
       tempModifier: cartridge!.powderSensitivity.in_(Unit.fraction),
       usePowderSensitivity: cartridge!.usePowderSensitivity,
     );
-    final zeroAtmo = cartridge!.conditions;
+    final zeroAtmo = cartridge!.atmo;
 
     return Shot(
       weapon: weapon,
@@ -172,9 +172,9 @@ class ShotProfile {
                   StorageUnits.profileZeroDistance,
                 )
               : baseCartridge.zeroDistance,
-          conditions: oldZeroCondJson != null
+          atmo: oldZeroCondJson != null
               ? AtmoData.fromJson(oldZeroCondJson as Map<String, dynamic>)
-              : baseCartridge.conditions,
+              : baseCartridge.atmo,
           usePowderSensitivity: oldZeroUsePowderSens,
           useDiffPowderTemp: olduseDiffPowderTemp,
           notes: baseCartridge.notes,

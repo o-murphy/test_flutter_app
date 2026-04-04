@@ -62,7 +62,7 @@ class A7pParser {
       powderTemp: Temperature(p.cZeroTemperature.toDouble(), Unit.celsius),
       powderSensitivity: Ratio(p.cTCoeff / 1000.0, Unit.fraction),
       zeroDistance: zeroDist,
-      conditions: zeroConds,
+      atmo: zeroConds,
       usePowderSensitivity: hasPowderSens,
       useDiffPowderTemp: useDiffPowderTemp,
     );

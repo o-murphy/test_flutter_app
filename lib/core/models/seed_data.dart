@@ -122,7 +122,7 @@ final seedCartridgeUkrop250 = Cartridge(
   powderTemp: Temperature(29.0, Unit.celsius),
   powderSensitivity: Ratio(0.02, Unit.fraction),
   zeroDistance: Distance(100.0, Unit.meter),
-  conditions: _seedZeroAtmo,
+  atmo: _seedZeroAtmo,
   usePowderSensitivity: true,
   useDiffPowderTemp: false,
 );
@@ -135,7 +135,7 @@ final seedCartridgeHornady250 = Cartridge(
   powderTemp: Temperature(15.0, Unit.celsius),
   powderSensitivity: Ratio(0.02, Unit.fraction),
   zeroDistance: Distance(100.0, Unit.meter),
-  conditions: _seedZeroAtmo,
+  atmo: _seedZeroAtmo,
   usePowderSensitivity: true,
   useDiffPowderTemp: false,
 );
@@ -148,7 +148,7 @@ final seedCartridgeLapua300 = Cartridge(
   powderTemp: Temperature(15.0, Unit.celsius),
   powderSensitivity: Ratio(0.123, Unit.fraction),
   zeroDistance: Distance(100.0, Unit.meter),
-  conditions: _seedZeroAtmo,
+  atmo: _seedZeroAtmo,
   usePowderSensitivity: true,
   useDiffPowderTemp: false,
 );
@@ -161,7 +161,7 @@ final seedCartridgeSts285EldM = Cartridge(
   powderTemp: Temperature(15.0, Unit.celsius),
   powderSensitivity: Ratio(0.02, Unit.fraction),
   zeroDistance: Distance(100.0, Unit.meter),
-  conditions: _seedZeroAtmo,
+  atmo: _seedZeroAtmo,
   usePowderSensitivity: true,
   useDiffPowderTemp: false,
 );

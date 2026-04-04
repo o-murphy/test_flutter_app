@@ -167,7 +167,7 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
         ? mvAtTempC(currentPowderTempC)
         : refMvMps;
 
-    final zeroAtmo = cartridge.conditions ?? atmo;
+    final zeroAtmo = cartridge.atmo ?? atmo;
     final zeroPowderTempC = zeroUseDiffTemp
         ? zeroAtmo.powderTemp.in_(Unit.celsius)
         : zeroAtmo.temperature.in_(Unit.celsius);

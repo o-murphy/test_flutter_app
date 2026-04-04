@@ -349,7 +349,7 @@ class TrajectoryTablesViewModel extends AsyncNotifier<TrajectoryTablesUiState> {
   List<double> _buildZeroKey(ShotProfile profile, Conditions conditions) {
     final c = profile.cartridge!;
     // Використовуємо умови з набою або глобальні умови
-    final zeroAtmo = c.conditions ?? conditions.atmo;
+    final zeroAtmo = c.atmo ?? conditions.atmo;
     final r = profile.rifle;
     final proj = c.projectile;
     final zeroUsePowderSens = c.usePowderSensitivity;

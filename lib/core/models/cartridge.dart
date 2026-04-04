@@ -19,7 +19,7 @@ class Cartridge {
 
   // ── Zero data (belongs to cartridge, not profile) ──────────────────────────
   final Distance zeroDistance;
-  final AtmoData? conditions;
+  final AtmoData? atmo;
   final bool usePowderSensitivity;
   final bool useDiffPowderTemp;
 
@@ -36,7 +36,7 @@ class Cartridge {
     required this.powderTemp,
     required this.powderSensitivity,
     Distance? zeroDistance,
-    this.conditions,
+    this.atmo,
     this.usePowderSensitivity = false,
     this.useDiffPowderTemp = false,
     this.notes,
@@ -75,7 +75,7 @@ class Cartridge {
     powderTemp: powderTemp ?? this.powderTemp,
     powderSensitivity: powderSensitivity ?? this.powderSensitivity,
     zeroDistance: zeroDistance ?? this.zeroDistance,
-    conditions: conditions ?? this.conditions,
+    atmo: conditions ?? this.atmo,
     usePowderSensitivity: usePowderSensitivity ?? this.usePowderSensitivity,
     useDiffPowderTemp: useDiffPowderTemp ?? this.useDiffPowderTemp,
     notes: notes ?? this.notes,
@@ -94,7 +94,7 @@ class Cartridge {
       StorageUnits.cartridgePowderSensitivity,
     ),
     'zeroDistance': zeroDistance.in_(StorageUnits.cartridgeZeroDistance),
-    if (conditions != null) 'zeroConditions': conditions!.toJson(),
+    if (atmo != null) 'zeroConditions': atmo!.toJson(),
     'usePowderSensitivity': usePowderSensitivity,
     'useDiffPowderTemp': useDiffPowderTemp,
     if (notes != null) 'notes': notes,
@@ -133,7 +133,7 @@ class Cartridge {
               StorageUnits.cartridgeZeroDistance,
             )
           : null,
-      conditions: zeroCondJson != null
+      atmo: zeroCondJson != null
           ? AtmoData.fromJson(zeroCondJson as Map<String, dynamic>)
           : null,
       usePowderSensitivity: json['usePowderSensitivity'] as bool? ?? false,
