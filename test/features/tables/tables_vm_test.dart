@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:eballistica/core/domain/ballistics_service.dart';
 import 'package:eballistica/core/providers/service_providers.dart';
 import 'package:eballistica/core/providers/settings_provider.dart';
+import 'package:eballistica/core/providers/shot_conditions_provider.dart';
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/cartridge.dart';
@@ -27,7 +28,7 @@ import 'package:eballistica/features/tables/details_table_mv.dart';
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 
-ShotProfile _makeProfile({double windMps = 3.0, double windDeg = 90.0}) {
+ShotProfile _makeProfile() {
   final projectile = Projectile(
     name: 'Test 175gr',
     dragType: DragModelType.g7,
@@ -59,12 +60,27 @@ ShotProfile _makeProfile({double windMps = 3.0, double windDeg = 90.0}) {
     rifle: rifle,
     sight: sight,
     cartridge: cartridge,
-    conditions: AtmoData(
-      temperature: Temperature(20.0, Unit.celsius),
-      altitude: Distance(150.0, Unit.meter),
-      pressure: Pressure(1013.25, Unit.hPa),
-      humidity: 0.50,
-      powderTemp: Temperature(20.0, Unit.celsius),
+  );
+}
+
+Conditions _makeConditions({
+  double tempC = 20.0,
+  double altM = 150.0,
+  double pressHPa = 1013.25,
+  double humidity = 0.50,
+  double powderTempC = 20.0,
+  double windMps = 3.0,
+  double windDeg = 90.0,
+  bool usePowderSensitivity = false,
+  bool useDiffPowderTemp = false,
+}) {
+  return Conditions(
+    atmo: AtmoData(
+      temperature: Temperature(tempC, Unit.celsius),
+      altitude: Distance(altM, Unit.meter),
+      pressure: Pressure(pressHPa, Unit.hPa),
+      humidity: humidity,
+      powderTemp: Temperature(powderTempC, Unit.celsius),
     ),
     winds: [
       WindData(
@@ -74,7 +90,12 @@ ShotProfile _makeProfile({double windMps = 3.0, double windDeg = 90.0}) {
       ),
     ],
     lookAngle: Angular(0, Unit.degree),
-    targetDistance: Distance(300.0, Unit.meter),
+    distance: Distance(300.0, Unit.meter),
+    usePowderSensitivity: usePowderSensitivity,
+    useDiffPowderTemp: useDiffPowderTemp,
+    useCoriolis: false,
+    latitudeDeg: null,
+    azimuthDeg: null,
   );
 }
 
@@ -123,7 +144,8 @@ List<TrajectoryData> _makeTraj({
 
 BallisticsResult _makeResult() {
   final profile = _makeProfile();
-  final shot = profile.toCurrentShot();
+  final conditions = _makeConditions();
+  final shot = profile.toCurrentShot(conditions);
   shot.relativeAngle = Angular(0.002, Unit.radian);
   final traj = _makeTraj();
   final hit = HitResult(shot, traj);
@@ -141,6 +163,7 @@ class _FakeBallisticsService implements BallisticsService {
   @override
   Future<BallisticsResult> calculateForTarget(
     ShotProfile profile,
+    Conditions conditions,
     TargetCalcOptions opts, {
     double? cachedZeroElevRad,
   }) async {
@@ -151,6 +174,7 @@ class _FakeBallisticsService implements BallisticsService {
   @override
   Future<BallisticsResult> calculateTable(
     ShotProfile profile,
+    Conditions conditions,
     TableCalcOptions opts, {
     double? cachedZeroElevRad,
   }) async {
@@ -173,8 +197,17 @@ class _FakeSettingsNotifier extends SettingsNotifier {
   Future<AppSettings> build() async => _settings;
 }
 
+class _FakeConditionsNotifier extends ShotConditionsNotifier {
+  final Conditions _conditions;
+  _FakeConditionsNotifier(this._conditions);
+
+  @override
+  Future<Conditions> build() async => _conditions;
+}
+
 ProviderContainer _createContainer({
   required ShotProfile profile,
+  required Conditions conditions,
   required _FakeBallisticsService service,
   AppSettings settings = const AppSettings(),
 }) {
@@ -182,6 +215,9 @@ ProviderContainer _createContainer({
     overrides: [
       shotProfileProvider.overrideWith(() => _FakeProfileNotifier(profile)),
       settingsProvider.overrideWith(() => _FakeSettingsNotifier(settings)),
+      shotConditionsProvider.overrideWith(
+        () => _FakeConditionsNotifier(conditions),
+      ),
       ballisticsServiceProvider.overrideWithValue(service),
     ],
   );
@@ -192,6 +228,7 @@ Future<TrajectoryTablesUiReady> _recalculate(
 ) async {
   await container.read(shotProfileProvider.future);
   await container.read(settingsProvider.future);
+  await container.read(shotConditionsProvider.future);
   await Future<void>.delayed(Duration.zero);
   final notifier = container.read(trajectoryTablesVmProvider.notifier);
   await notifier.recalculate();
@@ -216,7 +253,11 @@ void main() {
 
     setUp(() async {
       service = _FakeBallisticsService(_makeResult());
-      container = _createContainer(profile: _makeProfile(), service: service);
+      container = _createContainer(
+        profile: _makeProfile(),
+        conditions: _makeConditions(),
+        service: service,
+      );
       state = await _recalculate(container);
       details = _getDetails(container);
     });
@@ -308,6 +349,7 @@ void main() {
       final service = _FakeBallisticsService(_makeResult());
       container = _createContainer(
         profile: _makeProfile(),
+        conditions: _makeConditions(),
         service: service,
         settings: const AppSettings(tableConfig: TableConfig(showZeros: true)),
       );
@@ -332,6 +374,7 @@ void main() {
       final service = _FakeBallisticsService(_makeResult());
       final containerAll = _createContainer(
         profile: _makeProfile(),
+        conditions: _makeConditions(),
         service: service,
       );
       addTearDown(containerAll.dispose);
@@ -340,6 +383,7 @@ void main() {
       final service2 = _FakeBallisticsService(_makeResult());
       final containerHidden = _createContainer(
         profile: _makeProfile(),
+        conditions: _makeConditions(),
         service: service2,
         settings: const AppSettings(
           tableConfig: TableConfig(
@@ -377,6 +421,7 @@ void main() {
       final service = _FakeBallisticsService(_makeResult());
       container = _createContainer(
         profile: _makeProfile(),
+        conditions: _makeConditions(),
         service: service,
         settings: imperial,
       );
@@ -410,6 +455,9 @@ void main() {
           settingsProvider.overrideWith(
             () => _FakeSettingsNotifier(const AppSettings()),
           ),
+          shotConditionsProvider.overrideWith(
+            () => _FakeConditionsNotifier(_makeConditions()),
+          ),
           ballisticsServiceProvider.overrideWithValue(service),
         ],
       );
@@ -435,6 +483,9 @@ void main() {
           settingsProvider.overrideWith(
             () => _FakeSettingsNotifier(const AppSettings()),
           ),
+          shotConditionsProvider.overrideWith(
+            () => _FakeConditionsNotifier(_makeConditions()),
+          ),
           ballisticsServiceProvider.overrideWithValue(
             _ThrowingBallisticsService(),
           ),
@@ -444,6 +495,7 @@ void main() {
 
       await container.read(shotProfileProvider.future);
       await container.read(settingsProvider.future);
+      await container.read(shotConditionsProvider.future);
       await Future<void>.delayed(Duration.zero);
 
       final notifier = container.read(trajectoryTablesVmProvider.notifier);
@@ -459,6 +511,7 @@ void main() {
       final service = _FakeBallisticsService(_makeResult());
       final container = _createContainer(
         profile: _makeProfile(),
+        conditions: _makeConditions(),
         service: service,
       );
       addTearDown(container.dispose);
@@ -474,6 +527,7 @@ void main() {
       final service = _FakeBallisticsService(_makeResult());
       final container = _createContainer(
         profile: _makeProfile(),
+        conditions: _makeConditions(),
         service: service,
       );
       addTearDown(container.dispose);
@@ -497,6 +551,7 @@ class _ThrowingBallisticsService implements BallisticsService {
   @override
   Future<BallisticsResult> calculateForTarget(
     ShotProfile profile,
+    Conditions conditions,
     TargetCalcOptions opts, {
     double? cachedZeroElevRad,
   }) async {
@@ -506,6 +561,7 @@ class _ThrowingBallisticsService implements BallisticsService {
   @override
   Future<BallisticsResult> calculateTable(
     ShotProfile profile,
+    Conditions conditions,
     TableCalcOptions opts, {
     double? cachedZeroElevRad,
   }) async {

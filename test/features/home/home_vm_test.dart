@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:eballistica/core/domain/ballistics_service.dart';
 import 'package:eballistica/core/providers/service_providers.dart';
 import 'package:eballistica/core/providers/settings_provider.dart';
+import 'package:eballistica/core/providers/shot_conditions_provider.dart';
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/cartridge.dart';
@@ -24,11 +25,7 @@ import 'package:eballistica/features/home/home_vm.dart';
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 
-ShotProfile _makeProfile({
-  double targetM = 300.0,
-  double windMps = 3.0,
-  double windDeg = 90.0,
-}) {
+ShotProfile _makeProfile() {
   final projectile = Projectile(
     name: 'Test 175gr',
     dragType: DragModelType.g7,
@@ -60,12 +57,25 @@ ShotProfile _makeProfile({
     rifle: rifle,
     sight: sight,
     cartridge: cartridge,
-    conditions: AtmoData(
-      temperature: Temperature(20.0, Unit.celsius),
-      altitude: Distance(150.0, Unit.meter),
-      pressure: Pressure(1013.25, Unit.hPa),
-      humidity: 0.50,
-      powderTemp: Temperature(20.0, Unit.celsius),
+  );
+}
+
+Conditions _makeConditions({
+  double targetM = 300.0,
+  double windMps = 3.0,
+  double windDeg = 90.0,
+  double tempC = 20.0,
+  double altM = 150.0,
+  double pressHPa = 1013.25,
+  double humidity = 0.50,
+}) {
+  return Conditions(
+    atmo: AtmoData(
+      temperature: Temperature(tempC, Unit.celsius),
+      altitude: Distance(altM, Unit.meter),
+      pressure: Pressure(pressHPa, Unit.hPa),
+      humidity: humidity,
+      powderTemp: Temperature(tempC, Unit.celsius),
     ),
     winds: [
       WindData(
@@ -75,7 +85,12 @@ ShotProfile _makeProfile({
       ),
     ],
     lookAngle: Angular(0, Unit.degree),
-    targetDistance: Distance(targetM, Unit.meter),
+    distance: Distance(targetM, Unit.meter),
+    usePowderSensitivity: false,
+    useDiffPowderTemp: false,
+    useCoriolis: false,
+    latitudeDeg: null,
+    azimuthDeg: null,
   );
 }
 
@@ -84,16 +99,16 @@ List<TrajectoryData> _makeTraj({int points = 31, double stepM = 10.0}) {
   final result = <TrajectoryData>[];
   for (var i = 0; i <= points; i++) {
     final d = i * stepM;
-    final t = d / 800.0; // rough time
-    final v = 800.0 - d * 0.5; // velocity decreasing in fps-ish
-    final h = -(d * d * 0.00005); // parabolic drop in feet
-    final m = v / 1100.0; // rough mach
+    final t = d / 800.0;
+    final v = 800.0 - d * 0.5;
+    final h = -(d * d * 0.00005);
+    final m = v / 1100.0;
     int flag = 0;
-    if (i == 10) flag = TrajFlag.zeroUp.value; // zero crossing at 100m
+    if (i == 10) flag = TrajFlag.zeroUp.value;
     result.add(
       TrajectoryData(
         time: t,
-        distance: Distance(d * 3.28084, Unit.foot), // meters to feet
+        distance: Distance(d * 3.28084, Unit.foot),
         velocity: Velocity(v, Unit.fps),
         mach: m,
         height: Distance(h, Unit.foot),
@@ -118,8 +133,9 @@ List<TrajectoryData> _makeTraj({int points = 31, double stepM = 10.0}) {
 }
 
 BallisticsResult _makeResult({double targetM = 300.0}) {
-  final profile = _makeProfile(targetM: targetM);
-  final shot = profile.toCurrentShot();
+  final profile = _makeProfile();
+  final conditions = _makeConditions(targetM: targetM);
+  final shot = profile.toCurrentShot(conditions);
   shot.relativeAngle = Angular(0.002, Unit.radian);
   final traj = _makeTraj();
   final hit = HitResult(shot, traj);
@@ -137,6 +153,7 @@ class _FakeBallisticsService implements BallisticsService {
   @override
   Future<BallisticsResult> calculateForTarget(
     ShotProfile profile,
+    Conditions conditions,
     TargetCalcOptions opts, {
     double? cachedZeroElevRad,
   }) async {
@@ -147,6 +164,7 @@ class _FakeBallisticsService implements BallisticsService {
   @override
   Future<BallisticsResult> calculateTable(
     ShotProfile profile,
+    Conditions conditions,
     TableCalcOptions opts, {
     double? cachedZeroElevRad,
   }) async {
@@ -169,8 +187,17 @@ class _FakeSettingsNotifier extends SettingsNotifier {
   Future<AppSettings> build() async => _settings;
 }
 
+class _FakeConditionsNotifier extends ShotConditionsNotifier {
+  final Conditions _conditions;
+  _FakeConditionsNotifier(this._conditions);
+
+  @override
+  Future<Conditions> build() async => _conditions;
+}
+
 ProviderContainer _createContainer({
   required ShotProfile profile,
+  required Conditions conditions,
   required _FakeBallisticsService service,
   AppSettings settings = const AppSettings(),
 }) {
@@ -178,6 +205,9 @@ ProviderContainer _createContainer({
     overrides: [
       shotProfileProvider.overrideWith(() => _FakeProfileNotifier(profile)),
       settingsProvider.overrideWith(() => _FakeSettingsNotifier(settings)),
+      shotConditionsProvider.overrideWith(
+        () => _FakeConditionsNotifier(conditions),
+      ),
       ballisticsServiceProvider.overrideWithValue(service),
     ],
   );
@@ -187,6 +217,7 @@ ProviderContainer _createContainer({
 Future<HomeUiReady> _recalculate(ProviderContainer container) async {
   await container.read(shotProfileProvider.future);
   await container.read(settingsProvider.future);
+  await container.read(shotConditionsProvider.future);
   await Future<void>.delayed(Duration.zero);
   final notifier = container.read(homeVmProvider.notifier);
   await notifier.recalculate();
@@ -204,7 +235,11 @@ void main() {
 
     setUp(() async {
       service = _FakeBallisticsService(_makeResult());
-      container = _createContainer(profile: _makeProfile(), service: service);
+      container = _createContainer(
+        profile: _makeProfile(),
+        conditions: _makeConditions(),
+        service: service,
+      );
       state = await _recalculate(container);
     });
 
@@ -215,7 +250,7 @@ void main() {
       expect(state.cartridgeName, 'Test .308');
     });
 
-    test('wind angle is set from profile', () {
+    test('wind angle is set from conditions', () {
       expect(state.windAngleDeg, closeTo(90.0, 0.1));
     });
 
@@ -272,7 +307,11 @@ void main() {
 
     setUp(() async {
       service = _FakeBallisticsService(_makeResult());
-      container = _createContainer(profile: _makeProfile(), service: service);
+      container = _createContainer(
+        profile: _makeProfile(),
+        conditions: _makeConditions(),
+        service: service,
+      );
       await _recalculate(container);
     });
 
@@ -314,6 +353,7 @@ void main() {
       final service = _FakeBallisticsService(_makeResult());
       container = _createContainer(
         profile: _makeProfile(),
+        conditions: _makeConditions(),
         service: service,
         settings: imperial,
       );
@@ -338,6 +378,7 @@ void main() {
       final service = _FakeBallisticsService(_makeResult());
       final container = _createContainer(
         profile: _makeProfile(),
+        conditions: _makeConditions(),
         service: service,
         settings: const AppSettings(showMrad: false, showMoa: true),
       );
@@ -355,6 +396,7 @@ void main() {
       final service = _FakeBallisticsService(_makeResult());
       final container = _createContainer(
         profile: _makeProfile(),
+        conditions: _makeConditions(),
         service: service,
         settings: const AppSettings(showMrad: true, showMoa: true),
       );
@@ -370,6 +412,7 @@ void main() {
       final service = _FakeBallisticsService(_makeResult());
       final container = _createContainer(
         profile: _makeProfile(),
+        conditions: _makeConditions(),
         service: service,
       );
       addTearDown(container.dispose);
@@ -377,8 +420,6 @@ void main() {
       await _recalculate(container);
       expect(service.callCount, 1);
 
-      // Second recalculate — same profile, should still call service
-      // (caching is internal, service is always called but with cached value)
       await _recalculate(container);
       expect(service.callCount, 2);
     });
@@ -387,12 +428,7 @@ void main() {
   group('HomeViewModel — error handling', () {
     test('error state on service failure', () async {
       final badService = _ThrowingBallisticsService();
-      final container = _createContainer(
-        profile: _makeProfile(),
-        service: _FakeBallisticsService(_makeResult()),
-      );
-      // Override service after container creation
-      final container2 = ProviderContainer(
+      final container = ProviderContainer(
         overrides: [
           shotProfileProvider.overrideWith(
             () => _FakeProfileNotifier(_makeProfile()),
@@ -400,19 +436,22 @@ void main() {
           settingsProvider.overrideWith(
             () => _FakeSettingsNotifier(const AppSettings()),
           ),
+          shotConditionsProvider.overrideWith(
+            () => _FakeConditionsNotifier(_makeConditions()),
+          ),
           ballisticsServiceProvider.overrideWithValue(badService),
         ],
       );
       addTearDown(container.dispose);
-      addTearDown(container2.dispose);
 
-      await container2.read(shotProfileProvider.future);
-      await container2.read(settingsProvider.future);
+      await container.read(shotProfileProvider.future);
+      await container.read(settingsProvider.future);
+      await container.read(shotConditionsProvider.future);
       await Future<void>.delayed(Duration.zero);
 
-      final notifier = container2.read(homeVmProvider.notifier);
+      final notifier = container.read(homeVmProvider.notifier);
       await notifier.recalculate();
-      final state = container2.read(homeVmProvider).value;
+      final state = container.read(homeVmProvider).value;
       expect(state, isA<HomeUiError>());
       expect((state as HomeUiError).message, contains('Boom'));
     });
@@ -423,11 +462,12 @@ void main() {
       final service = _FakeBallisticsService(_makeResult());
       final container = _createContainer(
         profile: _makeProfile(),
+        conditions: _makeConditions(),
         service: service,
       );
       addTearDown(container.dispose);
 
-      await container.read(homeVmProvider.future);
+      // Не чекаємо нічого, просто читаємо початковий стан
       final state = container.read(homeVmProvider).value;
       expect(state, isA<HomeUiLoading>());
     });
@@ -438,6 +478,7 @@ class _ThrowingBallisticsService implements BallisticsService {
   @override
   Future<BallisticsResult> calculateForTarget(
     ShotProfile profile,
+    Conditions conditions,
     TargetCalcOptions opts, {
     double? cachedZeroElevRad,
   }) async {
@@ -447,6 +488,7 @@ class _ThrowingBallisticsService implements BallisticsService {
   @override
   Future<BallisticsResult> calculateTable(
     ShotProfile profile,
+    Conditions conditions,
     TableCalcOptions opts, {
     double? cachedZeroElevRad,
   }) async {

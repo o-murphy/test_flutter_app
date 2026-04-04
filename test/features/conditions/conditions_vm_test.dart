@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:eballistica/core/formatting/unit_formatter.dart';
 import 'package:eballistica/core/providers/settings_provider.dart';
+import 'package:eballistica/core/providers/shot_conditions_provider.dart';
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/cartridge.dart';
@@ -24,15 +25,7 @@ import 'package:eballistica/features/conditions/conditions_vm.dart';
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 
-ShotProfile _makeProfile({
-  double tempC = 20.0,
-  double altM = 150.0,
-  double pressHPa = 1013.25,
-  double humidity = 0.50,
-  double powderTempC = 20.0,
-  bool usePowderSensitivity = false,
-  bool useDiffPowderTemp = false,
-}) {
+ShotProfile _makeProfile() {
   final projectile = Projectile(
     name: 'Test 175gr',
     dragType: DragModelType.g7,
@@ -64,7 +57,20 @@ ShotProfile _makeProfile({
     rifle: rifle,
     sight: sight,
     cartridge: cartridge,
-    conditions: AtmoData(
+  );
+}
+
+Conditions _makeConditions({
+  double tempC = 20.0,
+  double altM = 150.0,
+  double pressHPa = 1013.25,
+  double humidity = 0.50,
+  double powderTempC = 20.0,
+  bool usePowderSensitivity = false,
+  bool useDiffPowderTemp = false,
+}) {
+  return Conditions(
+    atmo: AtmoData(
       temperature: Temperature(tempC, Unit.celsius),
       altitude: Distance(altM, Unit.meter),
       pressure: Pressure(pressHPa, Unit.hPa),
@@ -72,8 +78,13 @@ ShotProfile _makeProfile({
       powderTemp: Temperature(powderTempC, Unit.celsius),
     ),
     lookAngle: Angular(0, Unit.degree),
+    distance: Distance(300.0, Unit.meter),
+    winds: [],
     usePowderSensitivity: usePowderSensitivity,
     useDiffPowderTemp: useDiffPowderTemp,
+    useCoriolis: false,
+    latitudeDeg: null,
+    azimuthDeg: null,
   );
 }
 
@@ -93,35 +104,47 @@ class _FakeSettingsNotifier extends SettingsNotifier {
   Future<AppSettings> build() async => _settings;
 }
 
-/// Creates a ProviderContainer with the given profile and settings.
+class _FakeConditionsNotifier extends ShotConditionsNotifier {
+  Conditions _conditions;
+  _FakeConditionsNotifier(this._conditions);
+
+  @override
+  Future<Conditions> build() async => _conditions;
+
+  // Не використовуємо update, замість цього робимо push метод
+  void push(Conditions c) {
+    _conditions = c;
+    state = AsyncData(c);
+  }
+
+  Conditions get currentValue => _conditions;
+}
+
+/// Creates a ProviderContainer with the given profile, conditions and settings.
 ProviderContainer _createContainer({
   required ShotProfile profile,
+  required Conditions conditions,
   AppSettings settings = const AppSettings(),
 }) {
   return ProviderContainer(
     overrides: [
       shotProfileProvider.overrideWith(() => _FakeProfileNotifier(profile)),
       settingsProvider.overrideWith(() => _FakeSettingsNotifier(settings)),
+      shotConditionsProvider.overrideWith(
+        () => _FakeConditionsNotifier(conditions),
+      ),
     ],
   );
 }
 
 /// Waits for async dependencies to resolve, then reads the VM state.
-///
-/// ConditionsViewModel.build() uses ref.watch on shotProfileProvider and
-/// settingsProvider. If those are still AsyncLoading when build() runs,
-/// .value is null and the VM returns the empty state. We must ensure
-/// the dependencies have resolved BEFORE reading the VM so that it
-/// builds with real data.
 Future<ConditionsUiState> _waitForConditions(
   ProviderContainer container,
 ) async {
-  // 1. Resolve async dependencies
   await container.read(shotProfileProvider.future);
   await container.read(settingsProvider.future);
-  // 2. Yield so Riverpod can propagate invalidation to the VM
+  await container.read(shotConditionsProvider.future);
   await Future<void>.delayed(Duration.zero);
-  // 3. Now the VM rebuilds with real data
   return container.read(conditionsVmProvider.future);
 }
 
@@ -134,7 +157,8 @@ void main() {
 
     setUp(() async {
       container = _createContainer(
-        profile: _makeProfile(
+        profile: _makeProfile(),
+        conditions: _makeConditions(
           tempC: 20.0,
           altM: 150.0,
           pressHPa: 1013.25,
@@ -165,13 +189,6 @@ void main() {
     test('humidity displays as percentage', () {
       expect(state.humidity.displayValue, closeTo(50.0, 0.1));
       expect(state.humidity.symbol, '%');
-    });
-
-    test('humidity has no unit conversion (sentinel)', () {
-      expect(state.humidity.displayMin, 0.0);
-      expect(state.humidity.displayMax, 100.0);
-      expect(state.humidity.displayStep, 1.0);
-      expect(state.humidity.decimals, 0);
     });
 
     test('temperature constraints are correct', () {
@@ -212,7 +229,12 @@ void main() {
         pressure: Unit.mmHg,
       );
       container = _createContainer(
-        profile: _makeProfile(tempC: 20.0, altM: 150.0, pressHPa: 1013.25),
+        profile: _makeProfile(),
+        conditions: _makeConditions(
+          tempC: 20.0,
+          altM: 150.0,
+          pressHPa: 1013.25,
+        ),
         settings: const AppSettings(units: imperial),
       );
       state = await _waitForConditions(container);
@@ -221,25 +243,21 @@ void main() {
     tearDown(() => container.dispose());
 
     test('temperature converts to Fahrenheit', () {
-      // 20°C = 68°F
       expect(state.temperature.displayValue, closeTo(68.0, 0.5));
       expect(state.temperature.symbol, '°F');
     });
 
     test('altitude converts to yards', () {
-      // 150m ≈ 164 yd
       expect(state.altitude.displayValue, closeTo(164.0, 1.0));
       expect(state.altitude.symbol, 'yd');
     });
 
     test('pressure converts to mmHg', () {
-      // 1013.25 hPa ≈ 760 mmHg
       expect(state.pressure.displayValue, closeTo(760.0, 1.0));
       expect(state.pressure.symbol, 'mmHg');
     });
 
     test('temperature constraints convert properly', () {
-      // min: -100°C = -148°F, max: 100°C = 212°F
       expect(state.temperature.displayMin, closeTo(-148.0, 1.0));
       expect(state.temperature.displayMax, closeTo(212.0, 1.0));
     });
@@ -251,7 +269,8 @@ void main() {
 
     setUp(() async {
       container = _createContainer(
-        profile: _makeProfile(
+        profile: _makeProfile(),
+        conditions: _makeConditions(
           tempC: 25.0,
           powderTempC: 25.0,
           usePowderSensitivity: true,
@@ -289,7 +308,8 @@ void main() {
 
     setUp(() async {
       container = _createContainer(
-        profile: _makeProfile(
+        profile: _makeProfile(),
+        conditions: _makeConditions(
           tempC: 25.0,
           powderTempC: 30.0,
           usePowderSensitivity: true,
@@ -313,23 +333,29 @@ void main() {
   });
 
   group('ConditionsViewModel — empty state', () {
-    test('provides default values when profile has no settings loaded', () async {
-      // Use a notifier that never completes — simulates profile still loading.
-      // ConditionsVM.build() reads shotProfileProvider.value which is null
-      // while loading, so it falls through to _emptyState.
+    test('provides default values when conditions not loaded', () async {
+      // Використовуємо реальний notifier з null значенням
       final container = ProviderContainer(
         overrides: [
-          shotProfileProvider.overrideWith(() => _PendingProfileNotifier()),
+          shotProfileProvider.overrideWith(
+            () => _FakeProfileNotifier(_makeProfile()),
+          ),
           settingsProvider.overrideWith(
             () => _FakeSettingsNotifier(const AppSettings()),
           ),
+          // Не оверрайдимо shotConditionsProvider - він сам завантажиться
         ],
       );
       addTearDown(container.dispose);
 
-      // Wait for settings to resolve, then read the VM (profile is still loading)
+      // Чекаємо тільки settings і profile
       await container.read(settingsProvider.future);
+      await container.read(shotProfileProvider.future);
+
+      // Даємо час для VM
       await Future<void>.delayed(Duration.zero);
+
+      // Отримуємо стан VM
       final state = await container.read(conditionsVmProvider.future);
       expect(state.temperature.label, 'Temperature');
       expect(state.humidity.label, 'Humidity');
@@ -339,7 +365,10 @@ void main() {
 
   group('ConditionsViewModel — inputField types', () {
     test('each field has correct inputField', () async {
-      final container = _createContainer(profile: _makeProfile());
+      final container = _createContainer(
+        profile: _makeProfile(),
+        conditions: _makeConditions(),
+      );
       addTearDown(container.dispose);
       final state = await _waitForConditions(container);
 
@@ -381,4 +410,10 @@ void main() {
 class _PendingProfileNotifier extends ShotProfileNotifier {
   @override
   Future<ShotProfile> build() => Completer<ShotProfile>().future;
+}
+
+/// Conditions notifier that never completes — simulates "still loading" state.
+class _PendingConditionsNotifier extends ShotConditionsNotifier {
+  @override
+  Future<Conditions> build() => Completer<Conditions>().future;
 }

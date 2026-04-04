@@ -147,7 +147,7 @@ class Conditions {
     Distance? distance,
     Angular? lookAngle,
   }) : atmo = atmo ?? AtmoData.icao(),
-       distance = distance ?? Distance(100.0, Unit.meter),
+       distance = distance ?? Distance(300.0, Unit.meter),
        lookAngle = lookAngle ?? Angular(0.0, Unit.radian);
 
   Atmo toAtmo() => Atmo(

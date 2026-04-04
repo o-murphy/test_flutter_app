@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:eballistica/core/providers/recalc_coordinator.dart';
 import 'package:eballistica/core/providers/settings_provider.dart';
+import 'package:eballistica/core/providers/shot_conditions_provider.dart';
 import 'package:eballistica/core/providers/shot_profile_provider.dart';
 import 'package:eballistica/core/models/app_settings.dart';
 import 'package:eballistica/core/models/cartridge.dart';
@@ -55,14 +56,6 @@ ShotProfile _makeProfile() {
     rifle: rifle,
     sight: sight,
     cartridge: cartridge,
-    conditions: AtmoData(
-      temperature: Temperature(20.0, Unit.celsius),
-      altitude: Distance(150.0, Unit.meter),
-      pressure: Pressure(1013.25, Unit.hPa),
-      humidity: 0.50,
-      powderTemp: Temperature(20.0, Unit.celsius),
-    ),
-    lookAngle: Angular(0, Unit.degree),
   );
 }
 
@@ -127,6 +120,23 @@ class _ControllableSettingsNotifier extends SettingsNotifier {
   void push(AppSettings s) => state = AsyncData(s);
 }
 
+/// Conditions notifier that can push new values.
+class _ControllableConditionsNotifier extends ShotConditionsNotifier {
+  Conditions _currentValue;
+
+  _ControllableConditionsNotifier(this._currentValue);
+
+  @override
+  Future<Conditions> build() async => _currentValue;
+
+  void push(Conditions c) {
+    _currentValue = c;
+    state = AsyncData(c);
+  }
+
+  Conditions get currentValue => _currentValue;
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 class _TestContext {
@@ -136,6 +146,7 @@ class _TestContext {
   final _TrackingShotDetailsVM shotDetailsVM;
   final _ControllableProfileNotifier profileNotifier;
   final _ControllableSettingsNotifier settingsNotifier;
+  final _ControllableConditionsNotifier conditionsNotifier;
 
   _TestContext({
     required this.container,
@@ -144,6 +155,7 @@ class _TestContext {
     required this.shotDetailsVM,
     required this.profileNotifier,
     required this.settingsNotifier,
+    required this.conditionsNotifier,
   });
 }
 
@@ -155,11 +167,13 @@ _TestContext _createTestContext({
   final shotDetailsVM = _TrackingShotDetailsVM();
   final profileNotifier = _ControllableProfileNotifier(_makeProfile());
   final settingsNotifier = _ControllableSettingsNotifier(initialSettings);
+  final conditionsNotifier = _ControllableConditionsNotifier(Conditions());
 
   final container = ProviderContainer(
     overrides: [
       shotProfileProvider.overrideWith(() => profileNotifier),
       settingsProvider.overrideWith(() => settingsNotifier),
+      shotConditionsProvider.overrideWith(() => conditionsNotifier),
       homeVmProvider.overrideWith(() => homeVM),
       trajectoryTablesVmProvider.overrideWith(() => tablesVM),
       shotDetailsVmProvider.overrideWith(() => shotDetailsVM),
@@ -173,6 +187,7 @@ _TestContext _createTestContext({
     shotDetailsVM: shotDetailsVM,
     profileNotifier: profileNotifier,
     settingsNotifier: settingsNotifier,
+    conditionsNotifier: conditionsNotifier,
   );
 }
 
@@ -180,6 +195,7 @@ _TestContext _createTestContext({
 Future<void> _initCoordinator(_TestContext ctx) async {
   await ctx.container.read(shotProfileProvider.future);
   await ctx.container.read(settingsProvider.future);
+  await ctx.container.read(shotConditionsProvider.future);
   await Future<void>.delayed(Duration.zero);
   // Reading the coordinator triggers its build() which sets up listeners
   ctx.container.read(recalcCoordinatorProvider);
@@ -195,7 +211,7 @@ void main() {
     setUp(() async {
       ctx = _createTestContext();
       await _initCoordinator(ctx);
-    }); // Removed the extra closing brace here.
+    });
 
     tearDown(() => ctx.container.dispose());
 
@@ -269,7 +285,68 @@ void main() {
       expect(ctx.homeVM.recalcCount, 2);
       expect(ctx.tablesVM.recalcCount, 2);
       expect(ctx.shotDetailsVM.recalcCount, 2);
-    }); // Removed the extra closing brace here.
+    });
+  });
+
+  group('RecalcCoordinator — conditions changes', () {
+    late _TestContext ctx;
+
+    setUp(() async {
+      ctx = _createTestContext();
+      await _initCoordinator(ctx);
+    });
+
+    tearDown(() => ctx.container.dispose());
+
+    test('conditions change triggers all providers', () async {
+      final newConditions = Conditions(
+        atmo: AtmoData.icao(),
+        distance: Distance(200, Unit.meter),
+        lookAngle: Angular(5, Unit.degree),
+        winds: [],
+        usePowderSensitivity: true,
+        useDiffPowderTemp: false,
+        useCoriolis: false,
+        latitudeDeg: null,
+        azimuthDeg: null,
+      );
+      ctx.conditionsNotifier.push(newConditions);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(ctx.homeVM.recalcCount, 1);
+      expect(ctx.tablesVM.recalcCount, 1);
+      expect(ctx.shotDetailsVM.recalcCount, 1);
+    });
+
+    test('conditions usePowderSensitivity change triggers recalc', () async {
+      final current = ctx.conditionsNotifier.currentValue;
+      final newConditions = current.copyWith(usePowderSensitivity: true);
+      ctx.conditionsNotifier.push(newConditions);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(ctx.homeVM.recalcCount, 1);
+      expect(ctx.tablesVM.recalcCount, 1);
+      expect(ctx.shotDetailsVM.recalcCount, 1);
+    });
+
+    test('conditions wind speed change triggers recalc', () async {
+      final current = ctx.conditionsNotifier.currentValue;
+      final newConditions = current.copyWith(
+        winds: [
+          WindData(
+            velocity: Velocity(5.0, Unit.mps),
+            directionFrom: Angular(90, Unit.degree),
+            untilDistance: Distance(9999, Unit.meter),
+          ),
+        ],
+      );
+      ctx.conditionsNotifier.push(newConditions);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(ctx.homeVM.recalcCount, 1);
+      expect(ctx.tablesVM.recalcCount, 1);
+      expect(ctx.shotDetailsVM.recalcCount, 1);
+    });
   });
 
   group('RecalcCoordinator — settings changes that trigger recalc', () {
@@ -281,28 +358,6 @@ void main() {
     });
 
     tearDown(() => ctx.container.dispose());
-
-    test('profile usePowderSensitivity change triggers recalc', () async {
-      ctx.profileNotifier.push(
-        _makeProfile().copyWith(usePowderSensitivity: true),
-      );
-      await Future<void>.delayed(Duration.zero);
-
-      expect(ctx.homeVM.recalcCount, 1);
-      expect(ctx.tablesVM.recalcCount, 1);
-      expect(ctx.shotDetailsVM.recalcCount, 1);
-    });
-
-    test('profile useDiffPowderTemp change triggers recalc', () async {
-      ctx.profileNotifier.push(
-        _makeProfile().copyWith(useDiffPowderTemp: true),
-      );
-      await Future<void>.delayed(Duration.zero);
-
-      expect(ctx.homeVM.recalcCount, 1);
-      expect(ctx.tablesVM.recalcCount, 1);
-      expect(ctx.shotDetailsVM.recalcCount, 1);
-    });
 
     test('chartDistanceStep change triggers recalc', () async {
       ctx.settingsNotifier.push(const AppSettings(chartDistanceStep: 50.0));
@@ -377,19 +432,21 @@ void main() {
       expect(ctx.shotDetailsVM.recalcCount, 2);
     });
 
-    test('settings change with multiple relevant fields triggers once', () async {
-      // Even though multiple fields differ, it's a single push → single trigger
-      ctx.settingsNotifier.push(
-        const AppSettings(
-          chartDistanceStep: 50.0,
-          tableConfig: TableConfig(stepM: 50.0),
-        ),
-      );
-      await Future<void>.delayed(Duration.zero);
+    test(
+      'settings change with multiple relevant fields triggers once',
+      () async {
+        ctx.settingsNotifier.push(
+          const AppSettings(
+            chartDistanceStep: 50.0,
+            tableConfig: TableConfig(stepM: 50.0),
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
 
-      expect(ctx.homeVM.recalcCount, 1);
-      expect(ctx.tablesVM.recalcCount, 1);
-      expect(ctx.shotDetailsVM.recalcCount, 1);
-    });
+        expect(ctx.homeVM.recalcCount, 1);
+        expect(ctx.tablesVM.recalcCount, 1);
+        expect(ctx.shotDetailsVM.recalcCount, 1);
+      },
+    );
   });
 }
