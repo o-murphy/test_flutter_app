@@ -88,7 +88,6 @@ _HomeCalcResult _runHomeCalculation(_HomeCalcArgs args) {
       }
       freshZeroElevRad = weapon.zeroElevation.in_(Unit.radian);
     }
-
     final shot = profile.toCurrentShot(conditions, weapon);
 
     final targetElev = calc.barrelElevationForTarget(

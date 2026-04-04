@@ -77,7 +77,7 @@ class ShotProfile {
     final currentAmmo = Ammo(
       dm: cartridge!.projectile.toDragModel(),
       mv: cartridge!.mv,
-      powderTemp: conditions.atmo.powderTemp,
+      powderTemp: cartridge!.powderTemp,
       tempModifier: cartridge!.powderSensitivity.in_(Unit.fraction),
       usePowderSensitivity: conditions.usePowderSensitivity,
     );
