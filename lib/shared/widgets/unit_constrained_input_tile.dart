@@ -36,9 +36,8 @@ abstract class UnitValueFieldTileBase<T> extends StatelessWidget {
     throw UnimplementedError();
   }
 
-  TextStyle? _getDisplayTextStyle(ThemeData theme) {
-    return theme.textTheme.bodyMedium?.copyWith(fontFamily: 'monospace');
-  }
+  TextStyle? _getDisplayTextStyle(ThemeData theme) =>
+      theme.textTheme.bodyMedium?.copyWith(fontFamily: 'monospace');
 
   @override
   Widget build(BuildContext context) {
@@ -86,17 +85,15 @@ class UnitValueFieldTile extends UnitValueFieldTileBase<double> {
   }
 
   @override
-  void _showDialog(BuildContext context) {
-    showUnitEditDialog(
-      context,
-      label: label,
-      rawValue: rawValue,
-      constraints: constraints,
-      displayUnit: displayUnit,
-      symbol: symbol,
-      onChanged: onChanged,
-    );
-  }
+  void _showDialog(BuildContext context) => showUnitEditDialog(
+    context,
+    label: label,
+    rawValue: rawValue,
+    constraints: constraints,
+    displayUnit: displayUnit,
+    symbol: symbol,
+    onChanged: onChanged,
+  );
 }
 
 /// Тайл для опціонального значення (може бути null)
@@ -135,15 +132,13 @@ class NullableUnitValueFieldTile extends UnitValueFieldTileBase<double?> {
   }
 
   @override
-  void _showDialog(BuildContext context) {
-    showNullableUnitEditDialog(
-      context,
-      label: label,
-      rawValue: rawValue,
-      constraints: constraints,
-      displayUnit: displayUnit,
-      symbol: symbol,
-      onChanged: onChanged,
-    );
-  }
+  void _showDialog(BuildContext context) => showNullableUnitEditDialog(
+    context,
+    label: label,
+    rawValue: rawValue,
+    constraints: constraints,
+    displayUnit: displayUnit,
+    symbol: symbol,
+    onChanged: onChanged,
+  );
 }

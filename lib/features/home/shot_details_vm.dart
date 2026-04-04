@@ -153,7 +153,7 @@ class ShotDetailsViewModel extends AsyncNotifier<ShotDetailsUiState> {
         : null;
 
     // Gyroscopic stability
-    final sg = profile.toShot().calculateStabilityCoefficient();
+    final sg = profile.toCurrentShot().calculateStabilityCoefficient();
 
     // Trajectory markers
     final firstPoint = traj.isNotEmpty ? traj[0] : null;

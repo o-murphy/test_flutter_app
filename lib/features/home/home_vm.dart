@@ -326,7 +326,7 @@ class HomeViewModel extends AsyncNotifier<HomeUiState> {
     final diamInch = proj.diameter.in_(Unit.inch);
     final lenInch = proj.length.in_(Unit.inch);
     if (weightGr > 0 && diamInch > 0 && lenInch > 0 && twistInch > 0) {
-      final sg = profile.toShot().calculateStabilityCoefficient();
+      final sg = profile.toCurrentShot().calculateStabilityCoefficient();
       sgStr = 'Sg ${sg.toStringAsFixed(2)}';
     }
 

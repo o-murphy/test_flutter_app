@@ -101,7 +101,7 @@ DetailsTableData _buildDetails(ShotProfile profile, AppSettings settings) {
   final currentMvMps = currentPowderSensOn ? mvAtTempC(currTempC) : refMvMps;
 
   // Gyrostability (Miller)
-  double sg = profile.toShot().calculateStabilityCoefficient();
+  double sg = profile.toCurrentShot().calculateStabilityCoefficient();
 
   // Sectional density + form factor
   final sd = (weightGr > 0 && diamInch > 0)
