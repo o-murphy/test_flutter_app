@@ -1048,7 +1048,7 @@ class ConditionsViewModel extends AsyncNotifier<ConditionsUiState> {
     final settings = ref.read(settingsProvider).value!;
     final newTempC = tempC ?? atmo.temperature.in_(Unit.celsius);
     final useDiffTemp = settings.enablePowderSensitivity &&
-        settings.useDifferentPowderTemperature;
+        settings.useDiffPowderTemperature;
 
     return solver.Atmo(
       temperature: Temperature(newTempC, Unit.celsius),
@@ -1248,7 +1248,7 @@ class RecalcCoordinator extends Notifier<void> {
   bool _needsRecalc(AppSettings? prev, AppSettings next) {
     if (prev == null) return true;
     return prev.enablePowderSensitivity != next.enablePowderSensitivity ||
-        prev.useDifferentPowderTemperature != next.useDifferentPowderTemperature ||
+        prev.useDiffPowderTemperature != next.useDiffPowderTemperature ||
         prev.chartDistanceStep != next.chartDistanceStep ||
         prev.tableConfig.stepM != next.tableConfig.stepM;
   }

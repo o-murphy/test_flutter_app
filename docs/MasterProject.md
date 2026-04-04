@@ -257,7 +257,7 @@ Layout per field: `[−]  value  unit  [+]` — the +/− buttons are adjacent t
 | Aerodynamic jump                              | Always ON, control disabled (engine limitation)                 |
 | Pressure depends on altitude                  | Always ON, control disabled (engine limitation)                 |
 
-Powder temperature field appears in the **switch section** (not atmospheric fields), below the sub-switch, only when `useDifferentPowderTemperature` is ON.
+Powder temperature field appears in the **switch section** (not atmospheric fields), below the sub-switch, only when `useDiffPowderTemperature` is ON.
 
 ---
 
@@ -634,7 +634,7 @@ class AppSettings {
   final bool       showSubsonicTransition;
   final bool       enableCoriolis;
   final bool       enablePowderSensitivity;         // UI toggle — show/use powder sens
-  final bool       useDifferentPowderTemperature;   // Use separate powder temp vs atmo temp
+  final bool       useDiffPowderTemperature;   // Use separate powder temp vs atmo temp
   final bool       enableDerivation;
   final bool       enableAerodynamicJump;
   final bool       pressureDependsOnAltitude;
