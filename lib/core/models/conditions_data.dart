@@ -144,10 +144,10 @@ class Conditions {
     this.latitudeDeg,
     this.azimuthDeg,
     AtmoData? atmo,
-    Distance? targetDistance,
+    Distance? distance,
     Angular? lookAngle,
   }) : atmo = atmo ?? AtmoData.icao(),
-       distance = targetDistance ?? Distance(100.0, Unit.meter),
+       distance = distance ?? Distance(100.0, Unit.meter),
        lookAngle = lookAngle ?? Angular(0.0, Unit.radian);
 
   Atmo toAtmo() => Atmo(
@@ -190,7 +190,7 @@ class Conditions {
       usePowderSensitivity: usePowderSensitivity ?? this.usePowderSensitivity,
       useDiffPowderTemp: useDiffPowderTemp ?? this.useDiffPowderTemp,
       useCoriolis: useCoriolis ?? this.useCoriolis,
-      targetDistance: distance ?? this.distance,
+      distance: distance ?? this.distance,
     );
   }
 
@@ -208,7 +208,7 @@ class Conditions {
       ),
       latitudeDeg: (json['latitudeDeg'] as num?)?.toDouble(),
       azimuthDeg: (json['azimuthDeg'] as num?)?.toDouble(),
-      targetDistance: json['targetDistance'] != null
+      distance: json['targetDistance'] != null
           ? Distance(
               (json['targetDistance'] as num).toDouble(),
               StorageUnits.profileTargetDistance,
